@@ -349,3 +349,33 @@ if (!d3) { throw "d3 wasn't included!"};
   }
 }());
 
+// given a local file path to a file, this will return
+// the file contents as a string
+function readFile(filePath) {
+    var request = new XMLHttpRequest();
+    request.open("GET", filePath, false);
+    request.send(null);
+    return request.responseText;
+}
+
+
+function init() {
+    var newick = Newick.parse(readFile("dat/stMAT.tre"))
+    var newickNodes = []
+    function buildNewickNodes(node, callback) {
+        newickNodes.push(node)
+        if (node.branchset) {
+            for (var i=0; i < node.branchset.length; i++) {
+                buildNewickNodes(node.branchset[i])
+            }
+        }
+    }
+    buildNewickNodes(newick)
+
+
+    d3.phylogram.build('#phylogram', newick, {
+        width: 300,
+        height: 400
+    });
+}
+

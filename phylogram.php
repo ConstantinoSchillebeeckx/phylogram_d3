@@ -15,43 +15,11 @@
     <script type="text/javascript" src="js/newick.js"></script>
 
     <script>
-        function readFile(filePath) {
-            var request = new XMLHttpRequest();
-            request.open("GET", filePath, false);
-            request.send(null);
-            return request.responseText;
-        }
-
-
-      function load() {
-
-        var readTre = readFile("dat/stMAT.tre");
-
-
-        var newick = Newick.parse(readTre)
-        var newickNodes = []
-        function buildNewickNodes(node, callback) {
-          newickNodes.push(node)
-          if (node.branchset) {
-            for (var i=0; i < node.branchset.length; i++) {
-              buildNewickNodes(node.branchset[i])
-            }
-          }
-        }
-        buildNewickNodes(newick)
-        
-        
-        d3.phylogram.build('#phylogram', newick, {
-          width: 300,
-          height: 400
-        });
-      }
     </script>
-
 
     </head>
 
-    <body  onload="load();">
+    <body onload="init();">
 
         <div id='phylogram'></div>
 
