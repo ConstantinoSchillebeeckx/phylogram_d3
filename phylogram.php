@@ -15,12 +15,28 @@
     <script type="text/javascript" src="js/newick.js"></script>
 
     <script>
+        // function called when GUI is updated by user
+        // calls updateTree() so that tree can be updated
+        function guiUpdate() {
+
+            skipDistanceLabel = !$('#toggle_distance').is(':checked');
+            skipLeafLabel = !$('#toggle_leaf').is(':checked');
+
+            updateTree(skipDistanceLabel, skipLeafLabel);
+        }
     </script>
 
     </head>
 
-    <body onload="init();">
+    <body onload="init('dat/stMAT.tre', '#phylogram');">
 
+        <!-- controls for tree -->
+        <input type="checkbox" id="toggle_distance" value="toggle_distance" checked onclick="guiUpdate(this)" /> 
+        Toggle distance labels
+        <input type="checkbox" id="toggle_leaf" value="toggle_leaf" checked onclick="guiUpdate(this)" /> 
+        Toggle leaf labels
+
+        <!-- div for tree -->
         <div id='phylogram'></div>
 
         <?php //include("../navbar.html");?>

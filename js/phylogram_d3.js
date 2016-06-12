@@ -57,6 +57,8 @@
         Skip the tick rule.
       skipBranchLengthScaling
         Make a dendrogram instead of a phylogram.
+      skipLabels
+        Don't add labels to leaf nodes
   
   d3.phylogram.buildRadial(selector, nodes, options)
     Creates a radial dendrogram.
@@ -349,6 +351,46 @@ if (!d3) { throw "d3 wasn't included!"};
   }
 }());
 
+
+
+/* Function used to update existing tree
+
+Function called from front-end everytime GUI
+is changed; this will redraw the tree based
+on GUI settings
+
+Parameters:
+==========
+- dat : string
+    filepath for input Newick tre
+- div : string
+    div id (with included #) in which to generated tree
+- skipDistances : bool
+    option for skipDistances (don't draw distance values on tree)
+- skipLabels : bool
+    option for skipLabels (don't draw label on leaf)
+
+
+*/
+function updateTree(skipDistanceLabel, skipLeafLabel) {
+
+    tree = d3.select('svg');
+
+    // toggle leaf labels
+    tree.selectAll('g.leaf.node text')
+      .style('fill-opacity', skipLeafLabel? 1e-6 : 1 )tree
+
+    // toggle distance labels
+    tree.selectAll('g.inner.node text')
+      .style('fill-opacity', skipDistanceLabel? 1e-6 : 1 )
+}
+
+
+
+
+
+
+
 // given a local file path to a file, this will return
 // the file contents as a string
 function readFile(filePath) {
@@ -359,8 +401,28 @@ function readFile(filePath) {
 }
 
 
-function init() {
-    var newick = Newick.parse(readFile("dat/stMAT.tre"))
+
+/* initialize tree
+
+Function called from front-end with all user-defined
+options to format the tree.
+
+Parameters:
+==========
+- dat : string
+    filepath for input Newick tre
+- div : string
+    div id (with included #) in which to generated tree
+- skipDistances : bool
+    option for skipDistances (don't draw distance values on tree)
+- skipLabels : bool
+    option for skipLabels (don't draw label on leaf)
+
+Calls d3.phylogram.build to generate tree
+
+*/
+function init(dat, div) {
+    var newick = Newick.parse(readFile(dat))
     var newickNodes = []
     function buildNewickNodes(node, callback) {
         newickNodes.push(node)
@@ -372,10 +434,9 @@ function init() {
     }
     buildNewickNodes(newick)
 
-
-    d3.phylogram.build('#phylogram', newick, {
-        width: 300,
-        height: 400
+    d3.phylogram.build(div, newick, {
+        width: 800,
+        height: 600,
     });
 }
 
