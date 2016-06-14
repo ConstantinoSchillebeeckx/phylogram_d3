@@ -69,7 +69,7 @@
 
 	d3.phylogram.rightAngleDiagonal()
 		Similar to d3.diagonal except it create an orthogonal crook instead of a
-		smooth Bezier curve.
+		smapParseth Bezier curve.
 
 	d3.phylogram.radialRightAngleDiagonal()
 		d3.phylogram.rightAngleDiagonal for radial layouts.
@@ -379,10 +379,10 @@ Parameters:
 		option for skipDistances (don't draw distance values on tree)
 - skipLabels : bool
 		option for skipLabels (don't draw label on leaf)
-
+TODO
 
 */
-function updateTree(skipDistanceLabel, skipLeafLabel) {
+function updateTree(skipDistanceLabel, skipLeafLabel, colorLeaf, colorLeafBackground) {
 
 		tree = d3.select('svg');
 
@@ -546,12 +546,22 @@ function buildGUI(selector, mapping) {
 
     if (!mapping.empty()) {
 
-        // get list of columns originally in mapping file
-        // XXX better way to do this?
-        var cols = d3.set([]);
-        mapping.forEach(function(k,v) {
-            for (d in v) { cols.add(d); }
-        })
+        // parse mapping file a bit so we can use it with
+        // dropdown boxes and for defining color functions
+        var mapParse = d3.map();
+        mapping.forEach(function(leaf,cols) {
+            for (col in cols) {
+                var colVal = cols[col];
+                if (!mapParse.has(col)) {
+                    var val = d3.set([colVal]);
+                } else {
+                    var val = mapParse.get(col);
+                    val.add(colVal);
+                }
+                mapParse.set(col, val);
+            }
+        });
+        console.log(mapParse.keys())
 
         gui.append("br")
         gui.append("label")
@@ -559,6 +569,7 @@ function buildGUI(selector, mapping) {
 
         var leafSelect = gui.append("select")
 
+        // XXX first value in mapParse.keys() is not showing in front-end
         leafSelect.append("option")
             .attr("selected","")
             .attr("disabled","")
@@ -567,7 +578,7 @@ function buildGUI(selector, mapping) {
             .attr("value","")
 
         leafSelect.selectAll("option")
-            .data(cols.values()).enter()
+            .data(mapParse.keys()).enter()
             .append("option")
             .text(function(d) { return d; })
 
@@ -586,7 +597,7 @@ function buildGUI(selector, mapping) {
             .attr("value","")
 
         backgroundSelect.selectAll("option")
-            .data(cols.values()).enter()
+            .data(mapParse.keys()).enter()
             .append("option")
             .text(function(d) { return d; })
     }
