@@ -13,6 +13,7 @@
     <script type="text/javascript" src="js/d3.min.js"></script>
     <script type="text/javascript" src="js/phylogram_d3.js"></script>
     <script type="text/javascript" src="js/newick.js"></script>
+    <script type="text/javascript" src="js/colorbrewer.min.js"></script>
 
     <script>
     </script>
