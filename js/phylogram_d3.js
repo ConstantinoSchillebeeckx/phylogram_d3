@@ -163,28 +163,19 @@ if (!d3) { throw "d3 wasn't included!"};
 	}
 
 	d3.phylogram.styleTreeNodes = function(vis, leafRadius=4.5) {
-        console.log(vis.selectAll('g.leaf.node'))
 		vis.selectAll('g.leaf.node')
 			.append("svg:rect") // leaf background
-				.attr('fill', 'steelblue')
                 .attr('width', 200) // XXX what width do we want?
                 .attr('height',2 + leafRadius * 2) // +2 for stroke
                 .attr('y',-leafRadius - 1) // -1 for stroke
-                .attr('opacity',1e-6) // initially hide background
 
 		vis.selectAll('g.leaf.node')
 			.append("svg:circle")
 				.attr("r", leafRadius)
-				.attr('stroke',	'yellowGreen')
-				.attr('fill', 'greenYellow')
-				.attr('stroke-width', '2px');
 
 		vis.selectAll('g.root.node')
 			.append('svg:circle')
 				.attr("r", leafRadius)
-				.attr('fill', 'steelblue')
-				.attr('stroke', '#369')
-				.attr('stroke-width', '2px');
 	}
 
 	function scaleBranchLengths(nodes, w) {
@@ -247,14 +238,14 @@ if (!d3) { throw "d3 wasn't included!"};
 
 
 		if (!options.skipTicks) {
-			vis.selectAll('line')
+			vis.selectAll('line.rule')
 					.data(yscale.ticks(10))
 				.enter().append('svg:line')
+                    .attr("class", "rule")
 					.attr('y1', 0)
 					.attr('y2', h)
 					.attr('x1', yscale)
 					.attr('x2', yscale)
-					.attr("stroke", "#ddd");
 
 			vis.selectAll("text.rule")
 					.data(yscale.ticks(10))
@@ -264,8 +255,6 @@ if (!d3) { throw "d3 wasn't included!"};
 					.attr("y", 0)
 					.attr("dy", -3)
 					.attr("text-anchor", "middle")
-					.attr('font-size', '8px')
-					.attr('fill', '#ccc')
 					.text(function(d) { return Math.round(d*100) / 100; });
 		}
 
@@ -274,9 +263,6 @@ if (!d3) { throw "d3 wasn't included!"};
 			.enter().append("svg:path")
 				.attr("class", "link")
 				.attr("d", diagonal)
-				.attr("fill", "none")
-				.attr("stroke", "#aaa")
-				.attr("stroke-width", "4px");
 
 		var node = vis.selectAll("g.node")
 				.data(nodes)
@@ -294,7 +280,6 @@ if (!d3) { throw "d3 wasn't included!"};
 				})
 				.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
 
-        console.log(options)
 		d3.phylogram.styleTreeNodes(vis, options.leafRadius)
 
 		if (!options.skipLabels) {
@@ -303,17 +288,12 @@ if (!d3) { throw "d3 wasn't included!"};
 					.attr("dx", -6)
 					.attr("dy", -6)
 					.attr("text-anchor", 'end')
-					.attr('font-size', '8px')
-					.attr('fill', '#ccc')
 					.text(function(d) { return d.length; });
 
 			vis.selectAll('g.leaf.node').append("svg:text")
 				.attr("dx", 8)
 				.attr("dy", 3)
 				.attr("text-anchor", "start")
-				.attr('font-family', 'Helvetica Neue, Helvetica, sans-serif')
-				.attr('font-size', '10px')
-				.attr('fill', 'black')
 				.text(function(d) { return d.name + ' ('+d.length+')'; });
 		}
 
@@ -357,9 +337,6 @@ if (!d3) { throw "d3 wasn't included!"};
 				.attr("dy", ".31em")
 				.attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
 				.attr("transform", function(d) { return d.x < 180 ? null : "rotate(180)"; })
-				.attr('font-family', 'Helvetica Neue, Helvetica, sans-serif')
-				.attr('font-size', '10px')
-				.attr('fill', 'black')
 				.text(function(d) { return d.data.name; });
 
 			vis.selectAll('g.inner.node text')

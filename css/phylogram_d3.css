@@ -1,3 +1,59 @@
-body { font-family: "Open Sans", Helvetica, sans-serif; }
+body { 
+    font-family: "Open Sans", Helvetica, sans-serif; 
+    font-size: 11px;
+}
 
-td { vertical-align: top; }
+/* branch tip styling */
+.leaf circle {
+    fill: greenYellow;
+    stroke: yellowGreen;
+    stroke-width: 2px;
+}
+
+.leaf text {
+    font-size: 10px;
+    fill: black;
+}
+
+.leaf rect {
+    fill: steelblue;
+    opacity: 1e-6; /* initially hide leaf background */
+}
+/* branch tip styling */
+
+
+/* background distance rulers */
+text.rule {
+    font-size: 8px;
+    fill: #ccc;
+    text-decoration: underline;
+}
+
+line.rule {
+    stroke: #ddd;
+}
+/* background distance rulers */
+
+
+.root {
+    fill : steelblue;
+    stroke-width: 2px;
+    stroke: #369;
+}
+
+
+/* inside of tree */
+.inner text {
+    font-size: 8px;
+    fill: #ccc;
+}
+
+
+/* branches of tree */
+.link {
+    fill: none;
+    stroke: #aaa;
+    stroke-width: 2px;
+}
+
+
