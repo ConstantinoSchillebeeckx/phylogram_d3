@@ -220,11 +220,20 @@ if (!d3) { throw "d3 wasn't included!"};
 				return node.branchset
 			});
 		var diagonal = options.diagonal || d3.phylogram.rightAngleDiagonal();
-		var vis = options.vis || d3.select(selector).append("svg:svg")
-				.attr("width", w + 300)
-				.attr("height", h + 30)
+		var tmp = options.vis || d3.select(selector).append("div")
+                .attr("class","row")
+                .attr("id","canvas")
+        
+        var vis = tmp.append("div")
+                .attr("class","col-sm-8")
+                .attr("id","tree")
+            .append("svg:svg")
+                .attr("preserveAspectRatio","xMidYMid meet")
+                .attr("viewBox", '0 0 ' + (w + 300) + ' ' + (h + 300))
 			.append("svg:g")
 				.attr("transform", "translate(20, 20)");
+
+
 		var nodes = tree(nodes);
 
 		if (options.skipBranchLengthScaling) {
@@ -306,7 +315,13 @@ if (!d3) { throw "d3 wasn't included!"};
 				r = w / 2,
 				labelWidth = options.skipLabels ? 10 : options.labelWidth || 120;
 
-		var vis = d3.select(selector).append("svg:svg")
+		var vis = d3.select(selector)
+            .append("div")
+                .attr("class","row")
+                .attr("id","tree")
+            .append("div")
+                .attr("class","col-sm-12")
+            .append("svg:svg")
 				.attr("width", r * 2)
 				.attr("height", r * 2)
 			.append("svg:g")
@@ -382,17 +397,39 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor, backgroundColor
     tree.selectAll('g.inner.node text')
         .style('fill-opacity', skipDistanceLabel? 1e-6 : 1 )
 
+    // col for legend
+    if (leafColor || backgroundColor) {
+
+        d3.select("#legendID").remove()
+
+        var legend = d3.select("#canvas").append("div")
+            .attr("class","col-sm-4")
+            .attr("id", "legendID")
+            .append("svg")
+                .attr("preserveAspectRatio","xMidYMid meet")
+                .attr("viewBox", '0 0 ' + 600 + ' ' + ((d3.select('#tree svg').node().getBBox().height) + 300))
+    }
 
 
     // update leaf color
     if (leafColor) {
-        var colorScale = colorScales.get(leafColor) // color scale
-        var mapVals = mapParse.get(leafColor) // d3.map() obj with leaf name as key 
+        var colorScale = colorScales.get(leafColor); // color scale
+        var mapVals = mapParse.get(leafColor); // d3.map() obj with leaf name as key
+
+        // get unique values for chosen category and sort
+        // alphabetically or descending if integer
+        var uniqueVals = d3.set(mapVals.values()).values().map(filterTSVval);
+        var sorted = (typeof uniqueVals[0] === 'string' || uniqueVals[0] instanceof String) ? uniqueVals.sort() : uniqueVals.sort().reverse();
+
+        // fill out legend
+        generateLegend(leafColor, sorted, legend, colorScale, 'circle', 'translate(5,25)');
+
+        // update node styling
         tree.selectAll('g.leaf.node circle')
-            .attr('fill', function(d) {
+            .style('fill', function(d) {
                 return colorScale(mapVals.get(d.name))
             })
-            .attr('stroke', 'white')
+            .style('stroke', 'white')
     }
 
 
@@ -400,17 +437,95 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor, backgroundColor
     if (backgroundColor) {
         var colorScale = colorScales.get(backgroundColor) // color scale
         var mapVals = mapParse.get(backgroundColor) // d3.map() obj with leaf name as key 
+
+        // get unique values for chosen category and sort
+        // alphabetically or descending if integer
+        var uniqueVals = d3.set(mapVals.values()).values().map(filterTSVval);
+        var sorted = (typeof uniqueVals[0] === 'string' || uniqueVals[0] instanceof String) ? uniqueVals.sort() : uniqueVals.sort().reverse();
+
+
+        // fill out legend
+        var offset = 25;
+        if (leafColor) {
+            var offset = offset + 10 + d3.select('#legendID svg g').node().getBBox().height
+        }
+        generateLegend(backgroundColor, sorted, legend, colorScale, 'rect', 'translate(5,' + offset + ')');
+
+        // update node background style
         tree.selectAll('g.leaf.node rect')
-            .attr('fill', function(d) {
+            .style('fill', function(d) {
                 return colorScale(mapVals.get(d.name))
             })
-            .attr('opacity',1)
+            .style('opacity',1)
     }
+
 
 }
 
 
 
+/* Generate legend
+
+Helper function for generating a legend,
+given various inputs.  Legend consists of an overall
+'g' group which contains a legend title as well as 
+rows of legend elements.  Each row has the class
+'legend' and is 'g' group comprised of a shape
+and a text element.
+
+Parameters:
+===========
+- title: string
+    title for legend
+- sorted: array
+    array of items to populate legend with
+- container: d3 selection
+    selection into which to render legend,
+    should be an SVG
+- colorScale: d3 color scale
+    color scale used with each item in 'sorted'
+    generates either a circle or a rect with this
+    color
+- type: string
+    type of colored object to render along with
+    each item in 'sorted' either circle or rect
+- transform: string
+    transform string for outer 'g' group
+*/
+function generateLegend(title, sorted, container, colorScale, type, transform) {
+
+    var legend = container.append("g")
+            .attr("transform",transform)
+
+    legend.append("text")
+        .attr("class","lead")
+        .text(title);
+
+    var legendRow = legend.selectAll('g.legend')
+        .data(sorted).enter()
+        .append('g')
+            .attr('class', 'legend')
+            .attr('transform', function(d,i) { return 'translate(5,' + (25 + i * 20) + ')'; } )
+        
+    if (type == 'circle') {
+        legendRow.append(type)
+            .attr('r', 4.5)
+            .attr('fill', function(d) { return colorScale(d) } ) 
+    } else if (type == 'rect') {
+        legendRow.append(type)
+            .attr('width', 9)
+            .attr('height', 9)
+            .attr('x', -4.5)
+            .attr('y', -4.5)
+            .attr('fill', function(d) { return colorScale(d) } ) 
+    }
+        
+    legendRow.append('text')
+            .attr('dx', 8)
+            .attr('dy', 3)
+            .attr('text-anchor', 'start')
+            .text(function(d) { return d })
+}
 
 
 
@@ -553,26 +668,38 @@ var mapParse = d3.map();
 var colorScales = d3.map();
 function buildGUI(selector, mapping) {
 
+    // add bootstrap container class
+    d3.select(selector)
+        .attr("class","container-fluid")
+
     var gui = d3.select(selector).append("div")
         .attr("id", "gui")
+        .attr("class","form-inline")
 
-    gui.append("input")
+    gui.append("div")
+        .attr("class","checkbox")
+        .append("label")
+        .append("input")
         .attr("type","checkbox")
         .attr("id","toggle_distance")
         .attr("checked","")
         .attr("onclick","guiUpdate(this)")
-    gui.append("label")
-        .text(" Toggle distance labels ")
-    gui.append("input")
+        .text("Toggle distance labels")
+
+
+    gui.append("div")
+        .attr("class","checkbox")
+        .append("label")
+        .append("input")
         .attr("type","checkbox")
         .attr("id","toggle_leaf")
         .attr("checked","")
         .attr("onclick","guiUpdate(this)")
-    gui.append("label")
-        .text(" Toggle leaf labels")
+        .text("Toggle leaf labels")
 
 
     if (!mapping.empty()) {
+
 
         // parse mapping file a bit so we can use it with
         // dropdown boxes and for defining color functions
@@ -580,11 +707,11 @@ function buildGUI(selector, mapping) {
             for (col in cols) {
                 var colVal = cols[col];
                 if (!mapParse.has(col)) {
-                    var val = d3.map([{leaf: colVal}])
+                    var val = d3.map()
                 } else {
                     var val = mapParse.get(col);
-                    val.set(leaf,colVal);
                 }
+                val.set(leaf,colVal);
                 mapParse.set(col, val);
             }
         });
@@ -605,42 +732,50 @@ function buildGUI(selector, mapping) {
             }
         })
 
-        gui.append("br")
-        gui.append("label")
-            .text("Leaf color ")
-
         // select for leaf color
-        var leafSelect = gui.append("select")
+        var leafSelect = gui.append("div")
+            .attr("class","form-group")
+
+        leafSelect.append("label")
+            .text("Leaf node color")
+
+        var select1 = leafSelect.append("select")
             .attr('onchange','guiUpdate(this)')
             .attr('id','leafColor')
+            .attr("class","form-control")
 
-        leafSelect.selectAll("option")
+        select1.selectAll("option")
             .data(mapParse.keys()).enter()
             .append("option")
             .text(function(d) { return d; })
 
-        leafSelect.append("option")
+        select1.append("option")
             .attr("selected","")
             .attr("disabled","")
             .attr("hidden","")
             .style("display","none")
             .attr("value","")
         // select for leaf color
-        
-        gui.append("label")
-            .text(" Background color ")
+
 
         // select for background color
-        var backgroundSelect = gui.append("select")
+        var backgroundSelect = gui.append("div")
+            .attr("class","form-group")
+
+        backgroundSelect.append("label")
+            .text("Leaf background color")
+
+        var select2 = backgroundSelect.append("select")
             .attr('onchange','guiUpdate(this)')
             .attr('id','backgroundColor')
+            .attr("class","form-control")
 
-        backgroundSelect.selectAll("option")
+        select2.selectAll("option")
             .data(mapParse.keys()).enter()
             .append("option")
             .text(function(d) { return d; })
 
-        backgroundSelect.append("option")
+        select2.append("option")
             .attr("selected","")
             .attr("disabled","")
             .attr("hidden","")
