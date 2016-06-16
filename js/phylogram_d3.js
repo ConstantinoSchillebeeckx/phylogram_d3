@@ -504,10 +504,9 @@ function generateLegend(title, mapVals, container, colorScale, type, transform) 
         }
         counts.set(d,count);
     });
+
     var uniqueVals = counts.keys().map(filterTSVval);
-    console.log(uniqueVals.sort());
     var sorted = (typeof uniqueVals[0] === 'string' || uniqueVals[0] instanceof String) ? uniqueVals.sort() : uniqueVals.sort(function(a, b){ return a - b }).reverse();
-    console.log(sorted)
 
     var legend = container.append("g")
             .attr("transform",transform)
@@ -556,8 +555,54 @@ function generateLegend(title, mapVals, container, colorScale, type, transform) 
             .attr('dx', 8)
             .attr('dy', 3)
             .attr('text-anchor', 'start')
-            .text(function(d) { return '(' + counts.get(d) + ') ' + d })
+            .text(function(d) { 
+                // if legend is taxa info, clean it up
+                return '(' + counts.get(d) + ') ' + cleanTaxa(d);
+            })
 }
+
+
+/* Clean-up a QIIME formatted taxa string
+
+Will clean-up a QIIME formatted taxonomy string
+by removing the class prefix and replacing the
+semicolon with ' | '.  Function will check
+if string is taxa data if it leads with 'k__',
+otherwise it returns passed string.
+
+Parameters:
+===========
+- taxa : string
+    QIIME formatted string
+
+Returns:
+========
+- cleaned string
+
+*/
+function cleanTaxa(taxa) {
+
+    if ((typeof taxa === 'string' || taxa instanceof String) && taxa.slice(0, 2) == 'k_') {
+
+        var str = taxa.replace(/.__/g, "");
+
+        // some taxa strings end in ';' some don't,
+        // remove it if it exists
+        if (str.substr(str.length - 1) == ';') {
+            str = str.substring(0, str.length - 1);
+        }
+
+        return str.split(";").join(" | ");
+
+    } else {
+        
+        return taxa;
+
+    }
+
+}
+
+
 
 
 
