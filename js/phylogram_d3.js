@@ -506,7 +506,7 @@ function generateLegend(title, mapVals, container, colorScale, type, transform) 
     });
     var uniqueVals = counts.keys().map(filterTSVval);
     console.log(uniqueVals.sort());
-    var sorted = (typeof uniqueVals[0] === 'string' || uniqueVals[0] instanceof String) ? uniqueVals.sort() : uniqueVals.sort(function(a, b){return a-b});
+    var sorted = (typeof uniqueVals[0] === 'string' || uniqueVals[0] instanceof String) ? uniqueVals.sort() : uniqueVals.sort(function(a, b){ return a - b }).reverse();
     console.log(sorted)
 
     var legend = container.append("g")
