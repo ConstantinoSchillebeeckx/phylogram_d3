@@ -403,6 +403,10 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
     tree.selectAll('g.inner.node text')
         .style('fill-opacity', skipDistanceLabel? 1e-6 : 1 )
 
+    tree.selectAll('g.leaf.node text')
+        .text(function(d) { return skipDistanceLabel ? d.name : d.name + ' ('+d.length+')'; });
+
+
     // col for legend
     if (leafColor || backgroundColor) {
 
@@ -450,7 +454,16 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
         // update node background style
         tree.selectAll('g.leaf.node rect')
             .attr("width", function(d) { 
-                return d3.select('#leaf_' + d.name.replace('.','_')).node().getBBox().width; 
+                var name = d.name.replace('.','_');
+                var rectWidth = d3.select('#leaf_' + name + ' rect').node().getBBox().width;
+                var gWidth;
+                if (rectWidth > 0) { // remove extra that was added otherwise background width keeps growing
+                    gWidth = d3.select('#leaf_' + name).node().getBBox().width - 5;
+                } else {
+                    gWidth = d3.select('#leaf_' + name).node().getBBox().width;
+                }
+                var radius = d3.select('#leaf_' + name + ' circle').node().getBBox().height / 2.0;
+                return gWidth - radius + 5; // add extra so background is wider than label
             })
             .style('fill', function(d) {
                 return colorScale(mapVals.get(d.name))
