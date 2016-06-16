@@ -169,9 +169,9 @@ if (!d3) { throw "d3 wasn't included!"};
 	d3.phylogram.styleTreeNodes = function(vis, leafRadius=4.5) {
 		vis.selectAll('g.leaf.node')
 			.append("svg:rect") // leaf background
-                .attr('width', 200) // XXX what width do we want?
-                .attr('height',2 + leafRadius * 2) // +2 for stroke
-                .attr('y',-leafRadius - 1) // -1 for stroke
+                .attr('width', 0 ) // width is set when choosing background color
+                .attr('height', 10 + leafRadius * 2) // +2 for stroke
+                .attr('y', -leafRadius - 5);
 
 		vis.selectAll('g.leaf.node')
 			.append("svg:circle")
@@ -292,6 +292,9 @@ if (!d3) { throw "d3 wasn't included!"};
 					}
 				})
 				.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+
+        vis.selectAll('g.node.leaf')
+            .attr("id", function(d) { return 'leaf_' + d.name.replace('.','_'); }) // replace . for each of selecting when setting width of leaf background
 
 		d3.phylogram.styleTreeNodes(vis, options.leafRadius)
 
@@ -446,6 +449,9 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
 
         // update node background style
         tree.selectAll('g.leaf.node rect')
+            .attr("width", function(d) { 
+                return d3.select('#leaf_' + d.name.replace('.','_')).node().getBBox().width; 
+            })
             .style('fill', function(d) {
                 return colorScale(mapVals.get(d.name))
             })
@@ -500,30 +506,32 @@ function generateLegend(title, mapVals, container, colorScale, type, transform) 
         counts.set(d,count);
     });
 
-    var sorted = autoSort(counts.keys());
 
     var legend = container.append("g")
             .attr("transform",transform)
 
-    if (type == 'circle') {
-        legend.append("text")
-            .style("font-weight","bold")
-            .text("Node: ")
-            .attr("class","lead")
-        legend.append("text")
-            .attr("class","lead")
-            .attr("x",70)
-            .text(title);
-    } else if (type == 'rect') {
-        legend.append("text")
-            .style("font-weight","bold")
-            .text("Background: ")
-            .attr("class","lead")
-        legend.append("text")
-            .attr("class","lead")
-            .attr("x",140)
-            .text(title);
+    // if legend is to show an ordinal range, we represent it as a colorbar
+    // this way we don't have a potentially gigantic legend
+    // the length 11 is set by the colorbrewer scale
+    var sorted = autoSort(counts.keys());
+    var bar = false;
+    var scale;
+    if (!(typeof sorted[0] === 'string' || sorted[0] instanceof String)) {
+        bar = true;
+
+        scale = d3.scale.linear().domain([10,0]).range(d3.extent(sorted)); // map array of values into one of length 11
+        colorScale.domain(range(0,11));
+        sorted = range(0,11);
     }
+
+    legend.append("text")
+        .style("font-weight","bold")
+        .text(type == "circle" ? "Node: " : "Background: ")
+        .attr("class","lead")
+    legend.append("text")
+        .attr("class","lead")
+        .attr("x",type == "circle" ? 70 : 140)
+        .text(title);
 
 
     var legendRow = legend.selectAll('g.legend')
@@ -532,16 +540,16 @@ function generateLegend(title, mapVals, container, colorScale, type, transform) 
             .attr('class', 'legend')
             .attr('transform', function(d,i) { return 'translate(5,' + (25 + i * 20) + ')'; } )
         
-    if (type == 'circle') {
+    if (type == 'circle' && bar === false) {
         legendRow.append(type)
             .attr('r', 4.5)
             .attr('fill', function(d) { return colorScale(d) } ) 
-    } else if (type == 'rect') {
-        legendRow.append(type)
-            .attr('width', 9)
-            .attr('height', 9)
-            .attr('x', -4.5)
-            .attr('y', -4.5)
+    } else if (type == 'rect' || bar === true) {
+        legendRow.append('rect')
+            .attr('width', bar ? 30 : 9)
+            .attr('height', bar ? 20 : 9)
+            .attr('x', bar ? 4 : -4.5)
+            .attr('y', bar ? -11 : -4.5)
             .attr('fill', function(d) { return colorScale(d) } ) 
     }
         
@@ -549,11 +557,52 @@ function generateLegend(title, mapVals, container, colorScale, type, transform) 
             .attr('dx', 8)
             .attr('dy', 3)
             .attr('text-anchor', 'start')
+            .attr("fill", bar ? "white" : "black")
             .text(function(d) { 
-                // if legend is taxa info, clean it up
-                return '(' + counts.get(d) + ') ' + cleanTaxa(d);
+                if (bar) {
+                    return scale(d).toFixed(2);
+                } else {
+                    return '(' + counts.get(d) + ') ' + cleanTaxa(d); 
+                }
             })
 }
+
+
+/* helper function to generate array of length
+
+Will generate an array of specified length,
+starting at specified value.
+
+Parameters:
+===========
+- start : int
+    starting value for return array
+- len : int
+    length of desired return array
+
+Returns:
+========
+- array
+    order array with min value 0 and max value n
+
+*/
+
+function range(start, len) {
+
+    var arr = [];
+
+    for (var i = start; i < (len + start); i++) {
+        arr.push(i);
+    }
+    return arr;
+}
+
+
+
+
+
+
+
 
 
 /* Clean-up a QIIME formatted taxa string
@@ -753,21 +802,21 @@ function parseMapping(data) {
 
         // check if values for mapping column are string or numbers
         // strings are turned into ordinal scales, numbers into quantitative
-        // we simple check the first value in the obj
-        var val = filterTSVval(v.values()[0])
-        if (typeof val === 'string' || val instanceof String) { // ordinal scale
-            var scale;
-            if (v.values().length <= 10) {
-                scale = d3.scale.category10();
-            } else {
-                scale = d3.scale.category20();
+        // we simply check the first value in the obj
+        var vals = autoSort(v.values(), true);
+        var scale;
+        if (typeof vals[0] === 'string' || vals[0] instanceof String) { // ordinal scale
+            var tmp = d3.scale.category10();
+            if (vals.length > 10) {
+                tmp = d3.scale.category20();
             }
-            colorScales.set(k, scale.domain(autoSort(v.values())))
+            scale = tmp.domain(vals);
         } else { // quantitative scale
-            colorScales.set(k,d3.scale.ordinal()
-                .domain(v.values())
-                .range(colorbrewer.RdBu[4]));
+            scale = d3.scale.quantize()
+                .domain(d3.extent(vals))
+                .range(colorbrewer.Spectral[11]);
         }
+        colorScales.set(k, scale);
     })
 
     return [mapParse, colorScales];
@@ -786,13 +835,20 @@ Parameters:
 ===========
 - arr: array of strings
     an array of strings
+- unique: bool
+    default: false
+    if true, only unique values will be returned
 
 Returns:
 - sorted, converted array, will be either
     all strings or all numbers
 
 */
-function autoSort(arr) {
+function autoSort(arr, unique=false) {
+
+    // get unique values of array
+    // by converting to d3.set()
+    if (unique) { arr = d3.set(arr).values(); }
 
     var vals = arr.map(filterTSVval); // convert to int or float if needed
     var sorted = (typeof vals[0] === 'string' || vals[0] instanceof String) ? vals.sort() : vals.sort(function(a,b) { return a - b; }).reverse();
