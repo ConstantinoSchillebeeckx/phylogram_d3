@@ -20,7 +20,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
 
-    <body onload="init('dat/stMAT.tre', '#phylogram', 'dat/mapping.txt');">
+    <body onload="init('dat/tree.tre', '#phylogram', 'dat/mapping.txt');">
 
         <!-- div for tree -->
         <div id='phylogram'></div>
