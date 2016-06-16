@@ -422,7 +422,7 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor, backgroundColor
         var sorted = (typeof uniqueVals[0] === 'string' || uniqueVals[0] instanceof String) ? uniqueVals.sort() : uniqueVals.sort().reverse();
 
         // fill out legend
-        generateLegend(leafColor, sorted, legend, colorScale, 'circle', 'translate(5,25)');
+        generateLegend(leafColor, mapVals, legend, colorScale, 'circle', 'translate(5,25)');
 
         // update node styling
         tree.selectAll('g.leaf.node circle')
@@ -438,18 +438,13 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor, backgroundColor
         var colorScale = colorScales.get(backgroundColor) // color scale
         var mapVals = mapParse.get(backgroundColor) // d3.map() obj with leaf name as key 
 
-        // get unique values for chosen category and sort
-        // alphabetically or descending if integer
-        var uniqueVals = d3.set(mapVals.values()).values().map(filterTSVval);
-        var sorted = (typeof uniqueVals[0] === 'string' || uniqueVals[0] instanceof String) ? uniqueVals.sort() : uniqueVals.sort().reverse();
-
 
         // fill out legend
         var offset = 25;
         if (leafColor) {
             var offset = offset + 10 + d3.select('#legendID svg g').node().getBBox().height
         }
-        generateLegend(backgroundColor, sorted, legend, colorScale, 'rect', 'translate(5,' + offset + ')');
+        generateLegend(backgroundColor, mapVals, legend, colorScale, 'rect', 'translate(5,' + offset + ')');
 
         // update node background style
         tree.selectAll('g.leaf.node rect')
@@ -477,8 +472,9 @@ Parameters:
 ===========
 - title: string
     title for legend
-- sorted: array
-    array of items to populate legend with
+- mapVals: obj
+    d3.map() obj with leaf name as key
+    and legend row value as value
 - container: d3 selection
     selection into which to render legend,
     should be an SVG
@@ -492,14 +488,45 @@ Parameters:
 - transform: string
     transform string for outer 'g' group
 */
-function generateLegend(title, sorted, container, colorScale, type, transform) {
+function generateLegend(title, mapVals, container, colorScale, type, transform) {
+
+    // we need a unique list of values for the legend
+    // as well as the count of those unique vals
+    // they will sort alphabetically or descending if integer
+    var counts = d3.map(); // {legend Row: counts}
+    mapVals.values().forEach(function(d) {
+        var count = 1
+        if (counts.has(d)) {
+            var count = counts.get(d) + count;
+        }
+        counts.set(d,count);
+    });
+    var uniqueVals = counts.keys().map(filterTSVval);
+    var sorted = (typeof uniqueVals[0] === 'string' || uniqueVals[0] instanceof String) ? uniqueVals.sort() : uniqueVals.sort().reverse();
 
     var legend = container.append("g")
             .attr("transform",transform)
 
-    legend.append("text")
-        .attr("class","lead")
-        .text(title);
+    if (type == 'circle') {
+        legend.append("text")
+            .style("font-weight","bold")
+            .text("Node: ")
+            .attr("class","lead")
+        legend.append("text")
+            .attr("class","lead")
+            .attr("x",70)
+            .text(title);
+    } else if (type == 'rect') {
+        legend.append("text")
+            .style("font-weight","bold")
+            .text("Background: ")
+            .attr("class","lead")
+        legend.append("text")
+            .attr("class","lead")
+            .attr("x",140)
+            .text(title);
+    }
+
 
     var legendRow = legend.selectAll('g.legend')
         .data(sorted).enter()
@@ -524,7 +551,7 @@ function generateLegend(title, sorted, container, colorScale, type, transform) {
             .attr('dx', 8)
             .attr('dy', 3)
             .attr('text-anchor', 'start')
-            .text(function(d) { return d })
+            .text(function(d) { return '(' + counts.get(d) + ') ' + d })
 }
 
 
@@ -564,14 +591,17 @@ Parameters:
 		filepath for input Newick tre
 - div : string
 		div id (with included #) in which to generated tree
-- mappingFile : string
+- map : string
 		filepath to TSV mapping file (formats trees), expects
         first column to be labels for leafs
 
 Calls d3.phylogram.build to generate tree
 
 */
+var mapParse, colorScales; // GLOBAL! :(
 function init(dat, div, mappingFile=null) {
+
+        // process Newick tree
 		var newick = Newick.parse(readFile(dat))
 		var newickNodes = []
 		function buildNewickNodes(node, callback) {
@@ -586,25 +616,20 @@ function init(dat, div, mappingFile=null) {
 
 
 		// mapping file for formatting tree, expected to be a TSV
+        // used to populate dropdowns
         if (mappingFile) {
             d3.tsv(mappingFile, function(error, data) {
                 if (error) throw error;
 
-                // get name of index column in mapping
-                for (var index in data[0]) break;
-
-                // convert to d3 map where key is 'index' col
-                var mapObj = d3.map({})
-                data.forEach(function(row) { 
-                    var key = row[index];
-                    delete row[index]
-                    mapObj.set(key,row)
-                })
+                var parsed = parseMapping(data);
+                mapParse = parsed[0];
+                colorScales = parsed[1];
 
                 d3.phylogram.build(div, newick, {
                         width: 800,
                         height: 600,
-                        mapping: mapObj,
+                        mapping: mapParse,
+                        colorScale: colorScales,
                 });
             });
         } else {
@@ -614,6 +639,90 @@ function init(dat, div, mappingFile=null) {
             });
         }
 }
+
+/* Process mapping file into useable format
+
+Function responsible for parsing the TSV mapping
+file which contains metadata for formatting the
+tree leaves.  The TSV is reformatted into a more
+useful form, also the color scales are created
+for use in the legend and coloring the tree.
+
+It is assumed that the first column in the mapping
+file has the same values as the leaf names.
+
+Parameters:
+===========
+- data: d3.tsv() data
+    input mapping file processed by d3.tsv
+
+
+Returns:
+========
+- array
+    returns an array of length 2:
+    0:  d3.map() of parsed TSV data with file column
+        headers as the keys and the values are a d3.map()
+        where leaf names are keys (TSV rows) and values
+        are the row/column values in the file.
+    1:  d3.map() as colorScales where keys are file
+        column headers and values are the color scales.
+        scales take as input the leaf name (file row)
+*/
+function parseMapping(data) {
+    // get name of index column in mapping
+    for (var index in data[0]) break;
+
+    // convert to d3 map where key is 'index' col
+    var mapObj = d3.map({})
+    data.forEach(function(row) { 
+        var key = row[index];
+        delete row[index]
+        mapObj.set(key,row)
+    })
+
+
+    // parse mapping file a bit so we can use it with
+    // dropdown boxes and for defining color functions
+    var mapParse = d3.map();
+    // keys will be mapping column headers, values will be d3.map()
+    // with leaf names as keys and mapping file values as the value
+    mapObj.forEach(function(leaf,cols) {
+        for (col in cols) {
+            var colVal = cols[col];
+            if (!mapParse.has(col)) {
+                var val = d3.map();
+            } else {
+                var val = mapParse.get(col);
+            }
+            val.set(leaf,colVal);
+            mapParse.set(col, val);
+        }
+    });
+
+    // setup color scales for mapping columns
+    // keys are mapping column headers and values are scales 
+    // for converting column value to a color
+    var colorScales = d3.map();
+    mapParse.forEach(function(k,v) { // v is a d3.set of mapping column values
+
+        // check if values for mapping column are string or numbers
+        // strings are turned into ordinal scales, numbers into quantitative
+        // we simple check the first value in the obj
+        var val = filterTSVval(v.values()[0])
+        if (typeof val === 'string' || val instanceof String) { // ordinal scale
+            colorScales.set(k, d3.scale.category20c().domain(v.values()))
+        } else { // quantitative scale
+            colorScales.set(k,d3.scale.ordinal()
+                .domain(v.values())
+                .range(colorbrewer.RdBu[4]));
+        }
+    })
+
+    return [mapParse, colorScales];
+}
+
+
 
 
 
@@ -651,22 +760,16 @@ Parameters:
 ==========
 - selector : string
     div ID (with '#') into which to place GUI controls
-- mapping : d3 map obj
+- mapParse : d3 map obj
     optional parsed mapping file; if present, two
     select dropdowns are generated with the columns
     of the file.  one dropdown is for coloring the
-    leaf nodes, the other for the leaf backgrounds
-
+    leaf nodes, the other for the leaf backgrounds.
+    The first index of the output of parseMapping()
+    should be used here.
 */
 
-// parsed mapping file object
-// keys will be mapping column headers, values will be d3.map()
-// with leaf names as keys and mapping file values as the value
-var mapParse = d3.map();
-// keys are mapping column headers and values are scales 
-// for converting column value to a color
-var colorScales = d3.map();
-function buildGUI(selector, mapping) {
+function buildGUI(selector, mapParse) {
 
     // add bootstrap container class
     d3.select(selector)
@@ -676,61 +779,35 @@ function buildGUI(selector, mapping) {
         .attr("id", "gui")
         .attr("class","form-inline")
 
-    gui.append("div")
+    var check1 = gui.append("div")
         .attr("class","checkbox")
         .append("label")
-        .append("input")
+        
+    check1.append("input")
         .attr("type","checkbox")
         .attr("id","toggle_distance")
         .attr("checked","")
         .attr("onclick","guiUpdate(this)")
+
+    check1.append('text')
         .text("Toggle distance labels")
 
 
-    gui.append("div")
+    var check2 = gui.append("div")
         .attr("class","checkbox")
         .append("label")
-        .append("input")
+        
+    check2.append("input")
         .attr("type","checkbox")
         .attr("id","toggle_leaf")
         .attr("checked","")
         .attr("onclick","guiUpdate(this)")
+
+    check2.append('text')
         .text("Toggle leaf labels")
 
 
-    if (!mapping.empty()) {
-
-
-        // parse mapping file a bit so we can use it with
-        // dropdown boxes and for defining color functions
-        mapping.forEach(function(leaf,cols) {
-            for (col in cols) {
-                var colVal = cols[col];
-                if (!mapParse.has(col)) {
-                    var val = d3.map()
-                } else {
-                    var val = mapParse.get(col);
-                }
-                val.set(leaf,colVal);
-                mapParse.set(col, val);
-            }
-        });
-
-        // setup color scales for mapping columns
-        mapParse.forEach(function(k,v) { // v is a d3.set of mapping column values
-
-            // check if values for mapping column are string or numbers
-            // strings are turned into ordinal scales, numbers into quantitative
-            // we simple check the first value in the obj
-            var val = filterTSVval(v.values()[0])
-            if (typeof val === 'string' || val instanceof String) { // ordinal scale
-                colorScales.set(k, d3.scale.category20c().domain(v.values()))
-            } else { // quantitative scale
-                colorScales.set(k,d3.scale.ordinal()
-                    .domain(v.values())
-                    .range(colorbrewer.RdBu[4]));
-            }
-        })
+    if (!mapParse.empty()) {
 
         // select for leaf color
         var leafSelect = gui.append("div")
@@ -742,7 +819,7 @@ function buildGUI(selector, mapping) {
         var select1 = leafSelect.append("select")
             .attr('onchange','guiUpdate(this)')
             .attr('id','leafColor')
-            .attr("class","form-control")
+            .attr("class","form-control input-xs")
 
         select1.selectAll("option")
             .data(mapParse.keys()).enter()
@@ -768,7 +845,7 @@ function buildGUI(selector, mapping) {
         var select2 = backgroundSelect.append("select")
             .attr('onchange','guiUpdate(this)')
             .attr('id','backgroundColor')
-            .attr("class","form-control")
+            .attr("class","form-control input-xs")
 
         select2.selectAll("option")
             .data(mapParse.keys()).enter()
