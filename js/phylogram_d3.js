@@ -62,6 +62,10 @@
             leafRadius
                 Radius (int) of leaf circles
             mapping
+                Parsed mapping file object, see output of parseMapping[0]
+            colorScales
+                Color scales used to color legend and parts of tree, see output of parseMapping[1]
+
             TODO
 
 	d3.phylogram.buildRadial(selector, nodes, options)
@@ -225,7 +229,7 @@ if (!d3) { throw "d3 wasn't included!"};
                 .attr("id","canvas")
         
         var vis = tmp.append("div")
-                .attr("class","col-sm-8")
+                .attr("class", options.mapping ? "col-sm-8" : "col-sm-12")
                 .attr("id","tree")
             .append("svg:svg")
                 .attr("preserveAspectRatio","xMidYMid meet")
@@ -374,18 +378,17 @@ on GUI settings
 
 Parameters:
 ==========
-- dat : string
-		filepath for input Newick tre
-- div : string
-		div id (with included #) in which to generated tree
 - skipDistances : bool
-		option for skipDistances (don't draw distance values on tree)
+	option for skipDistances (don't draw distance values on tree)
 - skipLabels : bool
-		option for skipLabels (don't draw label on leaf)
-TODO
+	option for skipLabels (don't draw label on leaf)
+- leafColor : string (optional)
+    column in mapping file to use to color leaf node circle
+- backgroundColor: string (optional)
+    column in mapping file to use to color leaf node background
 
 */
-function updateTree(skipDistanceLabel, skipLeafLabel, leafColor, backgroundColor) {
+function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, backgroundColor=null) {
 
     tree = d3.select('svg');
 
@@ -598,8 +601,8 @@ Parameters:
 Calls d3.phylogram.build to generate tree
 
 */
-var mapParse, colorScales; // GLOBAL! :(
-function init(dat, div, mappingFile=null) {
+var mapParse, colorScales, mappingFile; // GLOBAL! :( not sure how to get around this
+function init(dat, div, mapp=null) {
 
         // process Newick tree
 		var newick = Newick.parse(readFile(dat))
@@ -617,6 +620,7 @@ function init(dat, div, mappingFile=null) {
 
 		// mapping file for formatting tree, expected to be a TSV
         // used to populate dropdowns
+        mappingFile = mapp;
         if (mappingFile) {
             d3.tsv(mappingFile, function(error, data) {
                 if (error) throw error;
@@ -738,11 +742,13 @@ function guiUpdate() {
     skipLeafLabel = !$('#toggle_leaf').is(':checked');
 
     // get dropdown values
-    var e = document.getElementById("leafColor");
-    var leafColor = e.options[e.selectedIndex].text;
-    var e = document.getElementById("backgroundColor");
-    var backgroundColor = e.options[e.selectedIndex].text;
-
+    var leafColor, backgroundColor;
+    if (mappingFile) {
+        var e = document.getElementById("leafColor");
+        leafColor = e.options[e.selectedIndex].text;
+        var e = document.getElementById("backgroundColor");
+        backgroundColor = e.options[e.selectedIndex].text;
+    }
 
     updateTree(skipDistanceLabel, skipLeafLabel, leafColor, backgroundColor);
 }
@@ -753,8 +759,9 @@ function guiUpdate() {
 Build all the HTML elements that serve as GUI controls for
 editing the tree format.
 
-TODO
-
+If a mapping file is provided, function will generate
+dropdowns for the mapping file columns; one for leaf color
+and one for leaf background.
 
 Parameters:
 ==========
@@ -769,7 +776,7 @@ Parameters:
     should be used here.
 */
 
-function buildGUI(selector, mapParse) {
+function buildGUI(selector, mapParse=null) {
 
     // add bootstrap container class
     d3.select(selector)
@@ -807,7 +814,7 @@ function buildGUI(selector, mapParse) {
         .text("Toggle leaf labels")
 
 
-    if (!mapParse.empty()) {
+    if (mapParse && !mapParse.empty()) {
 
         // select for leaf color
         var leafSelect = gui.append("div")
