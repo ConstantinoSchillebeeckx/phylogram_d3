@@ -505,7 +505,9 @@ function generateLegend(title, mapVals, container, colorScale, type, transform) 
         counts.set(d,count);
     });
     var uniqueVals = counts.keys().map(filterTSVval);
-    var sorted = (typeof uniqueVals[0] === 'string' || uniqueVals[0] instanceof String) ? uniqueVals.sort() : uniqueVals.sort().reverse();
+    console.log(uniqueVals.sort());
+    var sorted = (typeof uniqueVals[0] === 'string' || uniqueVals[0] instanceof String) ? uniqueVals.sort() : uniqueVals.sort(function(a, b){return a-b});
+    console.log(sorted)
 
     var legend = container.append("g")
             .attr("transform",transform)
@@ -576,7 +578,7 @@ function readFile(filePath) {
 function filterTSVval(value) {
     if (/^(\-|\+)?([0-9]+(\.[0-9]+))$/.test(value)) { // if string
         return Number(value);
-    } else if (/^(\-|\+)?([0-9])$/.test(value)) { // if int
+    } else if (/^\d+$/.test(value)) { // if int
         return parseInt(value);
     }
     return value;
