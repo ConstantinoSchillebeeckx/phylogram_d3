@@ -419,11 +419,6 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
         var colorScale = colorScales.get(leafColor); // color scale
         var mapVals = mapParse.get(leafColor); // d3.map() obj with leaf name as key
 
-        // get unique values for chosen category and sort
-        // alphabetically or descending if integer
-        var uniqueVals = d3.set(mapVals.values()).values().map(filterTSVval);
-        var sorted = (typeof uniqueVals[0] === 'string' || uniqueVals[0] instanceof String) ? uniqueVals.sort() : uniqueVals.sort().reverse();
-
         // fill out legend
         generateLegend(leafColor, mapVals, legend, colorScale, 'circle', 'translate(5,25)');
 
@@ -505,8 +500,7 @@ function generateLegend(title, mapVals, container, colorScale, type, transform) 
         counts.set(d,count);
     });
 
-    var uniqueVals = counts.keys().map(filterTSVval);
-    var sorted = (typeof uniqueVals[0] === 'string' || uniqueVals[0] instanceof String) ? uniqueVals.sort() : uniqueVals.sort(function(a, b){ return a - b }).reverse();
+    var sorted = autoSort(counts.keys());
 
     var legend = container.append("g")
             .attr("transform",transform)
@@ -762,7 +756,13 @@ function parseMapping(data) {
         // we simple check the first value in the obj
         var val = filterTSVval(v.values()[0])
         if (typeof val === 'string' || val instanceof String) { // ordinal scale
-            colorScales.set(k, d3.scale.category20c().domain(v.values()))
+            var scale;
+            if (v.values().length <= 10) {
+                scale = d3.scale.category10();
+            } else {
+                scale = d3.scale.category20();
+            }
+            colorScales.set(k, scale.domain(autoSort(v.values())))
         } else { // quantitative scale
             colorScales.set(k,d3.scale.ordinal()
                 .domain(v.values())
@@ -773,8 +773,33 @@ function parseMapping(data) {
     return [mapParse, colorScales];
 }
 
+/*  Automatically sort an array
 
+Given an array of strings, were the string
+could be a float (e.g. "1.2") or an int
+(e.g. "5"), this function will convert the
+array if all strings are ints or floats and
+sort it (either alphabetically or numerically
+ascending).
 
+Parameters:
+===========
+- arr: array of strings
+    an array of strings
+
+Returns:
+- sorted, converted array, will be either
+    all strings or all numbers
+
+*/
+function autoSort(arr) {
+
+    var vals = arr.map(filterTSVval); // convert to int or float if needed
+    var sorted = (typeof vals[0] === 'string' || vals[0] instanceof String) ? vals.sort() : vals.sort(function(a,b) { return a - b; }).reverse();
+
+    return sorted;
+
+}
 
 
 
