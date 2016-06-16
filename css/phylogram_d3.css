@@ -56,4 +56,11 @@ line.rule {
     stroke-width: 2px;
 }
 
+/* extra small dropdown */
+.form-control.input-xs {
+    height: 20px;
+}
 
+.form-inline text, .form-inline label {
+    margin: 0px 3px 0px 3px !important;
+}
