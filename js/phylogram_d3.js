@@ -167,7 +167,9 @@ if (!d3) { throw "d3 wasn't included!"};
                 .attr('height', 10 + leafRadius * 2) // +2 for stroke
                 .attr('y', -leafRadius - 5);
 
+        // replace . for ease of selecting when setting width of leaf background
 		vis.selectAll('g.leaf.node')
+            .attr("id", function(d) { return 'leaf_' + d.name.replace('.','_'); })
 			.append("svg:circle")
 				.attr("r", leafRadius)
 
@@ -201,6 +203,11 @@ if (!d3) { throw "d3 wasn't included!"};
 
 	// main tree building function
 	d3.phylogram.build = function(selector, nodes, options) {
+
+        // add bootstrap container class
+        d3.select(selector)
+            .attr("class","container-fluid")
+
 		options = options || {}
 
         // use margin convention
@@ -234,7 +241,6 @@ if (!d3) { throw "d3 wasn't included!"};
                 .attr("preserveAspectRatio","xMinYMin meet")
                 .attr("width",w)
                 .attr("height",h)
-                //.attr("viewBox", '0 0 ' + (1080.66) + ' ' + (1000))
                 .attr("xmlns","http://www.w3.org/2000/svg")
 			.append("svg:g")
 				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -242,6 +248,7 @@ if (!d3) { throw "d3 wasn't included!"};
 
 		var nodes = tree(nodes);
 
+        // scale tree 
 		if (options.skipBranchLengthScaling) {
 			var yscale = d3.scale.linear()
 				.domain([0, w])
@@ -250,8 +257,7 @@ if (!d3) { throw "d3 wasn't included!"};
 			var yscale = scaleBranchLengths(nodes, w)
 		}
 
-
-
+        // background ruler
 		if (!options.skipTicks) {
 			vis.selectAll('line.rule')
 					.data(yscale.ticks(10))
@@ -273,12 +279,14 @@ if (!d3) { throw "d3 wasn't included!"};
 					.text(function(d) { return Math.round(d*100) / 100; });
 		}
 
+        // tree branches
 		var link = vis.selectAll("path.link")
 				.data(tree.links(nodes))
 			.enter().append("svg:path")
 				.attr("class", "link")
 				.attr("d", diagonal)
 
+        // tree node groups
 		var node = vis.selectAll("g.node")
 				.data(nodes)
 			.enter().append("svg:g")
@@ -295,11 +303,10 @@ if (!d3) { throw "d3 wasn't included!"};
 				})
 				.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
 
-        vis.selectAll('g.node.leaf')
-            .attr("id", function(d) { return 'leaf_' + d.name.replace('.','_'); }) // replace . for each of selecting when setting width of leaf background
-
+        // tree nodes
 		d3.phylogram.styleTreeNodes(vis, options.leafRadius)
 
+        // node labels
 		if (!options.skipLabels) {
 			vis.selectAll('g.inner.node')
 				.append("svg:text")
@@ -317,14 +324,23 @@ if (!d3) { throw "d3 wasn't included!"};
 
         // now that the tree size has been generated,
         // set the container SVG to that size
+        /*
         var g = d3.select('svg g').node().getBBox();
-        w = g.width + margin.left + margin.right;
-        h = g.height + margin.top + margin.bottom;
+        var aspectRatio = g.width / g.height;
+        var col = d3.select('#tree').node();
+        if (col.offsetWidth > g.width) {
+            w = col.offsetWidth + margin.left + margin.right;
+            h = col.offsetWidth / aspectRatio + margin.top + margin.bottom;
+        } else {
+            w = g.width + margin.left + margin.right;
+            h = g.height + margin.top + margin.bottom;
+        }
         d3.select('svg')
             .attr("width", w)
             .attr("height", h)
             .attr("viewBox", '0 0 ' + (w) + ' ' + (h)) // set viewbox so that SVG fits to containing column
-
+            //.attr("class","img-responsive")
+        */
 		return {tree: tree, vis: vis}
 	}
 
@@ -928,7 +944,7 @@ Parameters:
 ==========
 - selector : string
     div ID (with '#') into which to place GUI controls
-- mapParse : d3 map obj
+- mapParse : d3 map obj (optioal)
     optional parsed mapping file; if present, two
     select dropdowns are generated with the columns
     of the file.  one dropdown is for coloring the
@@ -939,15 +955,15 @@ Parameters:
 
 function buildGUI(selector, mapParse=null) {
 
-    // add bootstrap container class
-    d3.select(selector)
-        .attr("class","container-fluid")
-
     var gui = d3.select(selector).append("div")
         .attr("id", "gui")
-        .attr("class","form-inline")
+        .attr("class","row form-horizontal")
+        .style("margin-top","20px");
 
-    var check1 = gui.append("div")
+    var col1 = gui.append("div")
+        .attr("class","col-sm-2")
+
+    var check1 = col1.append("div")
         .attr("class","checkbox")
         .append("label")
         
@@ -960,8 +976,7 @@ function buildGUI(selector, mapParse=null) {
     check1.append('text')
         .text("Toggle distance labels")
 
-
-    var check2 = gui.append("div")
+    var check2 = col1.append("div")
         .attr("class","checkbox")
         .append("label")
         
@@ -978,16 +993,20 @@ function buildGUI(selector, mapParse=null) {
     if (mapParse && !mapParse.empty()) {
 
         // select for leaf color
-        var leafSelect = gui.append("div")
-            .attr("class","form-group")
+        var col2 = gui.append("div")
+            .attr("class","col-sm-3 form-group")
 
-        leafSelect.append("label")
-            .text("Leaf node color")
+        col2.append("label")
+            .attr("class","col-sm-3 control-label")
+            .text("Leaf node")
+            
+        var select1col = col2.append("div")
+            .attr("class","col-sm-8")
 
-        var select1 = leafSelect.append("select")
+        var select1 = select1col.append("select")
             .attr('onchange','guiUpdate(this)')
             .attr('id','leafColor')
-            .attr("class","form-control input-xs")
+            .attr("class","form-control")
 
         select1.selectAll("option")
             .data(mapParse.keys()).enter()
@@ -1004,16 +1023,20 @@ function buildGUI(selector, mapParse=null) {
 
 
         // select for background color
-        var backgroundSelect = gui.append("div")
-            .attr("class","form-group")
+        var col3 = gui.append("div")
+            .attr("class","col-sm-3 form-group")
 
-        backgroundSelect.append("label")
-            .text("Leaf background color")
+        col3.append("label")
+            .attr("class","col-sm-4 control-label")
+            .text("Leaf background")
 
-        var select2 = backgroundSelect.append("select")
+        var select2col = col3.append("div")
+            .attr("class", "col-sm-8")
+
+        var select2 = select2col.append("select")
             .attr('onchange','guiUpdate(this)')
             .attr('id','backgroundColor')
-            .attr("class","form-control input-xs")
+            .attr("class","form-control") // input-xs
 
         select2.selectAll("option")
             .data(mapParse.keys()).enter()
