@@ -37,12 +37,6 @@
 			selector: selector of an element that will contain the SVG
 			nodes: JS object of nodes
 		Options:
-			width
-				Width of the vis, will attempt to set a default based on the width of
-				the container.
-			height
-				Height of the vis, will attempt to set a default based on the height
-				of the container.
 			vis
 				Pre-constructed d3 vis.
 			tree
@@ -209,14 +203,18 @@ if (!d3) { throw "d3 wasn't included!"};
 	d3.phylogram.build = function(selector, nodes, options) {
 		options = options || {}
 
+        // use margin convention
+        // https://bl.ocks.org/mbostock/3019563
+        var margin = {top: 30, right: 0, bottom: 0, left: 50};
+
+        // set initial w/h which are later updated once we know size of tree
+        var w = 800;
+        var h = 600;        
+
         // build GUI
         var gui = buildGUI(selector, options.mapping);
 
 
-		var w = options.width || d3.select(selector).style('width') || d3.select(selector).attr('width'),
-				h = options.height || d3.select(selector).style('height') || d3.select(selector).attr('height'),
-				w = parseInt(w),
-				h = parseInt(h);
 		var tree = options.tree || d3.layout.cluster()
 			.size([h, w])
 			.sort(function(node) { return node.children ? node.children.length : -1; })
@@ -224,18 +222,22 @@ if (!d3) { throw "d3 wasn't included!"};
 				return node.branchset
 			});
 		var diagonal = options.diagonal || d3.phylogram.rightAngleDiagonal();
+
 		var tmp = options.vis || d3.select(selector).append("div")
                 .attr("class","row")
                 .attr("id","canvas")
-        
+       
         var vis = tmp.append("div")
                 .attr("class", options.mapping ? "col-sm-8" : "col-sm-12")
                 .attr("id","tree")
             .append("svg:svg")
-                .attr("preserveAspectRatio","xMidYMid meet")
-                .attr("viewBox", '0 0 ' + (w + 300) + ' ' + (h + 300))
+                .attr("preserveAspectRatio","xMinYMin meet")
+                .attr("width",w)
+                .attr("height",h)
+                //.attr("viewBox", '0 0 ' + (1080.66) + ' ' + (1000))
+                .attr("xmlns","http://www.w3.org/2000/svg")
 			.append("svg:g")
-				.attr("transform", "translate(20, 20)");
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 
 		var nodes = tree(nodes);
@@ -313,9 +315,20 @@ if (!d3) { throw "d3 wasn't included!"};
 				.text(function(d) { return d.name + ' ('+d.length+')'; });
 		}
 
+        // now that the tree size has been generated,
+        // set the container SVG to that size
+        var g = d3.select('svg g').node().getBBox();
+        w = g.width + margin.left + margin.right;
+        h = g.height + margin.top + margin.bottom;
+        d3.select('svg')
+            .attr("width", w)
+            .attr("height", h)
+            .attr("viewBox", '0 0 ' + (w) + ' ' + (h)) // set viewbox so that SVG fits to containing column
+
 		return {tree: tree, vis: vis}
 	}
 
+    // MAIN RADIAL TREE BUILD FUNCTION
 	d3.phylogram.buildRadial = function(selector, nodes, options) {
         
         // TODO
@@ -741,19 +754,18 @@ function init(dat, div, mapp=null) {
                 colorScales = parsed[1];
 
                 d3.phylogram.build(div, newick, {
-                        width: 800,
-                        height: 600,
                         mapping: mapParse,
                         colorScale: colorScales,
                 });
             });
         } else {
             d3.phylogram.build(div, newick, {
-                    width: 800,
-                    height: 600,
             });
         }
 }
+
+
+
 
 /* Process mapping file into useable format
 
