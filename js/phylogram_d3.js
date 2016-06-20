@@ -75,6 +75,11 @@
 		d3.phylogram.rightAngleDiagonal for radial layouts.
 */
 
+
+// use margin convention
+// https://bl.ocks.org/mbostock/3019563
+var margin = {top: 30, right: 0, bottom: 20, left: 50};
+
 if (!d3) { throw "d3 wasn't included!"};
 (function() {
 	d3.phylogram = {}
@@ -210,13 +215,11 @@ if (!d3) { throw "d3 wasn't included!"};
 
 		options = options || {}
 
-        // use margin convention
-        // https://bl.ocks.org/mbostock/3019563
-        var margin = {top: 30, right: 0, bottom: 0, left: 50};
 
         // set initial w/h which are later updated once we know size of tree
-        var w = 800;
-        var h = 600;        
+        // XXX
+        var w = 800 - margin.right - margin.left;
+        var h = 600 - margin.top - margin.bottom;
 
         // build GUI
         var gui = buildGUI(selector, options.mapping);
@@ -235,12 +238,12 @@ if (!d3) { throw "d3 wasn't included!"};
                 .attr("id","canvas")
        
         var vis = tmp.append("div")
-                .attr("class", options.mapping ? "col-sm-8" : "col-sm-12")
+                .attr("class", "col-sm-12")
                 .attr("id","tree")
             .append("svg:svg")
                 .attr("preserveAspectRatio","xMinYMin meet")
-                .attr("width",w)
-                .attr("height",h)
+                .attr("width",w + margin.right + margin.left)
+                .attr("height",h + margin.top + margin.bottom)
                 .attr("xmlns","http://www.w3.org/2000/svg")
 			.append("svg:g")
 				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -324,23 +327,8 @@ if (!d3) { throw "d3 wasn't included!"};
 
         // now that the tree size has been generated,
         // set the container SVG to that size
-        /*
-        var g = d3.select('svg g').node().getBBox();
-        var aspectRatio = g.width / g.height;
-        var col = d3.select('#tree').node();
-        if (col.offsetWidth > g.width) {
-            w = col.offsetWidth + margin.left + margin.right;
-            h = col.offsetWidth / aspectRatio + margin.top + margin.bottom;
-        } else {
-            w = g.width + margin.left + margin.right;
-            h = g.height + margin.top + margin.bottom;
-        }
-        d3.select('svg')
-            .attr("width", w)
-            .attr("height", h)
-            .attr("viewBox", '0 0 ' + (w) + ' ' + (h)) // set viewbox so that SVG fits to containing column
-            //.attr("class","img-responsive")
-        */
+        resizeSVG();
+
 		return {tree: tree, vis: vis}
 	}
 
@@ -409,6 +397,31 @@ if (!d3) { throw "d3 wasn't included!"};
 }());
 
 
+//d3.select(window).on('resize', resizeSVG);
+
+
+function resizeSVG() {
+
+    var g = d3.select('svg g').node().getBBox();
+    var aspectRatio = g.width / g.height;
+    var col = d3.select('#tree').node();
+    if (col.offsetWidth < g.width) {
+        w = col.offsetWidth
+        h = col.offsetWidth / aspectRatio
+    } else {
+        w = g.width + margin.left + margin.right;
+        h = g.height + margin.top + margin.bottom;
+    }
+    //w = g.width + margin.left + margin.right;
+    //h = g.height + margin.top + margin.bottom;
+    d3.select('svg')
+        .attr("width", w)
+        .attr("height", h)
+        //.attr("viewBox", '0 0 ' + (w) + ' ' + (h)) // set viewbox so that SVG fits to containing column
+        //.attr("class","img-responsive")
+}
+
+
 
 /* Function used to update existing tree
 
@@ -447,14 +460,13 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
     // col for legend
     if (leafColor || backgroundColor) {
 
+        // remove legend if one exists so we can update
         d3.select("#legendID").remove()
 
-        var legend = d3.select("#canvas").append("div")
-            .attr("class","col-sm-4")
+        var legend = d3.select("svg g").append("g")
             .attr("id", "legendID")
-            .append("svg")
-                .attr("preserveAspectRatio","xMidYMid meet")
-                .attr("viewBox", '0 0 ' + 600 + ' ' + ((d3.select('#tree svg').node().getBBox().height) + 300))
+            .attr("transform","translate(" + d3.select("svg").node().getBBox().width + ",0)");
+
     }
 
 
@@ -464,7 +476,7 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
         var mapVals = mapParse.get(leafColor); // d3.map() obj with leaf name as key
 
         // fill out legend
-        generateLegend(leafColor, mapVals, legend, colorScale, 'circle', 'translate(5,25)');
+        generateLegend(leafColor, mapVals, legend, colorScale, 'circle', 'translate(5,0)');
 
         // update node styling
         tree.selectAll('g.leaf.node circle')
@@ -484,7 +496,7 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
         // fill out legend
         var offset = 25;
         if (leafColor) {
-            var offset = offset + 10 + d3.select('#legendID svg g').node().getBBox().height
+            var offset = offset + 15 + d3.select('#legendID').node().getBBox().height
         }
         generateLegend(backgroundColor, mapVals, legend, colorScale, 'rect', 'translate(5,' + offset + ')');
 
@@ -508,6 +520,7 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
             .style('opacity',1)
     }
 
+    resizeSVG();
 
 }
 
