@@ -206,6 +206,49 @@ if (!d3) { throw "d3 wasn't included!"};
 		return yscale
 	}
 
+
+    // finds the smallest vertical distance between leaves
+    // and scales things to a minimum distance so that
+    // branched don't overlap
+    function scaleLeafHeight(nodes, h) {
+
+        var traverseTree = function(root, callback) {
+            callback(root);
+            if (root.children) {
+				for (var i = root.children.length - 1; i >= 0; i--){
+					traverseTree(root.children[i], callback)
+				};
+            }
+        }
+
+        // get all leaf X positions
+        leafXpos = [];
+        traverseTree(nodes[0], function(node) {
+            if (!node.children) {
+                leafXpos.push(node.x);
+            }
+        });
+
+        // calculate leaf vertical distances
+        leafXdist = [];
+        leafXpos = leafXpos.sort(function(a, b){return a-b});
+        leafXpos.forEach(function(x,i) {
+            if (i + 1 != leafXpos.length) {
+                leafXdist.push(leafXpos[i + 1] - x);
+            }
+        })
+        var minSeparation = 15; // minimum separation between leaves
+        var xScale = d3.scale.linear()
+            .range([0, minSeparation])
+            .domain([0, d3.min(leafXdist)])
+
+		traverseTree(nodes[0], function(node) {
+			node.x = xScale(node.x)
+		})
+
+        return xScale;
+    }
+
 	// main tree building function
 	d3.phylogram.build = function(selector, nodes, options) {
 
@@ -217,9 +260,9 @@ if (!d3) { throw "d3 wasn't included!"};
 
 
         // set initial w/h which are later updated once we know size of tree
-        // XXX
-        var w = 800 - margin.right - margin.left;
-        var h = 600 - margin.top - margin.bottom;
+        var startW = 800, startH = 600;
+        var w = startW - margin.right - margin.left;
+        var h = startH - margin.top - margin.bottom;
 
         // build GUI
         var gui = buildGUI(selector, options.mapping);
@@ -257,7 +300,8 @@ if (!d3) { throw "d3 wasn't included!"};
 				.domain([0, w])
 				.range([0, w]);
 		} else {
-			var yscale = scaleBranchLengths(nodes, w)
+			var yscale = scaleBranchLengths(nodes, w);
+            var xscale = scaleLeafHeight(nodes, h);
 		}
 
         // background ruler
@@ -267,7 +311,7 @@ if (!d3) { throw "d3 wasn't included!"};
 				.enter().append('svg:line')
                     .attr("class", "rule")
 					.attr('y1', 0)
-					.attr('y2', h)
+					.attr('y2', xscale(h))
 					.attr('x1', yscale)
 					.attr('x2', yscale)
 
