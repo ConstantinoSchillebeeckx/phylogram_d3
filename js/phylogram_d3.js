@@ -237,7 +237,7 @@ if (!d3) { throw "d3 wasn't included!"};
                 leafXdist.push(leafXpos[i + 1] - x);
             }
         })
-        var minSeparation = 15; // minimum separation between leaves
+        var minSeparation = 22; // minimum separation between leaves
         var xScale = d3.scale.linear()
             .range([0, minSeparation])
             .domain([0, d3.min(leafXdist)])
@@ -449,15 +449,15 @@ function resizeSVG() {
     var g = d3.select('svg g').node().getBBox();
     var aspectRatio = g.width / g.height;
     var col = d3.select('#tree').node();
-    if (col.offsetWidth < g.width) {
+    /*if (col.offsetWidth < g.width) {
         w = col.offsetWidth
         h = col.offsetWidth / aspectRatio
     } else {
         w = g.width + margin.left + margin.right;
         h = g.height + margin.top + margin.bottom;
-    }
-    //w = g.width + margin.left + margin.right;
-    //h = g.height + margin.top + margin.bottom;
+    }*/
+    w = g.width + margin.left + margin.right;
+    h = g.height + margin.top + margin.bottom;
     d3.select('svg')
         .attr("width", w)
         .attr("height", h)
@@ -525,9 +525,11 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
         // update node styling
         tree.selectAll('g.leaf.node circle')
             .style('fill', function(d) {
-                return colorScale(mapVals.get(d.name))
+                return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'greenYellow'
             })
-            .style('stroke', 'white')
+            .style('stroke', function(d) {
+                return mapVals.get(d.name) ? 'white' : 'yellowGreen'
+            })
     }
 
 
@@ -559,7 +561,7 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
                 return gWidth - radius + 5; // add extra so background is wider than label
             })
             .style('fill', function(d) {
-                return colorScale(mapVals.get(d.name))
+                return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'none'
             })
             .style('opacity',1)
     }
