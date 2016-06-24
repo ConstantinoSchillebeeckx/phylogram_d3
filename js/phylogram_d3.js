@@ -373,6 +373,7 @@ if (!d3) { throw "d3 wasn't included!"};
         // set the container SVG to that size
         resizeSVG();
 
+        d3.select('#spinner').remove()
 		return {tree: tree, vis: vis}
 	}
 
@@ -803,6 +804,16 @@ Calls d3.phylogram.build to generate tree
 var mapParse, colorScales, mappingFile; // GLOBAL! :( not sure how to get around this
 function init(dat, div, mapp=null) {
 
+        // give user a spinner for feedback
+        var spinner = d3.select(div).append('div')
+            .attr('id','spinner')
+            .attr('class','lead')
+
+        spinner.append('i')
+            .attr('class','fa fa-cog fa-spin fa-3x fa-fw')
+        spinner.append('span')
+            .text('Generating...');
+
         // process Newick tree
 		var newick = Newick.parse(readFile(dat))
 		var newickNodes = []
@@ -837,6 +848,7 @@ function init(dat, div, mapp=null) {
             d3.phylogram.build(div, newick, {
             });
         }
+
 }
 
 
