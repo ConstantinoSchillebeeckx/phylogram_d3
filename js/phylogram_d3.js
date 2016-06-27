@@ -501,12 +501,11 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
     tree.selectAll('g.leaf.node text')
         .text(function(d) { return skipDistanceLabel ? d.name : d.name + ' ('+d.length+')'; });
 
+    // remove legend if one exists so we can update
+    d3.select("#legendID").remove()
 
     // col for legend
     if (leafColor || backgroundColor) {
-
-        // remove legend if one exists so we can update
-        d3.select("#legendID").remove()
 
         var legend = d3.select("svg g").append("g")
             .attr("id", "legendID")
@@ -514,9 +513,8 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
 
     }
 
-
     // update leaf color
-    if (leafColor) {
+    if (leafColor && leafColor != '') {
         var colorScale = colorScales.get(leafColor); // color scale
         var mapVals = mapParse.get(leafColor); // d3.map() obj with leaf name as key
 
@@ -531,11 +529,14 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
             .style('stroke', function(d) {
                 return mapVals.get(d.name) ? 'white' : 'yellowGreen'
             })
+    } else if (leafColor == '') {
+        tree.selectAll('g.leaf.node circle')
+            .attr('style','null')
     }
 
 
     // update background color
-    if (backgroundColor) {
+    if (backgroundColor && backgroundColor != '') {
         var colorScale = colorScales.get(backgroundColor) // color scale
         var mapVals = mapParse.get(backgroundColor) // d3.map() obj with leaf name as key 
 
@@ -565,6 +566,9 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
                 return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'none'
             })
             .style('opacity',1)
+    } else if (leafColor == '') {
+        tree.selectAll('g.leaf.node rect')
+            .attr('style','null')
     }
 
     resizeSVG();
@@ -1002,9 +1006,9 @@ function guiUpdate() {
     var leafColor, backgroundColor;
     if (mappingFile) {
         var e = document.getElementById("leafColor");
-        leafColor = e.options[e.selectedIndex].text;
+        leafColor = e.options[e.selectedIndex].value;
         var e = document.getElementById("backgroundColor");
-        backgroundColor = e.options[e.selectedIndex].text;
+        backgroundColor = e.options[e.selectedIndex].value;
     }
 
     updateTree(skipDistanceLabel, skipLeafLabel, leafColor, backgroundColor);
@@ -1069,7 +1073,7 @@ function buildGUI(selector, mapParse=null) {
     check2.append('text')
         .text("Toggle leaf labels")
 
-
+    // if mapping file was passed
     if (mapParse && !mapParse.empty()) {
 
         // select for leaf color
@@ -1091,14 +1095,13 @@ function buildGUI(selector, mapParse=null) {
         select1.selectAll("option")
             .data(mapParse.keys()).enter()
             .append("option")
+            .attr('value',function(d) { return d; })
             .text(function(d) { return d; })
 
         select1.append("option")
             .attr("selected","")
-            .attr("disabled","")
-            .attr("hidden","")
-            .style("display","none")
             .attr("value","")
+            .text('None');
         // select for leaf color
 
 
@@ -1125,10 +1128,8 @@ function buildGUI(selector, mapParse=null) {
 
         select2.append("option")
             .attr("selected","")
-            .attr("disabled","")
-            .attr("hidden","")
-            .style("display","none")
             .attr("value","")
+            .text('None');
         // select for background color
     }
 
