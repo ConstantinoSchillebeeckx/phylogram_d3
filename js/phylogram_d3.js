@@ -804,6 +804,16 @@ Calls d3.phylogram.build to generate tree
 var mapParse, colorScales, mappingFile; // GLOBAL! :( not sure how to get around this
 function init(dat, div, mapp=null) {
 
+        // check input
+        if (dat == '') {
+            d3.select(div).append('div')
+                .attr('class','alert alert-danger lead col-sm-4 col-sm-offset-4')
+                .style('margin-top','20px')
+                .attr('role','alert')
+                .html('Ensure a valid Newick tree file was passed to the <code>init()</code> function!')
+           return; 
+        }
+
         // give user a spinner for feedback
         var spinner = d3.select(div).append('div')
             .attr('id','spinner')
@@ -825,7 +835,6 @@ function init(dat, div, mapp=null) {
 						}
 				}
 		}
-		buildNewickNodes(newick)
 
 
 		// mapping file for formatting tree, expected to be a TSV
