@@ -1130,10 +1130,10 @@ function buildGUI(selector, mapParse=null) {
     // save button
     gui.append("button")
         .attr('class', 'btn btn-success')
+        .on("click",saveSVG)
         .append('i')
         .attr('class','fa fa-floppy-o')
         .attr('title','Save image')
-        .on("click",saveSVG);
 
     // if mapping file was passed
     if (mapParse && !mapParse.empty()) {
@@ -1202,20 +1202,24 @@ function buildGUI(selector, mapParse=null) {
 // which can then be right-clicked and 'save as...'
 function saveSVG(){
 
-    // get our styles from our stylesheet
+    // get styles from all required stylesheets
     // http://www.coffeegnome.net/converting-svg-to-png-with-canvg/
-    var style = "\n ";
-    for (var i=0;i<document.styleSheets.length; i++) {
-      str = document.styleSheets[i].href.split("/");
-      if (str[str.length-1]=="phylogram_d3.css"){
-        var rules = document.styleSheets[i].rules;
-        for (var j=0; j<rules.length;j++){
-          style += (rules[j].cssText + "\n");
+    var style = "\n";
+    var requiredSheets = ['phylogram_d3.css', 'open_sans.css']; // list of required CSS
+    for (var i=0; i<document.styleSheets.length; i++) {
+        var sheet = document.styleSheets[i];
+        if (sheet.href) {
+            var sheetName = sheet.href.split('/').pop();
+            if (requiredSheets.indexOf(sheetName) != -1) {
+                var rules = sheet.rules;
+                if (rules) {
+                    for (var j=0; j<rules.length; j++) {
+                        style += (rules[j].cssText + '\n');
+                    }
+                }
+            }
         }
-        break;
-      }
     }
-
 
     var svg = d3.select("svg"),
         img = new Image(),
@@ -1224,15 +1228,19 @@ function saveSVG(){
         height = svg.node().getBBox().height;
 
     // prepend style to svg
-    svg.insert('style',":first-child")
-    d3.select("svg style")
+    svg.insert('defs',":first-child")
+    d3.select("svg defs")
+        .append('style')
+        .attr('type','text/css')
         .html(style);
 
 
     // generate IMG in new tab
     var svgStr = serializer.serializeToString(svg.node());
     img.src = 'data:image/svg+xml;base64,'+window.btoa(unescape(encodeURIComponent(svgStr)));
-    window.open().document.write('<img src="' + img.src + '"/>');
+    var tab = window.open()
+    tab.document.write('<img src="' + img.src + '"/>');
+    tab.document.title = 'phylogram d3';
 };
 
 

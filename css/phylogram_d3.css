@@ -71,5 +71,26 @@ line.rule {
     line-height: 130%;
     font-size: 12px;
     font-family: "Open Sans", Helvetica, sans-serif; 
+    max-width: 500px;
+    word-wrap: break-word;
 }
 
+.d3-tip .tip-title {
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+.d3-tip .tip-name {
+    color: red;
+}
+
+.tip-meta-title {
+}
+
+.tip-meta-name {
+}
+
+
+text {
+    font-family: "Open Sans";
+}
