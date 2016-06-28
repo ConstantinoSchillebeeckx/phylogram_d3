@@ -827,15 +827,12 @@ Returns:
 - formatted HTML with all node data
 
 */
-
-
-
 function formatTooltip(d, mapParse=null) {
-    var html = "<u><strong>Node: <span style='color:red'>" + d.name + "</span></strong></u>";
+    var html = "<div class='tip-title'>Leaf <span class='tip-name'>" + d.name + "</span></div>";
 
     if (mapParse) {
         mapParse.keys().forEach(function(col) {
-            html += '<br><b>- ' + col + '</b>: ' + mapParse.get(col).get(d.name);
+            html += '<p class="tip-row"><span class="tip-meta-title">- ' + col + '</span>: <span class="tip-meta-name">' + mapParse.get(col).get(d.name) + '</span><p>';
         })
     }
 
