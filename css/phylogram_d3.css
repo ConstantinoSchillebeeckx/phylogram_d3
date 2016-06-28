@@ -61,3 +61,27 @@ line.rule {
     height: 20px;
 }
 
+/* tooltip */
+.d3-tip {
+    line-height: 1;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    border-radius: 2px;
+    line-height: 130%;
+    font-size: 12px;
+    font-family: "Open Sans", Helvetica, sans-serif; 
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d4-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}

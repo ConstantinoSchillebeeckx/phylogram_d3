@@ -75,10 +75,32 @@
 		d3.phylogram.rightAngleDiagonal for radial layouts.
 */
 
+// GLOBALS
+// --------------
+var mapParse, colorScales, mappingFile;
 
 // use margin convention
 // https://bl.ocks.org/mbostock/3019563
 var margin = {top: 30, right: 0, bottom: 20, left: 50};
+var startW = 800, startH = 600; // initial dimensions of SVG
+
+// tooltip
+var tip = d3.tip()
+    .attr('class', 'd3-tip')
+    .offset([-10, 0])
+    .html(function(d) {
+        return formatTooltip(d, mapParse);
+    })
+
+// --------------
+// GLOBALS
+
+
+
+
+
+
+
 
 if (!d3) { throw "d3 wasn't included!"};
 (function() {
@@ -260,7 +282,6 @@ if (!d3) { throw "d3 wasn't included!"};
 
 
         // set initial w/h which are later updated once we know size of tree
-        var startW = 800, startH = 600;
         var w = startW - margin.right - margin.left;
         var h = startH - margin.top - margin.bottom;
 
@@ -291,6 +312,7 @@ if (!d3) { throw "d3 wasn't included!"};
 			.append("svg:g")
 				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+        vis.call(tip);
 
 		var nodes = tree(nodes);
 
@@ -349,6 +371,8 @@ if (!d3) { throw "d3 wasn't included!"};
 					}
 				})
 				.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+                .on('mouseover', tip.show)
+                .on('mouseout', tip.hide)
 
         // tree nodes
 		d3.phylogram.styleTreeNodes(vis, options.leafRadius)
@@ -676,7 +700,7 @@ function generateLegend(title, mapVals, container, colorScale, type, transform) 
                 if (bar) {
                     return scale(d).toFixed(2);
                 } else {
-                    return '(' + counts.get(d) + ') ' + cleanTaxa(d); 
+                    return '(' + counts.get(d) + ') ' + d; 
                 }
             })
 }
@@ -786,6 +810,39 @@ function filterTSVval(value) {
     return value;
 }
 
+/* Function for styling tooltip content
+
+Parameters:
+==========
+- d : node attributes
+
+- mapParse : d3 map obj (optional)
+    optional parsed mapping file; keys are mapping file
+    column headers, values are d3 map obj with key as
+    node name and value as file value
+
+Returns:
+========
+- formatted HTML with all node data
+
+*/
+
+
+
+function formatTooltip(d, mapParse=null) {
+    var html = "<u><strong>Node: <span style='color:red'>" + d.name + "</span></strong></u>";
+
+    if (mapParse) {
+        mapParse.keys().forEach(function(col) {
+            html += '<br><b>- ' + col + '</b>: ' + mapParse.get(col).get(d.name);
+        })
+    }
+
+    return html;
+}
+
+
+
 
 /* initialize tree
 
@@ -805,7 +862,6 @@ Parameters:
 Calls d3.phylogram.build to generate tree
 
 */
-var mapParse, colorScales, mappingFile; // GLOBAL! :( not sure how to get around this
 function init(dat, div, mapp=null) {
 
         // check input
@@ -916,7 +972,7 @@ function parseMapping(data) {
     // with leaf names as keys and mapping file values as the value
     mapObj.forEach(function(leaf,cols) {
         for (col in cols) {
-            var colVal = cols[col];
+            var colVal = cleanTaxa(cols[col]);
             if (!mapParse.has(col)) {
                 var val = d3.map();
             } else {
