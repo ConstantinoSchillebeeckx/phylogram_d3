@@ -5,6 +5,7 @@
     <head>
 
         <!-- CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
         <link href="css/bootstrap.min.css" rel="stylesheet">
         <link href="css/open_sans.css" rel="stylesheet">
         <link href="css/phylogram_d3.css" rel="stylesheet">

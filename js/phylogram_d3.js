@@ -398,6 +398,7 @@ if (!d3) { throw "d3 wasn't included!"};
         resizeSVG();
 
         d3.select('#spinner').remove()
+
 		return {tree: tree, vis: vis}
 	}
 
@@ -877,7 +878,8 @@ function init(dat, div, mapp=null) {
         // give user a spinner for feedback
         var spinner = d3.select(div).append('div')
             .attr('id','spinner')
-            .attr('class','lead')
+            .attr('class','lead alert alert-info col-sm-3 col-sm-offset-4')
+            .style('margin-top','20px');
 
         spinner.append('i')
             .attr('class','fa fa-cog fa-spin fa-3x fa-fw')
@@ -917,7 +919,6 @@ function init(dat, div, mapp=null) {
             d3.phylogram.build(div, newick, {
             });
         }
-
 }
 
 
@@ -1129,6 +1130,14 @@ function buildGUI(selector, mapParse=null) {
     check2.append('text')
         .text("Toggle leaf labels")
 
+    // save button
+    gui.append("button")
+        .attr('class', 'btn btn-success')
+        .append('i')
+        .attr('class','fa fa-floppy-o')
+        .attr('title','Save image')
+        .on("click",saveSVG);
+
     // if mapping file was passed
     if (mapParse && !mapParse.empty()) {
 
@@ -1192,7 +1201,42 @@ function buildGUI(selector, mapParse=null) {
 }
 
 
+// when called, will open a new tab with the SVG
+// which can then be right-clicked and 'save as...'
+function saveSVG(){
 
+    // get our styles from our stylesheet
+    // http://www.coffeegnome.net/converting-svg-to-png-with-canvg/
+    var style = "\n ";
+    for (var i=0;i<document.styleSheets.length; i++) {
+      str = document.styleSheets[i].href.split("/");
+      if (str[str.length-1]=="phylogram_d3.css"){
+        var rules = document.styleSheets[i].rules;
+        for (var j=0; j<rules.length;j++){
+          style += (rules[j].cssText + "\n");
+        }
+        break;
+      }
+    }
+
+
+    var svg = d3.select("svg"),
+        img = new Image(),
+        serializer = new XMLSerializer(),
+        width = svg.node().getBBox().width,
+        height = svg.node().getBBox().height;
+
+    // prepend style to svg
+    svg.insert('style',":first-child")
+    d3.select("svg style")
+        .html(style);
+
+
+    // generate IMG in new tab
+    var svgStr = serializer.serializeToString(svg.node());
+    img.src = 'data:image/svg+xml;base64,'+window.btoa(unescape(encodeURIComponent(svgStr)));
+    window.open().document.write('<img src="' + img.src + '"/>');
+};
 
 
 
