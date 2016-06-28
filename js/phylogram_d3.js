@@ -254,7 +254,7 @@ if (!d3) { throw "d3 wasn't included!"};
 
         // add bootstrap container class
         d3.select(selector)
-            .attr("class","container-fluid")
+            .attr("class","container-fluid render")
 
 		options = options || {}
 
