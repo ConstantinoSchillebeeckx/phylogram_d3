@@ -18,6 +18,7 @@
         <script type="text/javascript" src="js/d3.min.js"></script>
         <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
         <script type="text/javascript" src="js/phylogram_d3.js"></script>
+        <script type="text/javascript" src="js/utils.js"></script>
 
 
         <meta name="viewport" content="width=device-width, initial-scale=1">
