@@ -59,7 +59,7 @@ function scaleLeafSeparation(nodes, minSeparation=22) {
         }
     })
 
-    var xScale = d3.scale.linear()
+    var xScale = d3.scaleLinear()
         .range([0, minSeparation])
         .domain([0, d3.min(leafXdist)])
 
@@ -85,6 +85,7 @@ Returns:
            horizontal scale for svg
 */
 function scaleBranchLengths(nodes, width) {
+
     // Visit all nodes and adjust y pos width distance metric
     var visitPreOrder = function(root, callback) {
         callback(root)
@@ -99,7 +100,7 @@ function scaleBranchLengths(nodes, width) {
     })
     var rootDists = nodes.map(function(n) { return n.rootDist; });
 
-    var yscale = d3.scale.linear()
+    var yscale = d3.scaleLinear()
         .domain([0, d3.max(rootDists)])
         .range([0, width]);
 
@@ -128,10 +129,10 @@ Returns:
 - nothing
 
 */
-function formatLinks(svg, nodes, tree) {
+function formatLinks(svg, links) {
 
     var link = svg.selectAll("path.link")
-          .data(tree.links(nodes))
+          .data(links)
         .enter().append("path")
           .attr("class", "link")
           .attr("d", elbow);
@@ -142,6 +143,37 @@ function formatLinks(svg, nodes, tree) {
       return "M" + d.source.y + "," + d.source.x
            + "H" + d.target.y + "V" + d.target.x
            + (d.target.children ? "" : "h" + margin.right);
+    }
+}
+
+
+
+/* Add labels (name, distance) to tree
+
+Parameters:
+===========
+- svg : svg selection
+        SVG containing tree
+- options : obj
+            tree options, must have skipLabels=True 
+            to hide labels, otherwise they will be
+            drawn.
+*/
+function formatLabels(svg, options) {
+
+    if (!options.skipLabels) {
+        svg.selectAll('g.inner.node')
+            .append("svg:text")
+                .attr("dx", -6)
+                .attr("dy", -6)
+                .attr("text-anchor", 'end')
+                .text(function(d) { return d.length; });
+
+        svg.selectAll('g.leaf.node').append("svg:text")
+            .attr("dx", 8)
+            .attr("dy", 3)
+            .attr("text-anchor", "start")
+            .text(function(d) { return d.name + ' ('+d.length+')'; });
     }
 }
 
@@ -206,6 +238,35 @@ function formatNodes(svg, nodes, leafRadius=4.5) {
 
 
 
+/* Master format tree function
+
+Parameters:
+===========
+- svg : svg selctor
+        svg HTML element into which to render
+- nodes : d3 tree nodes
+- links : d3 tree links
+- yscale : quantitative scale
+           horizontal scaling factor for distance
+- xscale : quantitative scale
+           vertical scale
+- height : int
+           height of svg
+- options : obj
+            tree options, see documentation for keys
+
+*/
+function formatTree(svg, nodes, links, yscale, xscale, height, options) {
+    formatRuler(svg, yscale, xscale, height, options, function() {
+        formatLinks(svg, links);
+        formatNodes(svg, nodes);
+        formatLabels(svg, options);
+    });
+}
+
+
+
+
 /* Render and format background rules
 
 Parameters:
@@ -218,33 +279,41 @@ Parameters:
            vertical scale
 - height : int
            height of svg
-
+- options : obj
+            tree options, expects a key hideRuler;
+            if true, rules won't be drawn
+- callback : callback function
+             ruler should be formatted first so that
+             all other SVG elements lay on top of it
 Returns:
 ========
 - nothing
 
 */
-function formatRuler(svg, yscale, xscale, height) {
+function formatRuler(svg, yscale, xscale, height, options, callback) {
 
+    if (!options.hideRuler) {
+        svg.selectAll('line.rule')
+                .data(yscale.ticks(10))
+            .enter().append('svg:line')
+                .attr("class", "rule")
+                .attr('y1', 0)
+                .attr('y2', xscale(height))
+                .attr('x1', yscale)
+                .attr('x2', yscale)
 
-    svg.selectAll('line.rule')
-            .data(yscale.ticks(10))
-        .enter().append('svg:line')
-            .attr("class", "rule")
-            .attr('y1', 0)
-            .attr('y2', xscale(height))
-            .attr('x1', yscale)
-            .attr('x2', yscale)
+        svg.selectAll("text.rule")
+                .data(yscale.ticks(10))
+            .enter().append("svg:text")
+                .attr("class", "rule")
+                .attr("x", yscale)
+                .attr("y", 0)
+                .attr("dy", -3)
+                .attr("text-anchor", "middle")
+                .text(function(d) { return Math.round(d*100) / 100; });
+    }
 
-    svg.selectAll("text.rule")
-            .data(yscale.ticks(10))
-        .enter().append("svg:text")
-            .attr("class", "rule")
-            .attr("x", yscale)
-            .attr("y", 0)
-            .attr("dy", -3)
-            .attr("text-anchor", "middle")
-            .text(function(d) { return Math.round(d*100) / 100; });
+    callback();
 }
 
 
@@ -365,10 +434,10 @@ file has the same values as the leaf names.
 
 Parameters:
 ===========
-- data: d3.tsv() data
+- data: d3.tsv() parsed data
     input mapping file processed by d3.tsv; will be
     an array (where each row in the TSV is an array
-    index) of objects where objects have col headers
+    value) of objects where objects have col headers
     as keys and file values as values
 
 
@@ -385,40 +454,36 @@ Returns:
         scales take as input the leaf name (file row)
 */
 function parseMapping(data) {
-    // get name of index (leaf name) column in mapping
-    for (var index in data[0]) break;
 
-    // convert to d3 map where key is 'index' (leaf name) col
-    var mapObj = d3.map({})
+    // get mapping file column headers
+    // we assume first column is the leaf ID
+    var colTSV = d3.map(data[0]).keys();
+    var id = colTSV[0];
+    colTSV.shift(); // remove first col (ID)
+
+
+    var mapParse = d3.map(); // {colHeader: { ID1: val, ID2: val } }
+
     data.forEach(function(row) {
-        var key = row[index];
-        delete row[index]
-        mapObj.set(key,row)
-    })
-
-    // parse mapping file a bit so we can use it with
-    // dropdown boxes and for defining color functions
-    var mapParse = d3.map();
-    // keys will be mapping column headers, values will be d3.map()
-    // with leaf names as keys and mapping file values as the value
-    mapObj.forEach(function(leaf,cols) {
-        for (col in cols) {
-            var colVal = cleanTaxa(cols[col]);
+        var leafName = row[id];
+        colTSV.forEach( function(col) {
+            var colVal = row[col];
             if (!mapParse.has(col)) {
                 var val = d3.map();
             } else {
                 var val = mapParse.get(col);
             }
-            val.set(leaf,colVal);
+            val.set(leafName, colVal);
             mapParse.set(col, val);
-        }
-    });
+        })
+    })
+
 
     // setup color scales for mapping columns
     // keys are mapping column headers and values are scales
     // for converting column value to a color
     var colorScales = d3.map();
-    mapParse.forEach(function(k,v) { // v is a d3.set of mapping column values
+    mapParse.each(function(v,k) { // v is a d3.set of mapping column values, with leaf ID has key
 
         // check if values for mapping column are string or numbers
         // strings are turned into ordinal scales, numbers into quantitative
@@ -426,13 +491,13 @@ function parseMapping(data) {
         var vals = autoSort(v.values(), true);
         var scale;
         if (typeof vals[0] === 'string' || vals[0] instanceof String) { // ordinal scale
-            var tmp = d3.scale.category10();
+            var tmp = d3.scaleOrdinal(d3.schemeCategory10);
             if (vals.length > 10) {
-                tmp = d3.scale.category20();
+                tmp = d3.scaleOrdinal(d3.schemeCategory20);
             }
             scale = tmp.domain(vals);
         } else { // quantitative scale
-            scale = d3.scale.quantize()
+            scale = d3.scaleQuantize()
                 .domain(d3.extent(vals))
                 .range(colorbrewer.Spectral[11]);
         }
@@ -639,6 +704,50 @@ function buildGUI(selector, mapParse=null) {
     }
 
 }
+
+
+
+
+
+
+/*  Automatically sort an array
+
+Given an array of strings, were the string
+could be a float (e.g. "1.2") or an int
+(e.g. "5"), this function will convert the
+array if all strings are ints or floats and
+sort it (either alphabetically or numerically
+ascending).
+
+Parameters:
+===========
+- arr: array of strings
+    an array of strings
+- unique: bool
+    default: false
+    if true, only unique values will be returned
+
+Returns:
+- sorted, converted array, will be either
+    all strings or all numbers
+
+*/
+function autoSort(arr, unique=false) {
+
+    // get unique values of array
+    // by converting to d3.set()
+    if (unique) { arr = d3.set(arr).values(); }
+
+    var vals = arr.map(filterTSVval); // convert to int or float if needed
+    var sorted = (typeof vals[0] === 'string' || vals[0] instanceof String) ? vals.sort() : vals.sort(function(a,b) { return a - b; }).reverse();
+
+    return sorted;
+
+}
+
+
+
+
 
 
 
@@ -995,42 +1104,6 @@ function formatTooltip(d, mapParse=null) {
 
 
 
-
-
-/*  Automatically sort an array
-
-Given an array of strings, were the string
-could be a float (e.g. "1.2") or an int
-(e.g. "5"), this function will convert the
-array if all strings are ints or floats and
-sort it (either alphabetically or numerically
-ascending).
-
-Parameters:
-===========
-- arr: array of strings
-    an array of strings
-- unique: bool
-    default: false
-    if true, only unique values will be returned
-
-Returns:
-- sorted, converted array, will be either
-    all strings or all numbers
-
-*/
-function autoSort(arr, unique=false) {
-
-    // get unique values of array
-    // by converting to d3.set()
-    if (unique) { arr = d3.set(arr).values(); }
-
-    var vals = arr.map(filterTSVval); // convert to int or float if needed
-    var sorted = (typeof vals[0] === 'string' || vals[0] instanceof String) ? vals.sort() : vals.sort(function(a,b) { return a - b; }).reverse();
-
-    return sorted;
-
-}
 
 
 

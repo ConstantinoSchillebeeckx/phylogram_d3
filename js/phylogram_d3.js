@@ -15,13 +15,15 @@ var mapParse, colorScales, mappingFile;
 var margin = {top: 30, right: 0, bottom: 20, left: 50};
 var startW = 800, startH = 600;
 
-// tooltip
+// tooltip 
+/*
 var tip = d3.tip()
     .attr('class', 'd3-tip')
     .offset([-10, 0])
     .html(function(d) {
         return formatTooltip(d, mapParse);
     })
+*/ // TODO
 
 // --------------
 // GLOBALS
@@ -112,6 +114,8 @@ Options obj:
 - colorScale: index 1 of the array output of parseMapping()
 - hideRuler: (bool) if true, background distance ruler is not rendered
 - skipBranchLengthScaling: (bool) if true, tree will not be scaled by distance
+- skipLabels
+TODO
 
 Retrurns:
 =========
@@ -150,17 +154,26 @@ function buildTree(div, newick, options) {
     //svg.call(tip); TODO
 
     // setup tree
-    var tree = d3.layout.tree()
+
+    var root = d3.hierarchy(newick, function(node) {
+            return node.branchset
+        })
+        .sort(function(node) { return node.children ? node.children.length : -1; })
+
+    var tree = d3.cluster(root)
+        .size([height, width]);
+
+    var nodes = root.descendants();
+    var links = root.links();
+/*
+    var tree = d3.layout.cluster()
         .sort(function(node) { return node.children ? node.children.length : -1; })
         .children(function(node) {
             return node.branchset
         })
         .size([height, width]);
-
     var nodes = tree.nodes(newick);
-    formatLinks(svg, nodes, tree);
-    formatNodes(svg, nodes);
-    console.log(nodes)
+*/
 
     // scale tree
     // note y is horizontal direction
@@ -177,13 +190,12 @@ function buildTree(div, newick, options) {
         var xscale = scaleLeafSeparation(nodes);
     }
 
+    console.log(links)
+    // format tree (ndes, links, labels, ruler)
+    formatTree(svg, nodes, links, yscale, xscale, height, options);
 
-    if (!options.hideRuler) {
-        formatRuler(svg, yscale, xscale, height);
-    }
 
-    //resizeSVG();
-
+    resizeSVG();
     showSpinner(null, false); // hide spinner
 
 }
