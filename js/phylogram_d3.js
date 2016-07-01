@@ -7,7 +7,6 @@
 // GLOBALS
 // --------------
 var mapParse, colorScales, mappingFile;
-
 // use margin convention
 // https://bl.ocks.org/mbostock/3019563
 // width and height are initially set and then
@@ -16,14 +15,13 @@ var margin = {top: 30, right: 0, bottom: 20, left: 50};
 var startW = 800, startH = 600;
 
 // tooltip 
-/*
 var tip = d3.tip()
     .attr('class', 'd3-tip')
     .offset([-10, 0])
     .html(function(d) {
         return formatTooltip(d, mapParse);
     })
-*/ // TODO
+
 
 // --------------
 // GLOBALS
@@ -85,10 +83,12 @@ function init(dat, div, mapp=null) {
             mapParse = parsed[0];
             colorScales = parsed[1];
 
-            buildTree(div, newick, {
+            options = {
                 mapping: mapParse,
                 colorScale: colorScales,
-            });
+            }
+
+            buildTree(div, newick, options);
         });
     } else {
         buildTree(div, newick, {});
@@ -151,29 +151,18 @@ function buildTree(div, newick, options) {
         .append("svg:g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    //svg.call(tip); TODO
+    svg.call(tip);
 
     // setup tree
-
-    var root = d3.hierarchy(newick, function(node) {
-            return node.branchset
-        })
-        .sort(function(node) { return node.children ? node.children.length : -1; })
-
-    var tree = d3.cluster(root)
-        .size([height, width]);
-
-    var nodes = root.descendants();
-    var links = root.links();
-/*
     var tree = d3.layout.cluster()
         .sort(function(node) { return node.children ? node.children.length : -1; })
         .children(function(node) {
             return node.branchset
         })
         .size([height, width]);
+
     var nodes = tree.nodes(newick);
-*/
+    var links = tree.links(nodes);
 
     // scale tree
     // note y is horizontal direction
@@ -190,7 +179,6 @@ function buildTree(div, newick, options) {
         var xscale = scaleLeafSeparation(nodes);
     }
 
-    console.log(links)
     // format tree (ndes, links, labels, ruler)
     formatTree(svg, nodes, links, yscale, xscale, height, options);
 

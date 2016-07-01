@@ -59,7 +59,7 @@ function scaleLeafSeparation(nodes, minSeparation=22) {
         }
     })
 
-    var xScale = d3.scaleLinear()
+    var xScale = d3.scale.linear()
         .range([0, minSeparation])
         .domain([0, d3.min(leafXdist)])
 
@@ -100,7 +100,7 @@ function scaleBranchLengths(nodes, width) {
     })
     var rootDists = nodes.map(function(n) { return n.rootDist; });
 
-    var yscale = d3.scaleLinear()
+    var yscale = d3.scale.linear()
         .domain([0, d3.max(rootDists)])
         .range([0, width]);
 
@@ -137,12 +137,11 @@ function formatLinks(svg, links) {
           .attr("class", "link")
           .attr("d", elbow);
 
-    // http://bl.ocks.org/mbostock/2966094
+    // http://bl.ocks.org/mbostock/2429963
     // draw right angle links to join nodes
     function elbow(d, i) {
       return "M" + d.source.y + "," + d.source.x
-           + "H" + d.target.y + "V" + d.target.x
-           + (d.target.children ? "" : "h" + margin.right);
+          + "V" + d.target.x + "H" + d.target.y;
     }
 }
 
@@ -215,8 +214,8 @@ function formatNodes(svg, nodes, leafRadius=4.5) {
                 }
             })
             .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
-            //.on('mouseover', tip.show) TODO
-            //.on('mouseout', tip.hide) TODO
+            .on('mouseover', tip.show) 
+            .on('mouseout', tip.hide)
 
     svg.selectAll('g.leaf.node')
         .append("svg:rect") // leaf background
@@ -483,7 +482,7 @@ function parseMapping(data) {
     // keys are mapping column headers and values are scales
     // for converting column value to a color
     var colorScales = d3.map();
-    mapParse.each(function(v,k) { // v is a d3.set of mapping column values, with leaf ID has key
+    mapParse.forEach(function(k, v) { // v is a d3.set of mapping column values, with leaf ID has key
 
         // check if values for mapping column are string or numbers
         // strings are turned into ordinal scales, numbers into quantitative
@@ -491,13 +490,13 @@ function parseMapping(data) {
         var vals = autoSort(v.values(), true);
         var scale;
         if (typeof vals[0] === 'string' || vals[0] instanceof String) { // ordinal scale
-            var tmp = d3.scaleOrdinal(d3.schemeCategory10);
+            var tmp = d3.scale.category10();
             if (vals.length > 10) {
-                tmp = d3.scaleOrdinal(d3.schemeCategory20);
+                tmp = d3.scale.category10();;
             }
             scale = tmp.domain(vals);
         } else { // quantitative scale
-            scale = d3.scaleQuantize()
+            scale = d3.scale.quantize()
                 .domain(d3.extent(vals))
                 .range(colorbrewer.Spectral[11]);
         }
@@ -707,6 +706,27 @@ function buildGUI(selector, mapParse=null) {
 
 
 
+// function called (from front-end GUI) every time
+// GUI is updated by user
+// calls updateTree() so that tree style can be updated
+function guiUpdate() {
+
+    // get checkbox state
+    skipDistanceLabel = !$('#toggle_distance').is(':checked');
+    skipLeafLabel = !$('#toggle_leaf').is(':checked');
+
+    // get dropdown values
+    var leafColor, backgroundColor;
+    if (!mapParse.empty()) {
+        var e = document.getElementById("leafColor");
+        leafColor = e.options[e.selectedIndex].value;
+        var e = document.getElementById("backgroundColor");
+        backgroundColor = e.options[e.selectedIndex].value;
+    }
+
+    updateTree(skipDistanceLabel, skipLeafLabel, leafColor, backgroundColor);
+}
+
 
 
 
@@ -750,15 +770,142 @@ function autoSort(arr, unique=false) {
 
 
 
+/* Clean-up a QIIME formatted taxa string
+
+Will clean-up a QIIME formatted taxonomy string
+by removing the class prefix and replacing the
+semicolon with ' | '.  Function will check
+if string is taxa data if it leads with 'k__',
+otherwise it returns passed string.
+
+Parameters:
+===========
+- taxa : string
+    QIIME formatted string
+
+Returns:
+========
+- cleaned string
+
+*/
+function cleanTaxa(taxa) {
+
+    if ((typeof taxa === 'string' || taxa instanceof String) && taxa.slice(0, 2) == 'k_') {
+
+        var str = taxa.replace(/.__/g, "");
+
+        // some taxa strings end in ';' some don't,
+        // remove it if it exists
+        if (str.substr(str.length - 1) == ';') {
+            str = str.substring(0, str.length - 1);
+        }
+
+        return str.split(";").join(" | ");
+
+    } else {
+        
+        return taxa;
+
+    }
+
+}
 
 
 
 
-// -------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------
+
+
+// helper function for filtering input TSV values
+// will automatically detect if value is int, float or string and return
+// it as such
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseFloat
+function filterTSVval(value) {
+    if (/^(\-|\+)?([0-9]+(\.[0-9]+))$/.test(value)) { // if string
+        return Number(value);
+    } else if (/^\d+$/.test(value)) { // if int
+        return parseInt(value);
+    }
+    return value;
+}
+
+
+
+
+/* Function for styling tooltip content
+
+Parameters:
+==========
+- d : node attributes
+
+- mapParse : d3 map obj (optional)
+    optional parsed mapping file; keys are mapping file
+    column headers, values are d3 map obj with key as
+    node name and value as file value
+
+Returns:
+========
+- formatted HTML with all node data
+
+*/
+function formatTooltip(d, mapParse=null) {
+    var html = "<div class='tip-title'>Leaf <span class='tip-name'>" + d.name + "</span></div>";
+
+    if (mapParse) {
+        mapParse.keys().forEach(function(col) {
+            html += '<p class="tip-row"><span class="tip-meta-title">- ' + col + '</span>: <span class="tip-meta-name">' + mapParse.get(col).get(d.name) + '</span><p>';
+        })
+    }
+
+    return html;
+}
+
+
+
+// when called, will open a new tab with the SVG
+// which can then be right-clicked and 'save as...'
+function saveSVG(){
+
+    // get styles from all required stylesheets
+    // http://www.coffeegnome.net/converting-svg-to-png-with-canvg/
+    var style = "\n";
+    var requiredSheets = ['phylogram_d3.css', 'open_sans.css']; // list of required CSS
+    for (var i=0; i<document.styleSheets.length; i++) {
+        var sheet = document.styleSheets[i];
+        if (sheet.href) {
+            var sheetName = sheet.href.split('/').pop();
+            if (requiredSheets.indexOf(sheetName) != -1) {
+                var rules = sheet.rules;
+                if (rules) {
+                    for (var j=0; j<rules.length; j++) {
+                        style += (rules[j].cssText + '\n');
+                    }
+                }
+            }
+        }
+    }
+
+    var svg = d3.select("svg"),
+        img = new Image(),
+        serializer = new XMLSerializer(),
+        width = svg.node().getBBox().width,
+        height = svg.node().getBBox().height;
+
+    // prepend style to svg
+    svg.insert('defs',":first-child")
+    d3.select("svg defs")
+        .append('style')
+        .attr('type','text/css')
+        .html(style);
+
+
+    // generate IMG in new tab
+    var svgStr = serializer.serializeToString(svg.node());
+    img.src = 'data:image/svg+xml;base64,'+window.btoa(unescape(encodeURIComponent(svgStr)));
+    var tab = window.open()
+    tab.document.write('<img src="' + img.src + '"/>');
+    tab.document.title = 'phylogram d3';
+};
+
 
 
 
@@ -1014,92 +1161,6 @@ function range(start, len) {
 
 
 
-/* Clean-up a QIIME formatted taxa string
-
-Will clean-up a QIIME formatted taxonomy string
-by removing the class prefix and replacing the
-semicolon with ' | '.  Function will check
-if string is taxa data if it leads with 'k__',
-otherwise it returns passed string.
-
-Parameters:
-===========
-- taxa : string
-    QIIME formatted string
-
-Returns:
-========
-- cleaned string
-
-*/
-function cleanTaxa(taxa) {
-
-    if ((typeof taxa === 'string' || taxa instanceof String) && taxa.slice(0, 2) == 'k_') {
-
-        var str = taxa.replace(/.__/g, "");
-
-        // some taxa strings end in ';' some don't,
-        // remove it if it exists
-        if (str.substr(str.length - 1) == ';') {
-            str = str.substring(0, str.length - 1);
-        }
-
-        return str.split(";").join(" | ");
-
-    } else {
-        
-        return taxa;
-
-    }
-
-}
-
-
-
-
-
-
-
-// helper function for filtering input TSV values
-// will automatically detect if value is int, float or string and return
-// it as such
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseFloat
-function filterTSVval(value) {
-    if (/^(\-|\+)?([0-9]+(\.[0-9]+))$/.test(value)) { // if string
-        return Number(value);
-    } else if (/^\d+$/.test(value)) { // if int
-        return parseInt(value);
-    }
-    return value;
-}
-
-/* Function for styling tooltip content
-
-Parameters:
-==========
-- d : node attributes
-
-- mapParse : d3 map obj (optional)
-    optional parsed mapping file; keys are mapping file
-    column headers, values are d3 map obj with key as
-    node name and value as file value
-
-Returns:
-========
-- formatted HTML with all node data
-
-*/
-function formatTooltip(d, mapParse=null) {
-    var html = "<div class='tip-title'>Leaf <span class='tip-name'>" + d.name + "</span></div>";
-
-    if (mapParse) {
-        mapParse.keys().forEach(function(col) {
-            html += '<p class="tip-row"><span class="tip-meta-title">- ' + col + '</span>: <span class="tip-meta-name">' + mapParse.get(col).get(d.name) + '</span><p>';
-        })
-    }
-
-    return html;
-}
 
 
 
@@ -1108,73 +1169,9 @@ function formatTooltip(d, mapParse=null) {
 
 
 
-// function called (from front-end GUI) every time
-// GUI is updated by user
-// calls updateTree() so that tree style can be updated
-function guiUpdate() {
-
-    // get checkbox state
-    skipDistanceLabel = !$('#toggle_distance').is(':checked');
-    skipLeafLabel = !$('#toggle_leaf').is(':checked');
-
-    // get dropdown values
-    var leafColor, backgroundColor;
-    if (mappingFile) {
-        var e = document.getElementById("leafColor");
-        leafColor = e.options[e.selectedIndex].value;
-        var e = document.getElementById("backgroundColor");
-        backgroundColor = e.options[e.selectedIndex].value;
-    }
-
-    updateTree(skipDistanceLabel, skipLeafLabel, leafColor, backgroundColor);
-}
 
 
 
-// when called, will open a new tab with the SVG
-// which can then be right-clicked and 'save as...'
-function saveSVG(){
-
-    // get styles from all required stylesheets
-    // http://www.coffeegnome.net/converting-svg-to-png-with-canvg/
-    var style = "\n";
-    var requiredSheets = ['phylogram_d3.css', 'open_sans.css']; // list of required CSS
-    for (var i=0; i<document.styleSheets.length; i++) {
-        var sheet = document.styleSheets[i];
-        if (sheet.href) {
-            var sheetName = sheet.href.split('/').pop();
-            if (requiredSheets.indexOf(sheetName) != -1) {
-                var rules = sheet.rules;
-                if (rules) {
-                    for (var j=0; j<rules.length; j++) {
-                        style += (rules[j].cssText + '\n');
-                    }
-                }
-            }
-        }
-    }
-
-    var svg = d3.select("svg"),
-        img = new Image(),
-        serializer = new XMLSerializer(),
-        width = svg.node().getBBox().width,
-        height = svg.node().getBBox().height;
-
-    // prepend style to svg
-    svg.insert('defs',":first-child")
-    d3.select("svg defs")
-        .append('style')
-        .attr('type','text/css')
-        .html(style);
-
-
-    // generate IMG in new tab
-    var svgStr = serializer.serializeToString(svg.node());
-    img.src = 'data:image/svg+xml;base64,'+window.btoa(unescape(encodeURIComponent(svgStr)));
-    var tab = window.open()
-    tab.document.write('<img src="' + img.src + '"/>');
-    tab.document.title = 'phylogram d3';
-};
 
 
 
