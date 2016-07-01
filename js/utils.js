@@ -965,15 +965,18 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
 
         // update node styling
         tree.selectAll('g.leaf.node circle')
+            .transition()
             .style('fill', function(d) {
                 return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'greenYellow'
             })
             .style('stroke', function(d) {
-                return mapVals.get(d.name) ? 'white' : 'yellowGreen'
+                return mapVals.get(d.name) ? 'gray' : 'yellowGreen'
             })
     } else if (leafColor == '') {
         tree.selectAll('g.leaf.node circle')
-            .attr('style','null')
+            .transition()
+            .style('fill','greenYellow')
+            .style('stroke','yellowGreen');
     }
 
 
@@ -992,6 +995,7 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
 
         // update node background style
         tree.selectAll('g.leaf.node rect')
+            .transition()
             .attr("width", function(d) { 
                 var name = d.name.replace('.','_');
                 var rectWidth = d3.select('#leaf_' + name + ' rect').node().getBBox().width;
@@ -1010,7 +1014,9 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
             .style('opacity',1)
     } else if (leafColor == '') {
         tree.selectAll('g.leaf.node rect')
-            .attr('style','null')
+            .transition(2000)
+            .style('opacity','1e-6')
+            .attr('width','0')
     }
 
     resizeSVG();
