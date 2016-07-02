@@ -600,10 +600,32 @@ Parameters:
 
 function buildGUI(selector, mapParse=null) {
 
-    var gui = d3.select(selector).append("div")
+    var collapse = d3.select(selector).append('div')
+        .attr("class","panel panel-default")
         .attr("id", "gui")
-        .attr("class","row form-horizontal")
         .style("margin-top","20px");
+      
+    collapse.append("div")
+        .attr("class","panel-heading")
+        .attr("role","tab")
+      .append("h4")
+        .attr("class","panel-title")
+      .append("a")
+        .attr("role","button")
+        .attr("data-toggle","collapse")
+        .attr("data-parent","#accordion")
+        .attr("href","#collapseOne")
+        .attr("aria-expanded","true")
+        .attr("aria-controls","collapseOne")
+        .text("Controls")
+
+    var gui = collapse.append("div")
+        .attr("id","collapseOne")
+        .attr("class","panel-collapse collapse in")
+        .attr("role","tabpanel")
+        .attr("aria-labelledby","headingOne")
+      .append("div")
+        .attr("class","panel-body")
 
     var col1 = gui.append("div")
         .attr("class","col-sm-2")
