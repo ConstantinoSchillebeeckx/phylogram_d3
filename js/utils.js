@@ -948,14 +948,12 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
 
     // col for legend
     if (leafColor || backgroundColor) {
-
         var legend = d3.select("svg g").append("g")
             .attr("id", "legendID")
             .attr("transform","translate(" + d3.select("svg").node().getBBox().width + ",0)");
-
     }
 
-    // update leaf color
+    // update leaf node
     if (leafColor && leafColor != '') {
         var colorScale = colorScales.get(leafColor); // color scale
         var mapVals = mapParse.get(leafColor); // d3.map() obj with leaf name as key
@@ -980,7 +978,7 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
     }
 
 
-    // update background color
+    // update leaf background 
     if (backgroundColor && backgroundColor != '') {
         var colorScale = colorScales.get(backgroundColor) // color scale
         var mapVals = mapParse.get(backgroundColor) // d3.map() obj with leaf name as key 
@@ -998,15 +996,9 @@ function updateTree(skipDistanceLabel, skipLeafLabel, leafColor=null, background
             .transition()
             .attr("width", function(d) { 
                 var name = d.name.replace('.','_');
-                var rectWidth = d3.select('#leaf_' + name + ' rect').node().getBBox().width;
-                var gWidth;
-                if (rectWidth > 0) { // remove extra that was added otherwise background width keeps growing
-                    gWidth = d3.select('#leaf_' + name).node().getBBox().width - 5;
-                } else {
-                    gWidth = d3.select('#leaf_' + name).node().getBBox().width;
-                }
+                var textWidth = d3.select('#leaf_' + name + ' text').node().getComputedTextLength();
                 var radius = d3.select('#leaf_' + name + ' circle').node().getBBox().height / 2.0;
-                return gWidth - radius + 5; // add extra so background is wider than label
+                return textWidth + radius + 10; // add extra so background is wider than label
             })
             .style('fill', function(d) {
                 return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'none'
