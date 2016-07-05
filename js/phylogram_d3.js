@@ -13,7 +13,8 @@ var mapParse, colorScales, mappingFile;
 // automatically scalled to fit tree
 var margin = {top: 30, right: 0, bottom: 20, left: 50};
 var startW = 800, startH = 600;
-
+var tree, nodes, links;
+var width, height;
 // tooltip 
 var tip = d3.tip()
     .attr('class', 'd3-tip')
@@ -83,7 +84,7 @@ function init(dat, div, mapp=null) {
             mapParse = parsed[0];
             colorScales = parsed[1];
 
-            options = {
+            var options = {
                 mapping: mapParse,
                 colorScale: colorScales,
             }
@@ -133,8 +134,8 @@ function buildTree(div, newick, options) {
     var gui = buildGUI(div, options.mapping);
 
     // setup SVG and divs
-    var width = startW - margin.left - margin.right,
-        height = startH - margin.top - margin.bottom;
+    width = startW - margin.left - margin.right;
+    height = startH - margin.top - margin.bottom;
 
     var tmp = d3.select(div).append("div")
             .attr("class","row")
@@ -154,15 +155,15 @@ function buildTree(div, newick, options) {
     svg.call(tip);
 
     // setup tree
-    var tree = d3.layout.cluster()
+    tree = d3.layout.cluster()
         .sort(function(node) { return node.children ? node.children.length : -1; })
         .children(function(node) {
             return node.branchset
         })
         .size([height, width]);
 
-    var nodes = tree.nodes(newick);
-    var links = tree.links(nodes);
+    nodes = tree.nodes(newick);
+    links = tree.links(nodes);
 
     // scale tree
     // note y is horizontal direction
@@ -176,14 +177,12 @@ function buildTree(div, newick, options) {
             .range([0, height]);
     } else {
         var yscale = scaleBranchLengths(nodes, width);
-        var xscale = scaleLeafSeparation(nodes);
+        var xscale = scaleLeafSeparation(tree, nodes);
     }
 
-    // format tree (ndes, links, labels, ruler)
+    // initial format of tree (nodes, links, labels, ruler)
     formatTree(svg, nodes, links, yscale, xscale, height, options);
 
-
-    resizeSVG();
     showSpinner(null, false); // hide spinner
 
 }
@@ -197,11 +196,20 @@ function buildTree(div, newick, options) {
 
 Function called from front-end everytime GUI
 is changed; this will redraw the tree based
-on GUI settings
+on GUI settings.
+
+Assumes globals (nodes, links) exist
 
 */
-function updateTree() {
+function updateTree(options) {
 
+    var svg = d3.select('svg g');
+
+    if (options != undefined && 'scaleH' in options) {
+        var sep = options['scaleH'];
+    } else {
+        var sep = 22; // default min separation between leaves
+    }
 
     // get checkbox state
     skipDistanceLabel = !$('#toggle_distance').is(':checked');
@@ -216,18 +224,26 @@ function updateTree() {
         backgroundColor = e.options[e.selectedIndex].value;
     }
 
+    scaleLeafSeparation(tree, nodes, sep); // this will update x-pos
 
-    tree = d3.select('svg');
+    // scale vertical pos
+    svg.selectAll("g.node")
+        .data(nodes)
+        .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+    svg.selectAll("path.link")
+        .data(links)
+        .attr("d", elbow);
+
 
     // toggle leaf labels
-    tree.selectAll('g.leaf.node text')
+    svg.selectAll('g.leaf.node text')
         .style('fill-opacity', skipLeafLabel? 1e-6 : 1 )
 
     // toggle distance labels
-    tree.selectAll('g.inner.node text')
+    svg.selectAll('g.inner.node text')
         .style('fill-opacity', skipDistanceLabel? 1e-6 : 1 )
 
-    tree.selectAll('g.leaf.node text')
+    svg.selectAll('g.leaf.node text')
         .text(function(d) { return skipDistanceLabel ? d.name : d.name + ' ('+d.length+')'; });
 
     // remove legend if one exists so we can update
@@ -239,6 +255,8 @@ function updateTree() {
             .attr("id", "legendID")
             .attr("transform","translate(" + d3.select("svg").node().getBBox().width + ",0)");
     }
+
+
     // update leaf node
     if (leafColor && leafColor != '') {
         var colorScale = colorScales.get(leafColor); // color scale
@@ -248,7 +266,7 @@ function updateTree() {
         generateLegend(leafColor, mapVals, legend, colorScale, 'circle', 'translate(5,0)');
 
         // update node styling
-        tree.selectAll('g.leaf.node circle')
+        svg.selectAll('g.leaf.node circle')
             .transition()
             .style('fill', function(d) {
                 return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'greenYellow'
@@ -257,7 +275,7 @@ function updateTree() {
                 return mapVals.get(d.name) ? 'gray' : 'yellowGreen'
             })
     } else if (leafColor == '') {
-        tree.selectAll('g.leaf.node circle')
+        svg.selectAll('g.leaf.node circle')
             .transition()
             .style('fill','greenYellow')
             .style('stroke','yellowGreen');
@@ -278,7 +296,7 @@ function updateTree() {
         generateLegend(backgroundColor, mapVals, legend, colorScale, 'rect', 'translate(5,' + offset + ')');
 
         // update node background style
-        tree.selectAll('g.leaf.node rect')
+        svg.selectAll('g.leaf.node rect')
             .transition()
             .attr("width", function(d) {
                 var name = d.name.replace('.','_');
@@ -291,11 +309,12 @@ function updateTree() {
             })
             .style('opacity',1)
     } else if (leafColor == '') {
-        tree.selectAll('g.leaf.node rect')
+        svg.selectAll('g.leaf.node rect')
             .transition(2000)
             .style('opacity','1e-6')
             .attr('width','0')
     }
+
     resizeSVG();
 
 }

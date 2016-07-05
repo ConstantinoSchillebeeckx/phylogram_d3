@@ -13,10 +13,15 @@
 
 Finds the smallest vertical distance between leaves
 and scales things to a minimum distance so that
-branches don't overlap
+branches don't overlap.
+
+Note that this will update the node.x positions
+for all nodes found in passed var 'nodes' as well
+as update the global 'links' var.
 
 Parameters:
 ===========
+- tree : d3.tree layout (cluster) 
 - nodes : d3.tree nodes
 - minSeparation : int (default: 22)
                   mininum distance between leaf nodes
@@ -28,7 +33,7 @@ Returns:
            svg height, it will scale properly so leaf
            nodes have minimum separation
 */
-function scaleLeafSeparation(nodes, minSeparation=22) {
+function scaleLeafSeparation(tree, nodes, minSeparation=22) {
 
     var traverseTree = function(root, callback) {
         callback(root);
@@ -63,9 +68,11 @@ function scaleLeafSeparation(nodes, minSeparation=22) {
         .range([0, minSeparation])
         .domain([0, d3.min(leafXdist)])
 
+    // update node x pos & links
     traverseTree(nodes[0], function(node) {
         node.x = xScale(node.x)
     })
+    links = tree.links(nodes);
 
     return xScale;
 }
@@ -137,15 +144,15 @@ function formatLinks(svg, links) {
           .attr("class", "link")
           .attr("d", elbow);
 
-    // http://bl.ocks.org/mbostock/2429963
-    // draw right angle links to join nodes
-    function elbow(d, i) {
-      return "M" + d.source.y + "," + d.source.x
-          + "V" + d.target.x + "H" + d.target.y;
-    }
 }
 
 
+// http://bl.ocks.org/mbostock/2429963
+// draw right angle links to join nodes
+function elbow(d, i) {
+  return "M" + d.source.y + "," + d.source.x
+      + "V" + d.target.x + "H" + d.target.y;
+}
 
 /* Add labels (name, distance) to tree
 
@@ -260,6 +267,7 @@ function formatTree(svg, nodes, links, yscale, xscale, height, options) {
         formatLinks(svg, links);
         formatNodes(svg, nodes);
         formatLabels(svg, options);
+        resizeSVG();
     });
 }
 
@@ -665,9 +673,9 @@ function buildGUI(selector, mapParse=null) {
         .attr('title','Save image')
 
     d3.select(selector).append("div")
-        .attr("id","slider1")
+        .attr("id","scaleH")
 
-    d3.select('#slider1').call(d3.slider().on("slide", function(evt, value) { console.log(value); }));
+    d3.select('#scaleH').call(d3.slider().min(22).max(100).step(1).on("slide", function(evt, value) { updateTree({'scaleH':value}); }));
 
     // if mapping file was passed
     if (mapParse && !mapParse.empty()) {
