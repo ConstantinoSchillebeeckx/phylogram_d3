@@ -682,11 +682,13 @@ function buildGUI(selector, mapParse=null) {
         .attr("type","radio")
         .attr("name","treeType")
         .attr("id","1")
-        .attr("value","default")
+        .attr("onclick","updateTree()")
+        .attr("checked","checked")
+        .attr("value","rectangular")
 
     tmp.append("p")
-        .style("margin-top","2px")
-        .text("Default")
+        .style("margin-top","3px")
+        .text("Rectangular")
 
     var tmp = col1.append("label")
         .attr("class","radio-inline")
@@ -695,10 +697,11 @@ function buildGUI(selector, mapParse=null) {
         .attr("type","radio")
         .attr("name","treeType")
         .attr("id","2")
+        .attr("onclick","updateTree()")
         .attr("value","radial")
         
     tmp.append("p")
-        .style("margin-top","2px")
+        .style("margin-top","3px")
         .text("Radial")
 
     var guiRow1 = gui.append("div")

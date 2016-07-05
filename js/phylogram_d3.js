@@ -15,6 +15,8 @@ var margin = {top: 30, right: 0, bottom: 20, left: 50};
 var startW = 800, startH = 600;
 var tree, nodes, links;
 var width, height;
+var treeType = ''; // rectangular or circular
+var newick;
 // tooltip 
 var tip = d3.tip()
     .attr('class', 'd3-tip')
@@ -72,7 +74,7 @@ function init(dat, div, mapp=null) {
 
 
     // process Newick tree
-    var newick = processNewick(fileStr);
+    newick = processNewick(fileStr);
 
 
     // render tree
@@ -153,7 +155,8 @@ function buildTree(div, newick, options) {
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     svg.call(tip);
-
+    updateTree(options);
+/*
     // setup tree
     tree = d3.layout.cluster()
         .sort(function(node) { return node.children ? node.children.length : -1; })
@@ -182,7 +185,7 @@ function buildTree(div, newick, options) {
 
     // initial format of tree (nodes, links, labels, ruler)
     formatTree(svg, nodes, links, yscale, xscale, height, options);
-
+*/
     showSpinner(null, false); // hide spinner
 
 }
@@ -201,9 +204,10 @@ on GUI settings.
 Assumes globals (nodes, links) exist
 
 */
-function updateTree(options) {
+function updateTree(options={}) {
 
-    var svg = d3.select('svg g');
+    // get tree type
+    var radio = $("input[type='radio']:checked").val();
 
     // get checkbox state
     skipDistanceLabel = !$('#toggle_distance').is(':checked');
@@ -212,6 +216,47 @@ function updateTree(options) {
     // get slider vals
     var sliderScaleH = scaleHSlider.value(); 
     var sliderLeafR = leafRSlider.value();
+
+    var svg = d3.select('svg g');
+    if (radio != treeType) { // if tree type change
+
+        d3.select('svg g').selectAll('*').remove(); // remove any existing svg
+
+        if (radio == 'rectangular') {
+            // setup rectangular tree
+            tree = d3.layout.cluster()
+                .sort(function(node) { return node.children ? node.children.length : -1; })
+                .children(function(node) {
+                    return node.branchset
+                })
+                .size([height, width]);
+
+            nodes = tree.nodes(newick);
+            links = tree.links(nodes);
+
+            // scale tree
+            // note y is horizontal direction
+            // x is vertical direction
+            if (options.skipBranchLengthScaling) {
+                var yscale = d3.scale.linear()
+                    .domain([0, width])
+                    .range([0, width]);
+                var xscale = d3.scale.linear()
+                    .domain([0, height])
+                    .range([0, height]);
+            } else {
+                var yscale = scaleBranchLengths(nodes, width);
+                var xscale = scaleLeafSeparation(tree, nodes);
+            }
+
+            // initial format of tree (nodes, links, labels, ruler)
+            formatTree(svg, nodes, links, yscale, xscale, height, options);
+        }
+
+        treeType = radio;
+    }
+
+
 
     // get dropdown values
     var leafColor, backgroundColor;
