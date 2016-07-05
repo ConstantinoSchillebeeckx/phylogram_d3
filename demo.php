@@ -22,7 +22,6 @@
         <script type="text/javascript" src="js/utils.js"></script>
         <script type="text/javascript" src="js/d3.slider.js"></script>
 
-
         <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
 

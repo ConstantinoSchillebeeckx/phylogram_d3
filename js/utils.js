@@ -615,6 +615,7 @@ function buildGUI(selector, mapParse=null) {
       
     collapse.append("div")
         .attr("class","panel-heading")
+        .style("overflow","auto")
         .attr("role","tab")
       .append("h4")
         .attr("class","panel-title")
@@ -622,13 +623,20 @@ function buildGUI(selector, mapParse=null) {
         .attr("role","button")
         .attr("data-toggle","collapse")
         .attr("data-parent","#accordion")
-        .attr("href","#collapseOne")
+        .attr("href","#collapseGUI")
         .attr("aria-expanded","true")
-        .attr("aria-controls","collapseOne")
-        .text("Controls")
+        .attr("aria-controls","collapseGUI")
+        .html("<i class='fa fa-chevron-down'></i> Controls")
+      .append("button")
+        .attr('class', 'btn btn-success pull-right btn')
+        .style('padding','1px 7px')
+        .on("click",saveSVG)
+        .append('i')
+        .attr('class','fa fa-floppy-o')
+        .attr('title','Save image')
 
     var gui = collapse.append("div")
-        .attr("id","collapseOne")
+        .attr("id","collapseGUI")
         .attr("class","panel-collapse collapse in")
         .attr("role","tabpanel")
         .attr("aria-labelledby","headingOne")
@@ -665,12 +673,14 @@ function buildGUI(selector, mapParse=null) {
         .text("Toggle leaf labels")
 
     // save button
+    /*
     gui.append("button")
         .attr('class', 'btn btn-success')
         .on("click",saveSVG)
         .append('i')
         .attr('class','fa fa-floppy-o')
         .attr('title','Save image')
+    */
 
     d3.select(selector).append("div")
         .attr("id","scaleH")
@@ -1059,9 +1069,11 @@ function range(start, len) {
     return arr;
 }
 
-
-
-
+$(document).ready(function(){
+    $('#collapseGUI').on('hide.bs.collapse', function () {
+        console.log('here')
+    })
+})
 
 
 
