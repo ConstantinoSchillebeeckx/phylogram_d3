@@ -6,8 +6,6 @@
 
 
 
-/* Primary tree building function
-
 
 /* Ensure leaf nodes are not overlapping
 
@@ -433,8 +431,11 @@ tree as well as generating color scales
 for use in the legend and coloring the tree.
 
 Note that any QIIME formatted taxonomy data
-found will automatically be cleaned up by removing
-the family prefix and replacing ; with |
+found will automatically be cleaned up removing
+the level prefix and splitting the taxonomy on
+each level into its own metadata category.  This
+allows users to color by a specific taxonomic
+level.
 
 It is assumed that the first column in the mapping
 file has the same values as the leaf names.
@@ -468,23 +469,36 @@ function parseMapping(data) {
     var id = colTSV[0];
     colTSV.shift(); // remove first col (ID)
 
-
     var mapParse = d3.map(); // {colHeader: { ID1: val, ID2: val } }
 
+    taxaDat = {};
     data.forEach(function(row) {
         var leafName = row[id];
-        colTSV.forEach( function(col) {
-            var colVal = row[col];
+        colTSV.forEach( function(col, i) {
+            var colVal = cleanTaxa(row[col]);
             if (!mapParse.has(col)) {
                 var val = d3.map();
             } else {
                 var val = mapParse.get(col);
             }
-            val.set(leafName, colVal);
-            mapParse.set(col, val);
+
+            if (typeof colVal === 'object') { // if data was taxa info, it comes back as an obj
+                for (var level in colVal) {
+                    var taxa = colVal[level];
+                    if (!mapParse.has(level)) {
+                        var val = d3.map();
+                    } else {
+                        var val = mapParse.get(level);
+                    }
+                    val.set(leafName, taxa);
+                    mapParse.set(level, val);
+                }
+            } else {
+                val.set(leafName, colVal);
+                mapParse.set(col, val);
+            }
         })
     })
-
 
     // setup color scales for mapping columns
     // keys are mapping column headers and values are scales
@@ -525,10 +539,9 @@ function parseMapping(data) {
 /* Clean-up a QIIME formatted taxa string
 
 Will clean-up a QIIME formatted taxonomy string
-by removing the class prefix and replacing the
-semicolon with ' | '.  Function will check
-if string is taxa data if it leads with 'k__',
-otherwise it returns passed string.
+by removing the class prefix and returning the
+original taxa string as an object split into taxonomic
+levels e.g. {"Kingdom":"bacteria", ... }
 
 Parameters:
 ===========
@@ -552,7 +565,17 @@ function cleanTaxa(taxa) {
             str = str.substring(0, str.length - 1);
         }
 
-        return str.split(";").join(" | ");
+        var clean = str.split(";");
+
+        var ret = {};
+
+        // construct object
+        var taxaLevels = ['Taxa [Kingdom]','Taxa [Phylum]','Taxa [Class]','Taxa [Order]','Taxa [Family]','Taxa [Genus]','Taxa [Species]'];
+        clean.forEach(function(taxa, i) {
+            ret[taxaLevels[i]] = taxa;
+        })
+
+        return ret;
 
     } else {
 
@@ -626,7 +649,7 @@ function buildGUI(selector, mapParse=null) {
         .attr("href","#collapseGUI")
         .attr("aria-expanded","true")
         .attr("aria-controls","collapseGUI")
-        .html("<i class='fa fa-chevron-down'></i> Controls")
+        .html("<i class='fa fa-chevron-right'></i> Controls")
       .append("button")
         .attr('class', 'btn btn-success pull-right btn')
         .style('padding','1px 7px')
@@ -642,6 +665,8 @@ function buildGUI(selector, mapParse=null) {
         .attr("aria-labelledby","headingOne")
       .append("div")
         .attr("class","panel-body")
+
+    //$('#collapseGUI').collapse('toggle'); // strange drag and slide behavior
 
     var guiRow1 = gui.append("div")
         .attr("class","row")
@@ -801,49 +826,6 @@ function autoSort(arr, unique=false) {
 
 
 
-/* Clean-up a QIIME formatted taxa string
-
-Will clean-up a QIIME formatted taxonomy string
-by removing the class prefix and replacing the
-semicolon with ' | '.  Function will check
-if string is taxa data if it leads with 'k__',
-otherwise it returns passed string.
-
-Parameters:
-===========
-- taxa : string
-    QIIME formatted string
-
-Returns:
-========
-- cleaned string
-
-*/
-function cleanTaxa(taxa) {
-
-    if ((typeof taxa === 'string' || taxa instanceof String) && taxa.slice(0, 2) == 'k_') {
-
-        var str = taxa.replace(/.__/g, "");
-
-        // some taxa strings end in ';' some don't,
-        // remove it if it exists
-        if (str.substr(str.length - 1) == ';') {
-            str = str.substring(0, str.length - 1);
-        }
-
-        return str.split(";").join(" | ");
-
-    } else {
-        
-        return taxa;
-
-    }
-
-}
-
-
-
-
 
 
 // helper function for filtering input TSV values
@@ -879,7 +861,7 @@ Returns:
 
 */
 function formatTooltip(d, mapParse=null) {
-    var html = "<div class='tip-title'>Leaf <span class='tip-name'>" + d.name + "</span></div>";
+    var html = "<div class='tip-title'>Leaf <span class='tip-name'>" + d.name + "</span></div><hr>";
 
     if (mapParse) {
         mapParse.keys().forEach(function(col) {
@@ -1077,11 +1059,6 @@ function range(start, len) {
     return arr;
 }
 
-$(document).ready(function(){
-    $('#collapseGUI').on('hide.bs.collapse', function () {
-        console.log('here')
-    })
-})
 
 
 
