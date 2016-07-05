@@ -668,6 +668,39 @@ function buildGUI(selector, mapParse=null) {
 
     //$('#collapseGUI').collapse('toggle'); // strange drag and slide behavior
 
+    var guiRow0 = gui.append("div")
+        .attr("class","row form-group")
+        .style("margin-bottom","0px")
+
+    var col1 = guiRow0.append("div")
+        .attr("class","col-sm-4")
+
+    var tmp = col1.append("label")
+        .attr("class","radio-inline")
+
+    tmp.append("input")
+        .attr("type","radio")
+        .attr("name","treeType")
+        .attr("id","1")
+        .attr("value","default")
+
+    tmp.append("p")
+        .style("margin-top","2px")
+        .text("Default")
+
+    var tmp = col1.append("label")
+        .attr("class","radio-inline")
+
+    tmp.append("input")
+        .attr("type","radio")
+        .attr("name","treeType")
+        .attr("id","2")
+        .attr("value","radial")
+        
+    tmp.append("p")
+        .style("margin-top","2px")
+        .text("Radial")
+
     var guiRow1 = gui.append("div")
         .attr("class","row")
 
