@@ -205,15 +205,13 @@ function updateTree(options) {
 
     var svg = d3.select('svg g');
 
-    if (options != undefined && 'scaleH' in options) {
-        var sep = options['scaleH'];
-    } else {
-        var sep = 22; // default min separation between leaves
-    }
-
     // get checkbox state
     skipDistanceLabel = !$('#toggle_distance').is(':checked');
     skipLeafLabel = !$('#toggle_leaf').is(':checked');
+
+    // get slider vals
+    var sliderScaleH = scaleHSlider.value(); 
+    var sliderLeafR = leafRSlider.value();
 
     // get dropdown values
     var leafColor, backgroundColor;
@@ -224,7 +222,7 @@ function updateTree(options) {
         backgroundColor = e.options[e.selectedIndex].value;
     }
 
-    scaleLeafSeparation(tree, nodes, sep); // this will update x-pos
+    scaleLeafSeparation(tree, nodes, sliderScaleH); // this will update x-pos
 
     // scale vertical pos
     svg.selectAll("g.node")
@@ -233,6 +231,10 @@ function updateTree(options) {
     svg.selectAll("path.link")
         .data(links)
         .attr("d", elbow);
+
+    // scale leaf radius
+    svg.selectAll("g.leaf circle")
+        .attr("r",sliderLeafR);
 
 
     // toggle leaf labels

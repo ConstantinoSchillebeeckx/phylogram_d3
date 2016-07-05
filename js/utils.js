@@ -774,12 +774,20 @@ function buildGUI(selector, mapParse=null) {
     col1.append("div")
         .attr("id","scaleH")
 
-    d3.select('#scaleH').call(
-        d3.slider().min(22).max(100).step(1).on("slide", 
-            function(evt, value) { 
-                updateTree({'scaleH':value}); 
-            })
-    );
+    scaleHSlider = d3.slider().min(22).max(100).step(1).on("slide", function(evt, value) { updateTree(); });
+    d3.select('#scaleH').call(scaleHSlider);
+
+    var col2 = guiRow2.append("div")
+        .attr("class","col-sm-2")
+
+    col2.append("label")
+        .text("Leaf radius")
+
+    col2.append("div")
+        .attr("id","leafR")
+
+    leafRSlider = d3.slider().min(5).max(20).on("slide", function(evt, value) { updateTree(); });
+    d3.select("#leafR").call(leafRSlider);
 }
 
 
