@@ -9,6 +9,7 @@
         <link href="css/bootstrap.min.css" rel="stylesheet">
         <link href="css/open_sans.css" rel="stylesheet">
         <link href="css/phylogram_d3.css" rel="stylesheet">
+        <link href="css/d3.slider.css" rel="stylesheet">
 
         <!-- JS -->
         <script type="text/javascript" src="js/jquery.min.js"></script>
@@ -19,6 +20,7 @@
         <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
         <script type="text/javascript" src="js/phylogram_d3.js"></script>
         <script type="text/javascript" src="js/utils.js"></script>
+        <script type="text/javascript" src="js/d3.slider.js"></script>
 
 
         <meta name="viewport" content="width=device-width, initial-scale=1">
