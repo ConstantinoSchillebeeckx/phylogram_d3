@@ -643,7 +643,10 @@ function buildGUI(selector, mapParse=null) {
       .append("div")
         .attr("class","panel-body")
 
-    var col1 = gui.append("div")
+    var guiRow1 = gui.append("div")
+        .attr("class","row")
+
+    var col1 = guiRow1.append("div")
         .attr("class","col-sm-2")
 
     var check1 = col1.append("div")
@@ -672,26 +675,13 @@ function buildGUI(selector, mapParse=null) {
     check2.append('text')
         .text("Toggle leaf labels")
 
-    // save button
-    /*
-    gui.append("button")
-        .attr('class', 'btn btn-success')
-        .on("click",saveSVG)
-        .append('i')
-        .attr('class','fa fa-floppy-o')
-        .attr('title','Save image')
-    */
 
-    d3.select(selector).append("div")
-        .attr("id","scaleH")
-
-    d3.select('#scaleH').call(d3.slider().min(22).max(100).step(1).on("slide", function(evt, value) { updateTree({'scaleH':value}); }));
 
     // if mapping file was passed
     if (mapParse && !mapParse.empty()) {
 
         // select for leaf color
-        var col2 = gui.append("div")
+        var col2 = guiRow1.append("div")
             .attr("class","col-sm-3 form-group")
 
         col2.append("label")
@@ -720,7 +710,7 @@ function buildGUI(selector, mapParse=null) {
 
 
         // select for background color
-        var col3 = gui.append("div")
+        var col3 = guiRow1.append("div")
             .attr("class","col-sm-3 form-group")
 
         col3.append("label")
@@ -747,6 +737,24 @@ function buildGUI(selector, mapParse=null) {
         // select for background color
     }
 
+    var guiRow2 = gui.append("div")
+        .attr("class","row")
+
+    var col1 = guiRow2.append("div")
+        .attr("class","col-sm-2")
+
+    col1.append("label")
+        .text("Vertical scale")
+
+    col1.append("div")
+        .attr("id","scaleH")
+
+    d3.select('#scaleH').call(
+        d3.slider().min(22).max(100).step(1).on("slide", 
+            function(evt, value) { 
+                updateTree({'scaleH':value}); 
+            })
+    );
 }
 
 
