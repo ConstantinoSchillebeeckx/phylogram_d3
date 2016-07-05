@@ -235,6 +235,8 @@ function updateTree(options) {
     // scale leaf radius
     svg.selectAll("g.leaf circle")
         .attr("r",sliderLeafR);
+    svg.selectAll("g.leaf text")
+        .attr("dx", sliderLeafR+3);
 
 
     // toggle leaf labels
