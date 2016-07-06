@@ -5,8 +5,6 @@
 */
 
 
-
-
 /* Ensure leaf nodes are not overlapping
 
 Finds the smallest vertical distance between leaves
@@ -651,6 +649,8 @@ margins.
 
 function resizeSVG() {
 
+    console.log('here')
+
     var svgRect = d3.select('svg').node().getBoundingClientRect();
     var g = d3.select('svg g').node();
     var dim = g.getBBox();
@@ -740,36 +740,21 @@ function buildGUI(selector, mapParse=null) {
         .style("margin-bottom","0px")
 
     var col1 = guiRow0.append("div")
-        .attr("class","col-sm-4")
+        .attr("class","col-sm-4 btn-toolbar")
 
-    var tmp = col1.append("label")
-        .attr("class","radio-inline")
+    var tmp = col1.append("button")
+        .attr("class","btn btn-info")
+        .attr("id","rectangular")
+        .attr("title","Generate a rectangular layout")
+        .attr("onclick","updateTree({'treeType':this.id})")
+        .html('<i class="fa fa-square-o fa-lg" aria-hidden="true"></i>')
+    col1.append("button")
+        .attr("class","btn btn-info")
+        .attr("id","radial")
+        .attr("title","Generate a radial layout")
+        .attr("onclick","updateTree({'treeType':this.id})")
+        .html('<i class="fa fa-circle-thin fa-lg" aria-hidden="true"></i>')
 
-    tmp.append("input")
-        .attr("type","radio")
-        .attr("name","treeType")
-        .attr("id","1")
-        .attr("onclick","updateTree()")
-        .attr("checked","checked")
-        .attr("value","rectangular")
-
-    tmp.append("p")
-        .style("margin-top","3px")
-        .text("Rectangular")
-
-    var tmp = col1.append("label")
-        .attr("class","radio-inline")
-
-    tmp.append("input")
-        .attr("type","radio")
-        .attr("name","treeType")
-        .attr("id","2")
-        .attr("onclick","updateTree()")
-        .attr("value","radial")
-        
-    tmp.append("p")
-        .style("margin-top","3px")
-        .text("Radial")
 
     var guiRow1 = gui.append("div")
         .attr("class","row")

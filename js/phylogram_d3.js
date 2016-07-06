@@ -138,7 +138,7 @@ function buildTree(div, newick, options) {
     // build GUI
     var gui = buildGUI(div, options.mapping);
 
-
+    options.treeType = 'rectangular';
     updateTree(options);
 
     showSpinner(null, false); // hide spinner
@@ -162,9 +162,6 @@ Assumes globals (nodes, links) exist
 function updateTree(options={}) {
 
     // GET GUI VALUES
-    // get tree type
-    var radio = $("input[type='radio']:checked").val();
-    options['treeType'] = radio;
 
     // get checkbox state
     skipDistanceLabel = !$('#toggle_distance').is(':checked');
@@ -190,7 +187,7 @@ function updateTree(options={}) {
     // we don't call this on every GUI update in case of
     // very large tree - all we care about is reformatting
     // the tree (instead of generating new objects)
-    if (radio != treeType) { // if tree type change
+    if (options.treeType != treeType) { // if tree type change
 
         d3.select('#canvas').remove(); // remove any existing canvas area
 
@@ -211,7 +208,7 @@ function updateTree(options={}) {
                 .attr("xmlns","http://www.w3.org/2000/svg")
             .append("svg:g")
 
-        if (radio == 'rectangular') {
+        if (options.treeType == 'rectangular') {
             // setup rectangular tree
             tree = d3.layout.cluster()
                 .sort(function(node) { return node.children ? node.children.length : -1; })
@@ -240,7 +237,7 @@ function updateTree(options={}) {
 
             // initial format of tree (nodes, links, labels, ruler)
             formatTree(svg, nodes, links, yscale, xscale, height, options);
-        } else if (radio == 'radial') {
+        } else if (options.treeType == 'radial') {
 
             tree = d3.layout.cluster()
                 .size([360, innerRadius])
@@ -256,12 +253,12 @@ function updateTree(options={}) {
             formatTree(svg, nodes, links, yscale, xscale, height, options);
         }
 
-        treeType = radio;
+        treeType = options.treeType;
     }
 
 
 
-    if (radio == 'rectangular') {
+    if (options.treeType == 'rectangular') {
         scaleLeafSeparation(tree, nodes, sliderScaleH); // this will update x-pos
 
         // scale vertical pos
@@ -362,7 +359,6 @@ function updateTree(options={}) {
 
     svg.call(tip);
     resizeSVG();
-
 }
 
 
