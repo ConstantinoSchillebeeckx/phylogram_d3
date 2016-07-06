@@ -31,6 +31,12 @@ text.rule {
 
 line.rule {
     stroke: #ddd;
+    fill: none;
+}
+
+circle.rule {
+    stroke: #ddd;
+    fill: none;
 }
 /* background distance rulers */
 

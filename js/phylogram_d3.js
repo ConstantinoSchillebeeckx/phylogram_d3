@@ -208,6 +208,7 @@ function updateTree(options={}) {
                 .attr("xmlns","http://www.w3.org/2000/svg")
             .append("svg:g")
 
+
         if (options.treeType == 'rectangular') {
             // setup rectangular tree
             tree = d3.layout.cluster()
@@ -217,26 +218,6 @@ function updateTree(options={}) {
                 })
                 .size([height, width]);
 
-            nodes = tree.nodes(newick);
-            links = tree.links(nodes);
-
-            // scale tree
-            // note y is horizontal direction
-            // x is vertical direction
-            if (options.skipBranchLengthScaling) {
-                var yscale = d3.scale.linear()
-                    .domain([0, width])
-                    .range([0, width]);
-                var xscale = d3.scale.linear()
-                    .domain([0, height])
-                    .range([0, height]);
-            } else {
-                var yscale = scaleBranchLengths(nodes, width);
-                var xscale = scaleLeafSeparation(tree, nodes);
-            }
-
-            // initial format of tree (nodes, links, labels, ruler)
-            formatTree(svg, nodes, links, yscale, xscale, height, options);
         } else if (options.treeType == 'radial') {
 
             tree = d3.layout.cluster()
@@ -246,12 +227,28 @@ function updateTree(options={}) {
                 .sort(function(a, b) { return (a.value - b.value) || d3.ascending(a.length, b.length); })
                 .separation(function(a, b) { return 1; });
 
-            nodes = tree.nodes(newick);
-            links = tree.links(nodes);
-
-            // initial format of tree (nodes, links, labels, ruler)
-            formatTree(svg, nodes, links, yscale, xscale, height, options);
         }
+
+        nodes = tree.nodes(newick);
+        links = tree.links(nodes);
+
+        // scale tree
+        // note y is horizontal direction
+        // x is vertical direction
+        if (options.skipBranchLengthScaling) {
+            var yscale = d3.scale.linear()
+                .domain([0, width])
+                .range([0, width]);
+            var xscale = d3.scale.linear()
+                .domain([0, height])
+                .range([0, height]);
+        } else {
+            var yscale = scaleBranchLengths(nodes, width);
+            var xscale = scaleLeafSeparation(tree, nodes);
+        }
+
+        // initial format of tree (nodes, links, labels, ruler)
+        formatTree(svg, nodes, links, yscale, xscale, height, options);
 
         treeType = options.treeType;
     }

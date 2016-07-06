@@ -366,7 +366,11 @@ function formatRuler(svg, yscale, xscale, height, options, callback) {
                     .attr("text-anchor", "middle")
                     .text(function(d) { return Math.round(d*100) / 100; });
         } else if (options.treeType == 'radial') {
-            console.log("TODO");
+            svg.selectAll('circle.rule')
+                .data(yscale.ticks(10))
+              .enter().append('circle')
+                .attr("class","rule")
+                .attr('r',yscale);
         }
     }
 
@@ -648,8 +652,6 @@ margins.
 */
 
 function resizeSVG() {
-
-    console.log('here')
 
     var svgRect = d3.select('svg').node().getBoundingClientRect();
     var g = d3.select('svg g').node();
