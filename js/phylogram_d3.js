@@ -138,6 +138,25 @@ function buildTree(div, newick, options) {
     // build GUI
     var gui = buildGUI(div, options.mapping);
 
+    // setup SVG and divs
+    width = startW - margin.left - margin.right;
+    height = startH - margin.top - margin.bottom;
+
+    var tmp = d3.select(renderDiv).append("div")
+            .attr("class","row")
+            .attr("id","canvas")
+
+    // NOTE: size of SVG and SVG g are updated in resizeSVG()
+    var svg = tmp.append("div")
+            .attr("class", "col-sm-12")
+            .attr("id","tree")
+        .append("svg:svg")
+            .attr("preserveAspectRatio","xMinYMin meet")
+            .attr("xmlns","http://www.w3.org/2000/svg")
+            .attr("width",startW)
+            .attr("height",startH)
+        .append("svg:g") // svg g group is translated in updateTree()
+
     options.treeType = 'rectangular';
     updateTree(options);
 
@@ -162,6 +181,9 @@ Assumes globals (nodes, links) exist
 function updateTree(options={}) {
 
     // GET GUI VALUES
+    if (!('treeType' in options)) {
+        options.treeType = treeType; // set tree type to previously used if not already set
+    }
 
     // get checkbox state
     skipDistanceLabel = !$('#toggle_distance').is(':checked');
@@ -181,7 +203,6 @@ function updateTree(options={}) {
     }
 
 
-
     var svg = d3.select('svg g');
     // this will do the intial generation of all SVG objects
     // we don't call this on every GUI update in case of
@@ -189,27 +210,12 @@ function updateTree(options={}) {
     // the tree (instead of generating new objects)
     if (options.treeType != treeType) { // if tree type change
 
-        d3.select('#canvas').remove(); // remove any existing canvas area
-
-        // setup SVG and divs
-        width = startW - margin.left - margin.right;
-        height = startH - margin.top - margin.bottom;
-
-        var tmp = d3.select(renderDiv).append("div")
-                .attr("class","row")
-                .attr("id","canvas")
-
-        // NOTE: size of SVG and SVG g are set in resizeSVG()
-        var svg = tmp.append("div")
-                .attr("class", "col-sm-12")
-                .attr("id","tree")
-            .append("svg:svg")
-                .attr("preserveAspectRatio","xMinYMin meet")
-                .attr("xmlns","http://www.w3.org/2000/svg")
-            .append("svg:g")
-
+        d3.select('svg g').selectAll('*').remove(); // remove any existing canvas area
 
         if (options.treeType == 'rectangular') {
+
+            svg.attr("transform","translate(" + margin.left + "," + margin.top + ")")
+
             // setup rectangular tree
             tree = d3.layout.cluster()
                 .sort(function(node) { return node.children ? node.children.length : -1; })
@@ -220,6 +226,9 @@ function updateTree(options={}) {
 
         } else if (options.treeType == 'radial') {
 
+            svg.attr("transform","translate(" + (outerRadius + margin.left) + "," + (outerRadius + margin.top) + ")")
+
+            // setup radial tree
             tree = d3.layout.cluster()
                 .size([360, innerRadius])
                 .children(function(d) { return d.branchset; })
@@ -252,7 +261,6 @@ function updateTree(options={}) {
 
         treeType = options.treeType;
     }
-
 
 
     if (options.treeType == 'rectangular') {

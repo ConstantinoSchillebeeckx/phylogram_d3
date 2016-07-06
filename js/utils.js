@@ -653,20 +653,12 @@ margins.
 
 function resizeSVG() {
 
-    var svgRect = d3.select('svg').node().getBoundingClientRect();
-    var g = d3.select('svg g').node();
-    var dim = g.getBBox();
-    var gRect = g.getBoundingClientRect();
+    var g = d3.select('svg g').node().getBBox();
 
     // scale SVG
     d3.select('svg')
-        .attr("width", dim.width + margin.left + margin.right)
-        .attr("height", dim.height + margin.top + margin.bottom)
-
-    // translate SVG group
-    var moveY = margin.top + svgRect.top - gRect.top;
-    var moveX = margin.left + svgRect.left - gRect.left;
-    d3.select('svg g').attr("transform","translate(" + moveX + "," + moveY + ")");
+        .attr("width", g.width + margin.left + margin.right)
+        .attr("height", g.height + margin.top + margin.bottom)
     
 }
 
@@ -975,12 +967,11 @@ function formatTooltip(d, mapParse=null) {
 // which can then be right-clicked and 'save as...'
 function saveSVG(){
 
-    // get styles from all required stylesheets
+    // get styles from all stylesheets
     // http://www.coffeegnome.net/converting-svg-to-png-with-canvg/
     var style = "\n";
     for (var i=0; i<document.styleSheets.length; i++) {
         var sheet = document.styleSheets[i];
-        console.log(sheet)
         if (sheet.href) {
             var sheetName = sheet.href.split('/').pop();
             var rules = sheet.rules;
