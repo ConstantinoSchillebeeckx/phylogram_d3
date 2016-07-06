@@ -24,8 +24,9 @@ var tip = d3.tip()
     .html(function(d) {
         return formatTooltip(d, mapParse);
     })
-
-
+var outerRadius = 960 / 2,
+    innerRadius = outerRadius - 170;
+var renderDiv; // svg is rendered here
 // --------------
 // GLOBALS
 
@@ -51,8 +52,10 @@ Parameters:
 */
 function init(dat, div, mapp=null) {
 
+    renderDiv = div;
+
     // show loading spinner
-    showSpinner(div, true)
+    showSpinner(renderDiv, true)
 
     // ensure file exists and can be read
     var fileStr = false;
@@ -63,7 +66,7 @@ function init(dat, div, mapp=null) {
                 fileStr = xhr.responseText.split("'").join(''); // remove the extra ' surrounding strings
             } else {
                 var msg = 'Input file <code>' + dat + '</code> could not be parsed, ensure it is a proper Newick tree file!';
-                displayErrMsg(msg, div);
+                displayErrMsg(msg, renderDiv);
                 return false;
             }
         }
@@ -91,10 +94,10 @@ function init(dat, div, mapp=null) {
                 colorScale: colorScales,
             }
 
-            buildTree(div, newick, options);
+            buildTree(renderDiv, newick, options);
         });
     } else {
-        buildTree(div, newick, {});
+        buildTree(renderDiv, newick, {});
     }
 }
 
@@ -135,57 +138,9 @@ function buildTree(div, newick, options) {
     // build GUI
     var gui = buildGUI(div, options.mapping);
 
-    // setup SVG and divs
-    width = startW - margin.left - margin.right;
-    height = startH - margin.top - margin.bottom;
 
-    var tmp = d3.select(div).append("div")
-            .attr("class","row")
-            .attr("id","canvas")
-
-    var svg = tmp.append("div")
-            .attr("class", "col-sm-12")
-            .attr("id","tree")
-        .append("svg:svg")
-            .attr("preserveAspectRatio","xMinYMin meet")
-            .attr("width", width + margin.right + margin.left)
-            .attr("height", height + margin.top + margin.bottom)
-            .attr("xmlns","http://www.w3.org/2000/svg")
-        .append("svg:g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    svg.call(tip);
     updateTree(options);
-/*
-    // setup tree
-    tree = d3.layout.cluster()
-        .sort(function(node) { return node.children ? node.children.length : -1; })
-        .children(function(node) {
-            return node.branchset
-        })
-        .size([height, width]);
 
-    nodes = tree.nodes(newick);
-    links = tree.links(nodes);
-
-    // scale tree
-    // note y is horizontal direction
-    // x is vertical direction
-    if (options.skipBranchLengthScaling) {
-        var yscale = d3.scale.linear()
-            .domain([0, width])
-            .range([0, width]);
-        var xscale = d3.scale.linear()
-            .domain([0, height])
-            .range([0, height]);
-    } else {
-        var yscale = scaleBranchLengths(nodes, width);
-        var xscale = scaleLeafSeparation(tree, nodes);
-    }
-
-    // initial format of tree (nodes, links, labels, ruler)
-    formatTree(svg, nodes, links, yscale, xscale, height, options);
-*/
     showSpinner(null, false); // hide spinner
 
 }
@@ -206,8 +161,10 @@ Assumes globals (nodes, links) exist
 */
 function updateTree(options={}) {
 
+    // GET GUI VALUES
     // get tree type
     var radio = $("input[type='radio']:checked").val();
+    options['treeType'] = radio;
 
     // get checkbox state
     skipDistanceLabel = !$('#toggle_distance').is(':checked');
@@ -217,10 +174,42 @@ function updateTree(options={}) {
     var sliderScaleH = scaleHSlider.value(); 
     var sliderLeafR = leafRSlider.value();
 
+    // get dropdown values
+    var leafColor, backgroundColor;
+    if (!mapParse.empty()) {
+        var e = document.getElementById("leafColor");
+        leafColor = e.options[e.selectedIndex].value;
+        var e = document.getElementById("backgroundColor");
+        backgroundColor = e.options[e.selectedIndex].value;
+    }
+
+
+
     var svg = d3.select('svg g');
+    // this will do the intial generation of all SVG objects
+    // we don't call this on every GUI update in case of
+    // very large tree - all we care about is reformatting
+    // the tree (instead of generating new objects)
     if (radio != treeType) { // if tree type change
 
-        d3.select('svg g').selectAll('*').remove(); // remove any existing svg
+        d3.select('#canvas').remove(); // remove any existing canvas area
+
+        // setup SVG and divs
+        width = startW - margin.left - margin.right;
+        height = startH - margin.top - margin.bottom;
+
+        var tmp = d3.select(renderDiv).append("div")
+                .attr("class","row")
+                .attr("id","canvas")
+
+        // NOTE: size of SVG and SVG g are set in resizeSVG()
+        var svg = tmp.append("div")
+                .attr("class", "col-sm-12")
+                .attr("id","tree")
+            .append("svg:svg")
+                .attr("preserveAspectRatio","xMinYMin meet")
+                .attr("xmlns","http://www.w3.org/2000/svg")
+            .append("svg:g")
 
         if (radio == 'rectangular') {
             // setup rectangular tree
@@ -251,6 +240,20 @@ function updateTree(options={}) {
 
             // initial format of tree (nodes, links, labels, ruler)
             formatTree(svg, nodes, links, yscale, xscale, height, options);
+        } else if (radio == 'radial') {
+
+            tree = d3.layout.cluster()
+                .size([360, innerRadius])
+                .children(function(d) { return d.branchset; })
+                .value(function(d) { return 1; })
+                .sort(function(a, b) { return (a.value - b.value) || d3.ascending(a.length, b.length); })
+                .separation(function(a, b) { return 1; });
+
+            nodes = tree.nodes(newick);
+            links = tree.links(nodes);
+
+            // initial format of tree (nodes, links, labels, ruler)
+            formatTree(svg, nodes, links, yscale, xscale, height, options);
         }
 
         treeType = radio;
@@ -258,24 +261,17 @@ function updateTree(options={}) {
 
 
 
-    // get dropdown values
-    var leafColor, backgroundColor;
-    if (!mapParse.empty()) {
-        var e = document.getElementById("leafColor");
-        leafColor = e.options[e.selectedIndex].value;
-        var e = document.getElementById("backgroundColor");
-        backgroundColor = e.options[e.selectedIndex].value;
+    if (radio == 'rectangular') {
+        scaleLeafSeparation(tree, nodes, sliderScaleH); // this will update x-pos
+
+        // scale vertical pos
+        svg.selectAll("g.node")
+            .data(nodes)
+            .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+        svg.selectAll("path.link")
+            .data(links)
+            .attr("d", elbow);
     }
-
-    scaleLeafSeparation(tree, nodes, sliderScaleH); // this will update x-pos
-
-    // scale vertical pos
-    svg.selectAll("g.node")
-        .data(nodes)
-        .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
-    svg.selectAll("path.link")
-        .data(links)
-        .attr("d", elbow);
 
     // scale leaf radius
     svg.selectAll("g.leaf circle")
@@ -364,6 +360,7 @@ function updateTree(options={}) {
             .attr('width','0')
     }
 
+    svg.call(tip);
     resizeSVG();
 
 }

@@ -126,22 +126,42 @@ Parameters:
 ===========
 - svg : svg selctor
         svg HTML element into which to render
-- nodes : d3.tree.nodes
-- tree : d3.layout.tree()
+- links : d3.tree.links
+- type : str
+         tree type (rectangular or radial)
 
 Returns:
 ========
 - nothing
 
 */
-function formatLinks(svg, links) {
+function formatLinks(svg, links, type) {
 
     var link = svg.selectAll("path.link")
-          .data(links)
-        .enter().append("path")
-          .attr("class", "link")
-          .attr("d", elbow);
+              .data(links)
+            .enter().append("path")
 
+    if (type == 'rectangular') {
+        link.attr("class", "link")
+            .attr("d", elbow);
+    } else if (type == 'radial') {
+        link.each(function(d) { d.target.linkNode = this; })
+            .attr("d", function(d) { return step(d.source.x, d.source.y, d.target.x, d.target.y) })
+            .attr("class","link")
+    }
+
+}
+
+// https://bl.ocks.org/mbostock/c034d66572fd6bd6815a
+// Like d3.svg.diagonal.radial, but with square corners.
+function step(startAngle, startRadius, endAngle, endRadius) {
+  var c0 = Math.cos(startAngle = (startAngle - 90) / 180 * Math.PI),
+      s0 = Math.sin(startAngle),
+      c1 = Math.cos(endAngle = (endAngle - 90) / 180 * Math.PI),
+      s1 = Math.sin(endAngle);
+  return "M" + startRadius * c0 + "," + startRadius * s0
+      + (endAngle === startAngle ? "" : "A" + startRadius + "," + startRadius + " 0 0 " + (endAngle > startAngle ? 1 : 0) + " " + startRadius * c1 + "," + startRadius * s1)
+      + "L" + endRadius * c1 + "," + endRadius * s1;
 }
 
 
@@ -162,22 +182,37 @@ Parameters:
             tree options, must have skipLabels=True 
             to hide labels, otherwise they will be
             drawn.
+- type : str
+         tree type (rectangular or radial)
 */
-function formatLabels(svg, options) {
+function formatLabels(svg, options, type) {
 
     if (!options.skipLabels) {
-        svg.selectAll('g.inner.node')
-            .append("svg:text")
-                .attr("dx", -6)
-                .attr("dy", -6)
-                .attr("text-anchor", 'end')
-                .text(function(d) { return d.length; });
+        if (type == 'rectangular') {
+            svg.selectAll('g.inner.node')
+                .append("svg:text")
+                    .attr("dx", -6)
+                    .attr("dy", -6)
+                    .attr("text-anchor", 'end')
+                    .text(function(d) { return d.length; });
 
-        svg.selectAll('g.leaf.node').append("svg:text")
-            .attr("dx", 8)
-            .attr("dy", 3)
-            .attr("text-anchor", "start")
-            .text(function(d) { return d.name + ' ('+d.length+')'; });
+            svg.selectAll('g.leaf.node').append("svg:text")
+                .attr("dx", 8)
+                .attr("dy", 3)
+                .attr("text-anchor", "start")
+                .text(function(d) { return d.name + ' ('+d.length+')'; });
+        } else if (type == 'radial') {
+            svg.append("g")
+                  .attr("class", "labels")
+                .selectAll("text")
+                  .data(nodes.filter(function(d) { return !d.children; }))
+                .enter().append("text")
+                  .attr("dx", function(d) { return d.x < 180 ? 8 : -8 }) // radius
+                  .attr("dy", 2.5) // theta
+                  .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + (innerRadius + 4) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
+                  .style("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+                  .text(function(d) { return d.name.replace(/_/g, " "); })
+        }
     }
 }
 
@@ -196,13 +231,15 @@ Parameters:
 - svg : svg selctor
         svg HTML element into which to render
 - nodes : d3.tree.nodes
+- type : str
+         tree type (rectangular or radial)
 
 Returns:
 ========
 - nothing
 
 */
-function formatNodes(svg, nodes, leafRadius=4.5) {
+function formatNodes(svg, nodes, type, leafRadius=5) {
 
     var node = svg.selectAll("g.node")
           .data(nodes)
@@ -218,25 +255,38 @@ function formatNodes(svg, nodes, leafRadius=4.5) {
                     return "leaf node"
                 }
             })
-            .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+
+    if (type == 'rectangular') {
+        node.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
             .on('mouseover', tip.show) 
             .on('mouseout', tip.hide)
 
-    svg.selectAll('g.leaf.node')
-        .append("svg:rect") // leaf background
-            .attr('width', 0 ) // width is set when choosing background color
-            .attr('height', 10 + leafRadius * 2) // +2 for stroke
-            .attr('y', -leafRadius - 5);
+        svg.selectAll('g.leaf.node')
+            .append("svg:rect") // leaf background
+                .attr('width', 0 ) // width is set when choosing background color
+                .attr('height', 10 + leafRadius * 2) // +2 for stroke
+                .attr('y', -leafRadius - 5);
 
-    // replace . for ease of selecting when setting width of leaf background
-    svg.selectAll('g.leaf.node')
-        .attr("id", function(d) { return 'leaf_' + d.name.replace('.','_'); })
-        .append("svg:circle")
-            .attr("r", leafRadius)
+        // replace . for ease of selecting when setting width of leaf background
+        svg.selectAll('g.leaf.node')
+            .attr("id", function(d) { return 'leaf_' + d.name.replace('.','_'); })
+            .append("svg:circle")
+                .attr("r", leafRadius)
 
-    svg.selectAll('g.root.node')
-        .append('svg:circle')
-            .attr("r", leafRadius)
+        svg.selectAll('g.root.node')
+            .append('svg:circle')
+                .attr("r", leafRadius)
+    } else if (type == 'radial') {
+        node.attr("transform", function(d) { return d.depth == 0 ? '': "rotate(" + (d.x - 90) + ")translate(" + (innerRadius + 4) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
+
+        svg.selectAll('g.leaf.node')
+            .append('circle')
+            .attr('r', leafRadius)
+
+        svg.selectAll('g.root.node')
+            .append('circle')
+            .attr('r', leafRadius)
+    }
 }
 
 
@@ -262,10 +312,9 @@ Parameters:
 */
 function formatTree(svg, nodes, links, yscale, xscale, height, options) {
     formatRuler(svg, yscale, xscale, height, options, function() {
-        formatLinks(svg, links);
-        formatNodes(svg, nodes);
-        formatLabels(svg, options);
-        resizeSVG();
+        formatLinks(svg, links, options.treeType);
+        formatNodes(svg, nodes, options.treeType);
+        formatLabels(svg, options, options.treeType);
     });
 }
 
@@ -286,7 +335,8 @@ Parameters:
            height of svg
 - options : obj
             tree options, expects a key hideRuler;
-            if true, rules won't be drawn
+            if true, rules won't be drawn. also
+            expects a key treeType (rectangular/radial)
 - callback : callback function
              ruler should be formatted first so that
              all other SVG elements lay on top of it
@@ -298,24 +348,28 @@ Returns:
 function formatRuler(svg, yscale, xscale, height, options, callback) {
 
     if (!options.hideRuler) {
-        svg.selectAll('line.rule')
-                .data(yscale.ticks(10))
-            .enter().append('svg:line')
-                .attr("class", "rule")
-                .attr('y1', 0)
-                .attr('y2', xscale(height))
-                .attr('x1', yscale)
-                .attr('x2', yscale)
+        if (options.treeType == 'rectangular') {
+            svg.selectAll('line.rule')
+                    .data(yscale.ticks(10))
+                .enter().append('svg:line')
+                    .attr("class", "rule")
+                    .attr('y1', 0)
+                    .attr('y2', xscale(height))
+                    .attr('x1', yscale)
+                    .attr('x2', yscale)
 
-        svg.selectAll("text.rule")
-                .data(yscale.ticks(10))
-            .enter().append("svg:text")
-                .attr("class", "rule")
-                .attr("x", yscale)
-                .attr("y", 0)
-                .attr("dy", -3)
-                .attr("text-anchor", "middle")
-                .text(function(d) { return Math.round(d*100) / 100; });
+            svg.selectAll("text.rule")
+                    .data(yscale.ticks(10))
+                .enter().append("svg:text")
+                    .attr("class", "rule")
+                    .attr("x", yscale)
+                    .attr("y", 0)
+                    .attr("dy", -3)
+                    .attr("text-anchor", "middle")
+                    .text(function(d) { return Math.round(d*100) / 100; });
+        } else if (options.treeType == 'radial') {
+            console.log("TODO");
+        }
     }
 
     callback();
@@ -589,16 +643,29 @@ function cleanTaxa(taxa) {
 /*
 
 When called, will resize the SVG to fit the
-inner group.
+inner g group.  Inner g group will also
+be translated to respect the specified
+margins.
 
 */
 
 function resizeSVG() {
 
-    var g = d3.select('svg g').node().getBBox();
+    var svgRect = d3.select('svg').node().getBoundingClientRect();
+    var g = d3.select('svg g').node();
+    var dim = g.getBBox();
+    var gRect = g.getBoundingClientRect();
+
+    // scale SVG
     d3.select('svg')
-        .attr("width", g.width + margin.left + margin.right)
-        .attr("height", g.height + margin.top + margin.bottom)
+        .attr("width", dim.width + margin.left + margin.right)
+        .attr("height", dim.height + margin.top + margin.bottom)
+
+    // translate SVG group
+    var moveY = margin.top + svgRect.top - gRect.top;
+    var moveX = margin.left + svgRect.left - gRect.left;
+    d3.select('svg g').attr("transform","translate(" + moveX + "," + moveY + ")");
+    
 }
 
 
