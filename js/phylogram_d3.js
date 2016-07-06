@@ -243,7 +243,7 @@ function updateTree(options={}) {
                 .domain([0, height])
                 .range([0, height]);
         } else {
-            var yscale = scaleBranchLengths(nodes, width);
+            var yscale = scaleBranchLengths(nodes, options.treeType == 'rectangular' ? width : outerRadius);
             var xscale = scaleLeafSeparation(tree, nodes);
         }
 

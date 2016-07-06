@@ -183,7 +183,7 @@ Parameters:
 - type : str
          tree type (rectangular or radial)
 */
-function formatLabels(svg, options, type) {
+function formatLabels(svg, options, type, leafRadius=5) {
 
     if (!options.skipLabels) {
         if (type == 'rectangular') {
@@ -207,7 +207,7 @@ function formatLabels(svg, options, type) {
                 .enter().append("text")
                   .attr("dx", function(d) { return d.x < 180 ? 8 : -8 }) // radius
                   .attr("dy", 2.5) // theta
-                  .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + (innerRadius + 4) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
+                  .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + (d.y + leafRadius) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
                   .style("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
                   .text(function(d) { return d.name.replace(/_/g, " "); })
         }
@@ -275,7 +275,7 @@ function formatNodes(svg, nodes, type, leafRadius=5) {
             .append('svg:circle')
                 .attr("r", leafRadius)
     } else if (type == 'radial') {
-        node.attr("transform", function(d) { return d.depth == 0 ? '': "rotate(" + (d.x - 90) + ")translate(" + (innerRadius + 4) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
+        node.attr("transform", function(d) { return d.depth == 0 ? '': "rotate(" + (d.x - 90) + ")translate(" + (d.y + leafRadius) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
 
         svg.selectAll('g.leaf.node')
             .append('circle')
@@ -370,7 +370,7 @@ function formatRuler(svg, yscale, xscale, height, options, callback) {
                 .data(yscale.ticks(10))
               .enter().append('circle')
                 .attr("class","rule")
-                .attr('r',yscale);
+                .attr('r', yscale);
         }
     }
 
