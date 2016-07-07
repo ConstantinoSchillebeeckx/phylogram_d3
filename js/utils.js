@@ -74,7 +74,11 @@ function scaleLeafSeparation(tree, nodes, minSeparation=22) {
 }
 
 
-/* Scale tree width
+/* Scale tree by distance metric
+
+Will iterate through tree and set the attribute
+rootDist (at each node) and will adjust the
+y-pos of the tree properly
 
 Parameters:
 ===========
@@ -87,7 +91,7 @@ Returns:
 - yscale : d3.scale
            horizontal scale for svg
 */
-function scaleBranchLengths(nodes, width) {
+function scaleBranchLengths(nodes) {
 
     // Visit all nodes and adjust y pos width distance metric
     var visitPreOrder = function(root, callback) {
@@ -125,29 +129,28 @@ Parameters:
 - svg : svg selctor
         svg HTML element into which to render
 - links : d3.tree.links
-- type : str
-         tree type (rectangular or radial)
+- options : obj
+            tree options, see documentation for keys
 
 Returns:
 ========
 - nothing
 
 */
-function formatLinks(svg, links, type) {
+function formatLinks(svg, links, options) {
 
-    var link = svg.selectAll("path.link")
-              .data(links)
-            .enter().append("path")
-
-    if (type == 'rectangular') {
-        link.attr("class", "link")
-            .attr("d", elbow);
-    } else if (type == 'radial') {
-        link.each(function(d) { d.target.linkNode = this; })
-            .attr("d", function(d) { return step(d.source.x, d.source.y, d.target.x, d.target.y) })
-            .attr("class","link")
-    }
-
+    // set to global!
+    link = svg.selectAll("path.link")
+      .data(links)
+        .enter().append("path")
+        .attr("class","link")
+        .attr("d", function(d) {
+            if (options.treeType == 'rectangular') {
+                return elbow(d);
+            } else if (options.treeType == 'radial') {
+                return step(d.source.x, d.source.y, d.target.x, d.target.y);
+            }
+        })
 }
 
 // https://bl.ocks.org/mbostock/c034d66572fd6bd6815a
@@ -170,50 +173,6 @@ function elbow(d, i) {
       + "V" + d.target.x + "H" + d.target.y;
 }
 
-/* Add labels (name, distance) to tree
-
-Parameters:
-===========
-- svg : svg selection
-        SVG containing tree
-- options : obj
-            tree options, must have skipLabels=True 
-            to hide labels, otherwise they will be
-            drawn.
-- type : str
-         tree type (rectangular or radial)
-*/
-function formatLabels(svg, options, type, leafRadius=5) {
-
-    if (!options.skipLabels) {
-        if (type == 'rectangular') {
-            svg.selectAll('g.inner.node')
-                .append("svg:text")
-                    .attr("dx", -6)
-                    .attr("dy", -6)
-                    .attr("text-anchor", 'end')
-                    .text(function(d) { return d.length; });
-
-            svg.selectAll('g.leaf.node').append("svg:text")
-                .attr("dx", 8)
-                .attr("dy", 3)
-                .attr("text-anchor", "start")
-                .text(function(d) { return d.name + ' ('+d.length+')'; });
-        } else if (type == 'radial') {
-            svg.append("g")
-                  .attr("class", "labels")
-                .selectAll("text")
-                  .data(nodes.filter(function(d) { return !d.children; }))
-                .enter().append("text")
-                  .attr("dx", function(d) { return d.x < 180 ? 8 : -8 }) // radius
-                  .attr("dy", 2.5) // theta
-                  .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + (d.y + leafRadius) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
-                  .style("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
-                  .text(function(d) { return d.name.replace(/_/g, " "); })
-        }
-    }
-}
-
 
 
 
@@ -224,67 +183,75 @@ Will render all tree nodes as well as format them
 with color, shape, size; additionally all leaf
 nodes and internal nodes will get labels by default.
 
+A node is a generalized group which can contain shapes
+(circle) as well as labels (text).
+
 Parameters:
 ===========
 - svg : svg selctor
         svg HTML element into which to render
 - nodes : d3.tree.nodes
-- type : str
-         tree type (rectangular or radial)
+- options : obj
+            tree options, see documentation for keys
 
 Returns:
 ========
 - nothing
 
 */
-function formatNodes(svg, nodes, type, leafRadius=5) {
+function formatNodes(svg, nodes, options, leafRadius=5) {
 
-    var node = svg.selectAll("g.node")
-          .data(nodes)
-        .enter().append("g")
-            .attr("class", function(n) {
-                if (n.children) {
-                    if (n.depth == 0) {
-                        return "root node"
-                    } else {
-                        return "inner node"
-                    }
+    node = svg.selectAll("g.node")
+        .data(nodes, function(d, i) { return d.name != '' ? d.name : 'root'; })
+      .enter().append("g")
+        .attr("class", function(n) {
+            if (n.children) {
+                if (n.depth == 0) {
+                    return "root node"
                 } else {
-                    return "leaf node"
+                    return "inner node"
                 }
-            })
+            } else {
+                return "leaf node"
+            }
+        })
+        .attr("id", function(d) { return d.children ? null : 'leaf_' + d.name.replace('.','_'); })
+        .attr("transform", function(d) {
+            if (options.treeType == 'rectangular') {
+                return "translate(" + d.y + "," + d.x + ")";
+            } else if (options.treeType == 'radial') {
+                return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")";
+            }
+        })
+//        .on('mouseover', tip.show) 
+//        .on('mouseout', tip.hide) TODO
 
-    if (type == 'rectangular') {
-        node.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
-            .on('mouseover', tip.show) 
-            .on('mouseout', tip.hide)
+    // node backgrounds
+    node.append("rect")
+      .attr('width', 0 ) // width is set when choosing background color
+      .attr('height', 10 + leafRadius * 2) 
+      .attr('y', -leafRadius - 5)
+      .attr("opacity", function(d) { return d.children ? 1e-6 : 1 });
 
-        svg.selectAll('g.leaf.node')
-            .append("svg:rect") // leaf background
-                .attr('width', 0 ) // width is set when choosing background color
-                .attr('height', 10 + leafRadius * 2) // +2 for stroke
-                .attr('y', -leafRadius - 5);
+    // node circles
+    node.append("circle")
+        .attr("r", leafRadius)
+        .attr("opacity", function(d) { 
+            if (!d.children || d.name == '') {
+                return 1;
+            } else {
+                return 1e-6;
+            }
+        });
 
-        // replace . for ease of selecting when setting width of leaf background
-        svg.selectAll('g.leaf.node')
-            .attr("id", function(d) { return 'leaf_' + d.name.replace('.','_'); })
-            .append("svg:circle")
-                .attr("r", leafRadius)
+    // node label
+    node.append("text")
+        .attr("text-anchor", "start")
+        .attr("dx", 8)
+        .attr("dy", 3)
+        .text(function(d) { return d.children ? null : d.name + ' ('+d.length+')'; });
 
-        svg.selectAll('g.root.node')
-            .append('svg:circle')
-                .attr("r", leafRadius)
-    } else if (type == 'radial') {
-        node.attr("transform", function(d) { return d.depth == 0 ? '': "rotate(" + (d.x - 90) + ")translate(" + (d.y + leafRadius) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
 
-        svg.selectAll('g.leaf.node')
-            .append('circle')
-            .attr('r', leafRadius)
-
-        svg.selectAll('g.root.node')
-            .append('circle')
-            .attr('r', leafRadius)
-    }
 }
 
 
@@ -310,9 +277,8 @@ Parameters:
 */
 function formatTree(svg, nodes, links, yscale, xscale, height, options) {
     formatRuler(svg, yscale, xscale, height, options, function() {
-        formatLinks(svg, links, options.treeType);
-        formatNodes(svg, nodes, options.treeType);
-        formatLabels(svg, options, options.treeType);
+        formatLinks(svg, links, options);
+        formatNodes(svg, nodes, options);
     });
 }
 
@@ -345,6 +311,7 @@ Returns:
 */
 function formatRuler(svg, yscale, xscale, height, options, callback) {
 
+/*
     if (!options.hideRuler) {
         if (options.treeType == 'rectangular') {
             svg.selectAll('line.rule')
@@ -373,7 +340,7 @@ function formatRuler(svg, yscale, xscale, height, options, callback) {
                 .attr('r', yscale);
         }
     }
-
+*/
     callback();
 }
 
@@ -782,6 +749,18 @@ function buildGUI(selector, mapParse=null) {
     check2.append('text')
         .text("Toggle leaf labels")
 
+    var check3 = col1.append("div")
+        .attr("class","checkbox")
+        .append("label")
+        
+    check3.append("input")
+        .attr("type","checkbox")
+        .attr("id","scale_distance")
+        .attr("checked","")
+        .attr("onclick","updateTree()")
+
+    check3.append('text')
+        .text("Scale by distance")
 
 
     // if mapping file was passed
@@ -789,16 +768,12 @@ function buildGUI(selector, mapParse=null) {
 
         // select for leaf color
         var col2 = guiRow1.append("div")
-            .attr("class","col-sm-3 form-group")
+            .attr("class","col-sm-2 form-group")
 
         col2.append("label")
-            .attr("class","col-sm-3 control-label")
             .text("Leaf node")
             
-        var select1col = col2.append("div")
-            .attr("class","col-sm-8")
-
-        var select1 = select1col.append("select")
+        var select1 = col2.append("select")
             .attr('onchange','updateTree()')
             .attr('id','leafColor')
             .attr("class","form-control")
@@ -817,17 +792,10 @@ function buildGUI(selector, mapParse=null) {
 
 
         // select for background color
-        var col3 = guiRow1.append("div")
-            .attr("class","col-sm-3 form-group")
-
-        col3.append("label")
-            .attr("class","col-sm-4 control-label")
+        col2.append("label")
             .text("Leaf background")
 
-        var select2col = col3.append("div")
-            .attr("class", "col-sm-8")
-
-        var select2 = select2col.append("select")
+        var select2 = col2.append("select")
             .attr('onchange','updateTree()')
             .attr('id','backgroundColor')
             .attr("class","form-control") 
