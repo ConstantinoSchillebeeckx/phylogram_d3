@@ -79,6 +79,7 @@ circle.rule {
     font-family: "Open Sans", Helvetica, sans-serif; 
     max-width: 500px;
     word-wrap: break-word;
+    z-index: 10;
 }
 
 .d3-tip .tip-title {

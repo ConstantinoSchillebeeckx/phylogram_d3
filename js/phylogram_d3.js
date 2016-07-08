@@ -26,7 +26,7 @@ var tip = d3.tip()
     .html(function(d) {
         return formatTooltip(d, mapParse);
     })
-var outerRadius = 960 / 2,
+var outerRadius = startW / 2,
     innerRadius = outerRadius - 170;
 var renderDiv; // svg is rendered here
 
@@ -183,13 +183,16 @@ function buildTree(div, newick, options) {
             .attr("width",startW)
             .attr("height",startH)
         .append("svg:g") // svg g group is translated in updateTree()
+            .attr("id",'canvasSVG')
+        .append("g")
+            .attr("id","treeSVG")
 
     // generate intial layout and all tree elements
     if (options.treeType == 'rectangular') {
-        svg.attr("transform","translate(" + margin.left + "," + margin.top + ")")
+        d3.select("#canvasSVG").attr("transform","translate(" + margin.left + "," + margin.top + ")")
         tree = rectTree;
     } else if (options.treeType == 'radial') {
-        svg.attr("transform","translate(" + (outerRadius + margin.left) + "," + (outerRadius + margin.top) + ")")
+        d3.select("#canvasSVG").attr("transform","translate(" + (innerRadius + margin.left) + "," + (innerRadius + margin.top) + ")")
         tree = radialTree;
     }
 
@@ -202,6 +205,7 @@ function buildTree(div, newick, options) {
     formatLinks(svg, links, options);
     formatNodes(svg, nodes, options);
 
+    svg.call(tip);
     resizeSVG();
 
     showSpinner(null, false); // hide spinner
@@ -249,18 +253,21 @@ function updateTree(options={}) {
         options['backgroundColor'] = e.options[e.selectedIndex].value;
     }
 
-    console.log(options, scale);
-
     if (options.treeType != treeType || options.skipBranchLengthScaling != scale) { // if tree type changes
 
         if (options.treeType == 'rectangular') {
 
-            svg.transition()
-                .duration(duration)
-                .attr("transform","translate(" + margin.left + "," + margin.top + ")")
+            if (options.treeType != treeType) {
+                d3.select("#canvasSVG").transition()
+                    .duration(duration)
+                    .attr("transform","translate(" + margin.left + "," + margin.top + ")")
+            }
 
             nodes = rectTree.nodes(newick);
-            if (!options.skipBranchLengthScaling) { scaleBranchLengths(nodes); }
+            //scaleLeafSeparation(tree, nodes, options.sliderScaleH);
+            if (!options.skipBranchLengthScaling) { 
+                scaleBranchLengths(nodes); 
+            }
             links = rectTree.links(nodes)
 
             node.data(nodes)
@@ -271,15 +278,17 @@ function updateTree(options={}) {
                 });
 
             link.data(links)
-                //.transition()
-                //.duration(duration)
+                .transition()
+                .duration(duration)
                 .attr("d", elbow)
 
         } else if (options.treeType == 'radial') {
 
-            svg.transition()
-                .duration(duration)
-                .attr("transform","translate(" + (outerRadius + margin.left) + "," + (outerRadius + margin.top) + ")")
+            if (options.treeType != treeType) {
+                d3.select("#canvasSVG").transition()
+                    .duration(duration)
+                    .attr("transform","translate(" + (innerRadius + margin.left) + "," + (innerRadius + margin.top) + ")")
+            }
 
             nodes = radialTree.nodes(newick);
             if (!options.skipBranchLengthScaling) { scaleBranchLengths(nodes); }
@@ -300,6 +309,18 @@ function updateTree(options={}) {
 
         treeType = options.treeType; // update current tree type
         scale = options.skipBranchLengthScaling;
+    }
+
+    if (options.treeType == 'rectangular') {
+        scaleLeafSeparation(tree, nodes, options.sliderScaleH); // this will update x-pos
+
+        // scale vertical pos
+        svg.selectAll("g.node")
+            .data(nodes)
+            .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+        svg.selectAll("path.link")
+            .data(links)
+            .attr("d", elbow);
     }
 
     // scale leaf radius
@@ -323,12 +344,6 @@ function updateTree(options={}) {
     // remove legend if one exists so we can update
     d3.select("#legendID").remove()
 
-    // col for legend
-    if (options.leafColor || options.backgroundColor) {
-        var legend = d3.select("svg g").append("g")
-            .attr("id", "legendID")
-            .attr("transform","translate(" + d3.select("svg").node().getBBox().width + ",0)");
-    }
 
     // update leaf node
     if (options.leafColor != '') {
@@ -336,20 +351,21 @@ function updateTree(options={}) {
         var mapVals = mapParse.get(options.leafColor); // d3.map() obj with leaf name as key
 
         // fill out legend
-        generateLegend(options.leafColor, mapVals, legend, colorScale, 'circle', 'translate(5,0)');
+        generateLegend(options.leafColor, mapVals, colorScale, 'circle');
 
         // update node styling
         svg.selectAll('g.leaf.node circle')
             .transition()
             .style('fill', function(d) {
-                return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'white'
+                return mapVals.get(d.name) ? dimColor(colorScale(mapVals.get(d.name))) : 'white'
             })
-            .style('stroke', 'gray')
-    } else if (leafColor == '') {
+            .style('stroke', function(d) {
+                return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'gray'
+            })
+    } else if (options.leafColor == '') {
         svg.selectAll('g.leaf.node circle')
             .transition()
-            .style('fill','greenYellow')
-            .style('stroke','yellowGreen');
+            .attr("style","");
     }
 
 
@@ -361,8 +377,7 @@ function updateTree(options={}) {
 
         // fill out legend
         var offset = 25;
-        if (leafColor) { var offset = offset + 15 + d3.select('#legendID').node().getBBox().height }
-        generateLegend(options.backgroundColor, mapVals, legend, colorScale, 'rect', 'translate(5,' + offset + ')');
+        generateLegend(options.backgroundColor, mapVals, colorScale, 'rect');
 
         // update node background style
         svg.selectAll('g.leaf.node rect')
@@ -377,14 +392,14 @@ function updateTree(options={}) {
                 return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'none'
             })
             .style('opacity',1)
-    } else if (leafColor == '') {
+    } else if (options.leafColor == '') {
         svg.selectAll('g.leaf.node rect')
             .transition(2000)
             .style('opacity','1e-6')
             .attr('width','0')
     }
 
-    svg.call(tip);
+
     resizeSVG();
 }
 
