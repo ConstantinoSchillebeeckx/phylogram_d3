@@ -29,9 +29,9 @@
         var treeOptions = {
             'mapping_file': 'dat/mapping.txt',
             'treeType': 'rectangular',
-            'hideRuler': 'TODO',
+            'hideRuler': false,
             'skipBranchLengthScaling': false,
-            'skipLabels': 'TODO',
+            'skipLabels': false,
         }
     </script>
     <body onload="init('dat/tree.tre', '#phylogram', treeOptions);">

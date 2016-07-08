@@ -108,7 +108,7 @@ Options obj:
 - mapping_file: path to OTU mapping file (if there is one)
 - hideRuler: (bool) if true, background distance ruler is not rendered TODO
 - skipBranchLengthScaling: (bool) if true, tree will not be scaled by distance TODO
-- skipLabels: TODO
+- skipLabels: (bool) if true, leaves will not be labeled by name or distance
 - treeType: either rectangular or radial
 TODO
 
@@ -197,7 +197,6 @@ function buildTree(div, newick, options) {
     if (!('skipBranchLengthScaling' in options)) { 
         options['skipBranchLengthScaling'] = !scale;
     }
-    console.log(options)
 
     // add bootstrap container class
     d3.select(div)

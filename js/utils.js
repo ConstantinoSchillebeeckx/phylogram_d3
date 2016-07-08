@@ -251,7 +251,8 @@ function formatNodes(id, nodes, options, leafRadius=5) {
         .attr("dy", 3)
         .attr("text-anchor", function(d) { return treeType == 'radial' && d.x > 180 ? "end" : "start" })
         .attr("transform", function(d) { return treeType == 'radial' && d.x > 180 ? "rotate(180)" : "" }) 
-        .text(function(d) { return d.children ? null : d.name + ' ('+d.length+')'; });
+        .text(function(d) { return d.children ? null : d.name + ' ('+d.length+')'; })
+        .attr("opacity", function(d) { return options.skipLabels ? 1e-6 : 1; });
    
 
 }
