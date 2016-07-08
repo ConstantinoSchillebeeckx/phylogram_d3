@@ -160,7 +160,6 @@ Retrurns:
 
 function buildTree(div, newick, options) {
 
-    console.log(options)
 
     // add bootstrap container class
     d3.select(div)
@@ -198,6 +197,7 @@ function buildTree(div, newick, options) {
 
     nodes = tree.nodes(newick);
     if (!options.skipBranchLengthScaling) { scaleBranchLengths(nodes); }
+    scaleLeafSeparation(tree, nodes)
     links = tree.links(nodes);
 
     // initial format of tree (nodes, links, labels, ruler)
