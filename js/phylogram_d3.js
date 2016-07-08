@@ -193,9 +193,13 @@ function buildTree(div, newick, options) {
     // check options, if not set, set to default
     if (!('treeType' in options)) { 
         options['treeType'] = treeType;
+    } else {
+        treeType = options.treeType;
     }
     if (!('skipBranchLengthScaling' in options)) { 
         options['skipBranchLengthScaling'] = !scale;
+    } else {
+        scale = options.skipBranchLengthScaling;
     }
 
     // add bootstrap container class
@@ -293,6 +297,7 @@ function updateTree(options={}) {
         options['backgroundColor'] = e.options[e.selectedIndex].value;
     }
 
+
     // adjust physical positioning
     if (options.treeType != treeType || options.skipBranchLengthScaling != scale) {
 
@@ -308,7 +313,7 @@ function updateTree(options={}) {
             nodes = rectTree.nodes(newick);
             scaleLeafSeparation(tree, nodes, options.sliderScaleH);
             if (!options.skipBranchLengthScaling) { 
-                var yscale = scaleBranchLengths(nodes); 
+                scaleBranchLengths(nodes); 
             }
             links = rectTree.links(nodes)
 
@@ -324,11 +329,12 @@ function updateTree(options={}) {
                 .duration(duration)
                 .attr("d", elbow)
 
-            // not working TODO
+            /*
             rulerG.data(function(d) { return [lineData(yscale(d))] })
                     .transition()
                     .duration(duration)
                     .attr("d",lineFunction)
+            */
 
 
         } else if (options.treeType == 'radial') {
@@ -355,10 +361,12 @@ function updateTree(options={}) {
                 .duration(duration)
                 .attr("d", function(d) { return step(d.source.x, d.source.y, d.target.x, d.target.y); })
 
+            /*
             rulerG.data(function(d) { return [circleData(yscale(d))] })
                     .transition()
                     .duration(duration)
                     .attr("d",lineFunction)
+            */
         }
 
         treeType = options.treeType; // update current tree type
