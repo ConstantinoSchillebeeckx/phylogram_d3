@@ -223,8 +223,8 @@ function formatNodes(svg, nodes, options, leafRadius=5) {
                 return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")";
             }
         })
-//        .on('mouseover', tip.show) 
-//        .on('mouseout', tip.hide) TODO
+        .on('mouseover', tip.show) 
+        .on('mouseout', tip.hide)
 
     // node backgrounds
     node.append("rect")
@@ -612,13 +612,12 @@ function cleanTaxa(taxa) {
 /*
 
 When called, will resize the SVG to fit the
-inner g group.  Inner g group will also
-be translated to respect the specified
-margins.
+inner g group.
 
 */
-
 function resizeSVG() {
+
+    //findTreeCenter()
 
     var g = d3.select('svg g').node().getBBox();
 
@@ -995,20 +994,25 @@ Parameters:
 - mapVals: obj
     d3.map() obj with leaf name as key
     and legend row value as value
-- container: d3 selection
-    selection into which to render legend,
-    should be an SVG
 - colorScale: d3 color scale
-    color scale used with each item in 'sorted'
+    color scale used with each item in mapVals;
     generates either a circle or a rect with this
     color
 - type: string
     type of colored object to render along with
-    each item in 'sorted' either circle or rect
-- transform: string
-    transform string for outer 'g' group
+    each item in mapVals; either 'circle' or 'rect'
 */
-function generateLegend(title, mapVals, container, colorScale, type, transform) {
+function generateLegend(title, mapVals, colorScale, type) {
+
+    // generate containing group if necessarry
+    var container = d3.select("#legendID")
+    if (container.empty()) { // if legend doesn't already exist
+        container = d3.select('svg g').append("g")
+            .attr("id", "legendID")
+            .attr("transform","translate(" + (d3.select("svg").node().getBBox().width + 10) + ",0)");
+    }
+
+
 
     // we need a unique list of values for the legend
     // as well as the count of those unique vals
@@ -1023,6 +1027,12 @@ function generateLegend(title, mapVals, container, colorScale, type, transform) 
     });
 
 
+    if (container.select("#legendID g").empty()) {
+        var transform = 'translate(5,0)';
+    } else {
+        var offset = 15 + d3.select('#legendID').node().getBBox().height;
+        var transform = 'translate(5,' + offset + ')';
+    }
     var legend = container.append("g")
             .attr("transform",transform)
 
@@ -1059,7 +1069,9 @@ function generateLegend(title, mapVals, container, colorScale, type, transform) 
     if (type == 'circle' && bar === false) {
         legendRow.append(type)
             .attr('r', 4.5)
-            .attr('fill', function(d) { return colorScale(d) } ) 
+            .attr('fill', function(d) { return dimColor(colorScale(d)) } ) 
+            .attr('stroke', function(d) { return colorScale(d) } ) 
+            .attr("stroke-width",2);
     } else if (type == 'rect' || bar === true) {
         legendRow.append('rect')
             .attr('width', bar ? 30 : 9)
@@ -1114,13 +1126,49 @@ function range(start, len) {
 }
 
 
+/* Ligten a color
+
+Utility for generating a lighter version
+of the given color
+
+Parameters:
+===========
+- colorName : str
+    html color name (http://html-color-codes.info/color-names/)
+
+Returns:
+========
+- RGB of the input color that has been lightened by 20% (in HSL)
+
+
+*/
+
+function dimColor(colorName) {
+
+    var c = d3.hsl(colorName);
+    c.l += 0.20;
+    c + "";
+    return c;
+
+}
 
 
 
+function findTreeCenter() {
 
+    var tree = d3.select("#treeSVG").node().getBoundingClientRect();
+    var root = d3.select("g.root.node").node().getBoundingClientRect();
 
+    console.log(tree)
+    console.log(root)
 
+    var dX = (root.top - tree.top)
+    var dY = (root.left - tree.left)
 
+    console.log(dX,dY)
+    return [dX, dY];
+
+}
 
 
 
