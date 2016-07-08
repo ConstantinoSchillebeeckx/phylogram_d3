@@ -13,12 +13,15 @@ var mapParse, colorScales, mappingFile;
 // automatically scalled to fit tree
 var margin = {top: 30, right: 0, bottom: 20, left: 50};
 var startW = 800, startH = 600;
-var nodes, links, node, link;
 var width = startW - margin.left - margin.right;
 var height = startH - margin.top - margin.bottom;
-var treeType = 'radial'; // rectangular or circular [currently rendered treeType]
-var scale = false;
+var nodes, links, node, link;
 var newick;
+
+// tree defaults
+var treeType = 'rectangular'; // rectangular or circular [currently rendered treeType]
+var scale = true; // if true, tree will be scaled by distance metric
+
 // tooltip 
 var tip = d3.tip()
     .attr('class', 'd3-tip')
@@ -31,6 +34,7 @@ var outerRadius = startW / 2,
 var renderDiv; // svg is rendered here
 
 var tree; // will be set to one of the following tree types
+// TODO can consolidate tree types into a single one
 // setup radial tree
 var radialTree = d3.layout.cluster()
     .size([360, innerRadius])
@@ -97,11 +101,19 @@ Parameters:
 		filepath for input Newick tre
 - div : string
 		div id (with included #) in which to generated tree
-- mapp : string (optional)
-		filepath to TSV mapping file (formats trees), expects
-        first column to be labels for leafs
+- options: obj
+           options object with potential keys and values
+
+Options obj:
+- mapping_file: path to OTU mapping file (if there is one)
+- hideRuler: (bool) if true, background distance ruler is not rendered TODO
+- skipBranchLengthScaling: (bool) if true, tree will not be scaled by distance TODO
+- skipLabels: TODO
+- treeType: either rectangular or radial
+TODO
+
 */
-function init(dat, div, mapp=null) {
+function init(dat, div, options={}) {
 
     renderDiv = div;
 
@@ -132,25 +144,21 @@ function init(dat, div, mapp=null) {
 
 
     // render tree
-    if (mapp) {
-        d3.tsv(mapp, function(error, data) {
+    if ('mapping_file' in options) {
+        d3.tsv(options.mapping_file, function(error, data) {
             if (error) throw error;
 
             var parsed = parseMapping(data);
             mapParse = parsed[0];
             colorScales = parsed[1];
 
-            var options = {
-                mapping: mapParse,
-                colorScale: colorScales,
-                treeType: treeType,
-                skipBranchLengthScaling: scale,
-            }
+            options['mapping'] = mapParse;
+            options['colorScale'] = colorScales;
 
             buildTree(renderDiv, newick, options);
         });
     } else {
-        buildTree(renderDiv, newick, {});
+        buildTree(renderDiv, newick, options);
     }
 }
 
@@ -173,13 +181,6 @@ Parameters:
 - options: obj
            options object with potential keys and values
 
-Options obj:
-- mapping: index 0 of the array output of parseMapping()
-- colorScale: index 1 of the array output of parseMapping()
-- hideRuler: (bool) if true, background distance ruler is not rendered
-- skipBranchLengthScaling: (bool) if true, tree will not be scaled by distance
-- skipLabels
-TODO
 
 Retrurns:
 =========
@@ -189,13 +190,23 @@ Retrurns:
 
 function buildTree(div, newick, options) {
 
+    // check options, if not set, set to default
+    if (!('treeType' in options)) { 
+        options['treeType'] = treeType;
+    }
+    if (!('skipBranchLengthScaling' in options)) { 
+        options['skipBranchLengthScaling'] = !scale;
+    }
+    console.log(options)
 
     // add bootstrap container class
     d3.select(div)
         .attr("class","container-fluid render")
 
     // build GUI
-    var gui = buildGUI(div, options.mapping);
+    if ('mapping' in options) {
+        var gui = buildGUI(div, options.mapping);
+    }
 
     var tmp = d3.select(renderDiv).append("div")
             .attr("class","row")

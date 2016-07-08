@@ -25,7 +25,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
 
-    <body onload="init('dat/tree.tre', '#phylogram', 'dat/mapping.txt');">
+    <script> 
+        var treeOptions = {
+            'mapping_file': 'dat/mapping.txt',
+            'treeType': 'rectangular',
+            'hideRuler': 'TODO',
+            'skipBranchLengthScaling': false,
+            'skipLabels': 'TODO',
+        }
+    </script>
+    <body onload="init('dat/tree.tre', '#phylogram', treeOptions);">
 
         <!-- div for tree -->
         <div id='phylogram'></div>
