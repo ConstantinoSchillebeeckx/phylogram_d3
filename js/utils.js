@@ -137,10 +137,10 @@ Returns:
 - nothing
 
 */
-function formatLinks(svg, links, options) {
+function formatLinks(id, links, options) {
 
     // set to global!
-    link = svg.selectAll("path.link")
+    link = d3.select(id).selectAll("path.link")
       .data(links)
         .enter().append("path")
         .attr("class","link")
@@ -199,9 +199,9 @@ Returns:
 - nothing
 
 */
-function formatNodes(svg, nodes, options, leafRadius=5) {
+function formatNodes(id, nodes, options, leafRadius=5) {
 
-    node = svg.selectAll("g.node")
+    node = d3.select(id).selectAll("g.node")
         .data(nodes, function(d, i) { return d.name != '' ? d.name : 'root'; })
       .enter().append("g")
         .attr("class", function(n) {
@@ -261,25 +261,24 @@ function formatNodes(svg, nodes, options, leafRadius=5) {
 
 Parameters:
 ===========
-- svg : svg selctor
-        svg HTML element into which to render
 - nodes : d3 tree nodes
 - links : d3 tree links
 - yscale : quantitative scale
            horizontal scaling factor for distance
+           if null, ruler is not drawn
 - xscale : quantitative scale
            vertical scale
+           if null, ruler is not drawn
 - height : int
            height of svg
 - options : obj
             tree options, see documentation for keys
 
 */
-function formatTree(svg, nodes, links, yscale, xscale, height, options) {
-    formatRuler(svg, yscale, xscale, height, options, function() {
-        formatLinks(svg, links, options);
-        formatNodes(svg, nodes, options);
-    });
+function formatTree(nodes, links, yscale=null, xscale=null, height, options) {
+    formatRuler('#rulerSVG', yscale, xscale, height, options);
+    formatLinks('#treeSVG', links, options);
+    formatNodes('#treeSVG', nodes, options);
 }
 
 
@@ -309,21 +308,24 @@ Returns:
 - nothing
 
 */
-function formatRuler(svg, yscale, xscale, height, options, callback) {
+function formatRuler(id, yscale, xscale, height, options) {
 
-/*
-    if (!options.hideRuler) {
+    if (!options.hideRuler && yscale != null) {
+
         if (options.treeType == 'rectangular') {
-            svg.selectAll('line.rule')
-                    .data(yscale.ticks(10))
-                .enter().append('svg:line')
-                    .attr("class", "rule")
-                    .attr('y1', 0)
-                    .attr('y2', xscale(height))
-                    .attr('x1', yscale)
-                    .attr('x2', yscale)
 
-            svg.selectAll("text.rule")
+            var rulerG = d3.select(id).selectAll("g")
+                    .data(yscale.ticks(10))
+                  .enter().append("g")
+                    .attr("class", "ruleGroup")
+                    
+            ruler = rulerG.selectAll('circle.rule')
+                    .data(function(d) { return [lineData(yscale(d))] })
+                  .enter().append('path')
+                    .attr("class","rule" )
+                    .attr("d",lineFunction)
+
+         /*   ruler.selectAll("text.rule")
                     .data(yscale.ticks(10))
                 .enter().append("svg:text")
                     .attr("class", "rule")
@@ -332,16 +334,22 @@ function formatRuler(svg, yscale, xscale, height, options, callback) {
                     .attr("dy", -3)
                     .attr("text-anchor", "middle")
                     .text(function(d) { return Math.round(d*100) / 100; });
-        } else if (options.treeType == 'radial') {
-            svg.selectAll('circle.rule')
-                .data(yscale.ticks(10))
-              .enter().append('circle')
-                .attr("class","rule")
-                .attr('r', yscale);
+            */
+        } else if (options.treeType == 'radial') {  
+            console.log('here')
+            var rulerG = d3.select(id).selectAll("g")
+                    .data(yscale.ticks(10))
+                  .enter().append("g")
+                    .attr("class", "ruleGroup")
+                    .attr("transform", function(d) { return "translate(" + -circleData(yscale(d))[0].x + "," + -yscale(d) + ")"; })
+                    
+            ruler = rulerG.selectAll('circle.rule')
+                    .data(function(d) { return [circleData(yscale(d))] })
+                  .enter().append('path')
+                    .attr("class","rule" )
+                    .attr("d",lineFunction)
         }
     }
-*/
-    callback();
 }
 
 

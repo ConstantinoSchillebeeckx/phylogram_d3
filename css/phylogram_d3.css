@@ -34,9 +34,10 @@ line.rule {
     fill: none;
 }
 
-circle.rule {
+path.rule {
     stroke: #ddd;
     fill: none;
+    stroke-width: 1px;
 }
 /* background distance rulers */
 

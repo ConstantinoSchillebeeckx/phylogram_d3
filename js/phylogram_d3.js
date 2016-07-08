@@ -35,9 +35,6 @@ var tree; // will be set to one of the following tree types
 var radialTree = d3.layout.cluster()
     .size([360, innerRadius])
     .children(function(d) { return d.branchset; })
-    //.value(function(d) { return 1; })
-    //.sort(function(a, b) { return (a.value - b.value) || d3.ascending(a.length, b.length); })
-    //.separation(function(a, b) { return (a.parent == b.parent ? 1 : 2) / a.depth; });
 
 // setup rectangular tree
 var rectTree = d3.layout.cluster()
@@ -49,8 +46,40 @@ var rectTree = d3.layout.cluster()
 
 var duration = 1000;
 
+
+// https://jsfiddle.net/chrisJamesC/3MShS/
+var numberOfPoints = 30;
+var lineLength = startH;
+
+function circleData(r) { 
+    var points = [];
+    $.map(Array(numberOfPoints), function (d, i) {
+        var imag = lineLength / 2 + r * Math.sin(2 * i * Math.PI / (numberOfPoints - 1))
+        var real = r - r * Math.cos(2 * i * Math.PI / (numberOfPoints - 1))
+        points.push({x: imag, y: real})
+    }) 
+    return points;
+}
+
+function lineData(y) {
+    var points = [];
+    $.map(Array(numberOfPoints), function (d, i) {
+        var x = i * lineLength / (numberOfPoints - 1)
+        points.push({ x: y, y: x})
+    }).reverse()
+    return points;
+}
+
+var lineFunction = d3.svg.line()
+    .x(function (d) {return d.x;})
+    .y(function (d) {return d.y;})
+    .interpolate("cardinal");
+
 // --------------
 // GLOBALS
+
+
+
 
 
 
@@ -181,10 +210,14 @@ function buildTree(div, newick, options) {
             .attr("xmlns","http://www.w3.org/2000/svg")
             .attr("width",startW)
             .attr("height",startH)
-        .append("svg:g") // svg g group is translated in updateTree()
+        .append("g") // svg g group is translated in updateTree()
             .attr("id",'canvasSVG')
-        .append("g")
+
+    svg.append("g")
+            .attr("id","rulerSVG")
+    svg.append("g")
             .attr("id","treeSVG")
+
 
     // generate intial layout and all tree elements
     if (options.treeType == 'rectangular') {
@@ -195,15 +228,12 @@ function buildTree(div, newick, options) {
         tree = radialTree;
     }
 
-    nodes = tree.nodes(newick);
-    if (!options.skipBranchLengthScaling) { scaleBranchLengths(nodes); }
-    scaleLeafSeparation(tree, nodes)
-    links = tree.links(nodes);
-
     // initial format of tree (nodes, links, labels, ruler)
-    //formatTree(svg, nodes, links, yscale, xscale, height, options);
-    formatLinks(svg, links, options);
-    formatNodes(svg, nodes, options);
+    nodes = tree.nodes(newick);
+    if (!options.skipBranchLengthScaling) { var yscale = scaleBranchLengths(nodes); }
+    var xscale = scaleLeafSeparation(tree, nodes)
+    links = tree.links(nodes);
+    formatTree(nodes, links, yscale, xscale, height, options);
 
     svg.call(tip);
     resizeSVG();
@@ -264,9 +294,9 @@ function updateTree(options={}) {
             }
 
             nodes = rectTree.nodes(newick);
-            //scaleLeafSeparation(tree, nodes, options.sliderScaleH);
+            scaleLeafSeparation(tree, nodes, options.sliderScaleH);
             if (!options.skipBranchLengthScaling) { 
-                scaleBranchLengths(nodes); 
+                var yscale = scaleBranchLengths(nodes); 
             }
             links = rectTree.links(nodes)
 
@@ -282,12 +312,17 @@ function updateTree(options={}) {
                 .duration(duration)
                 .attr("d", elbow)
 
+            ruler.data(function(d) { return [lineData(yscale(d))] })
+                    .transition()
+                    .duration(duration)
+                    .attr("d",lineFunction)
+
         } else if (options.treeType == 'radial') {
 
             if (options.treeType != treeType) {
                 d3.select("#canvasSVG").transition()
                     .duration(duration)
-                    .attr("transform","translate(" + (innerRadius + margin.left) + "," + (innerRadius + margin.top) + ")")
+                    .attr("transform","translate(" + (outerRadius + margin.left) + "," + (outerRadius + margin.top) + ")")
             }
 
             nodes = radialTree.nodes(newick);
