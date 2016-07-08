@@ -231,7 +231,7 @@ function buildTree(div, newick, options) {
     // initial format of tree (nodes, links, labels, ruler)
     nodes = tree.nodes(newick);
     if (!options.skipBranchLengthScaling) { var yscale = scaleBranchLengths(nodes); }
-    var xscale = scaleLeafSeparation(tree, nodes)
+    if (options.treeType == 'rectangular') { var xscale = scaleLeafSeparation(tree, nodes); }
     links = tree.links(nodes);
     formatTree(nodes, links, yscale, xscale, height, options);
 
