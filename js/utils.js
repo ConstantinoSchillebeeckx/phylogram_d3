@@ -246,11 +246,13 @@ function formatNodes(id, nodes, options, leafRadius=5) {
 
     // node label
     node.append("text")
-        .attr("text-anchor", "start")
-        .attr("dx", 8)
+        .attr("class","leafLabel")
+        .attr("dx", function(d) { return treeType == 'radial' && d.x > 180 ? "-8" : "8" }) 
         .attr("dy", 3)
+        .attr("text-anchor", function(d) { return treeType == 'radial' && d.x > 180 ? "end" : "start" })
+        .attr("transform", function(d) { return treeType == 'radial' && d.x > 180 ? "rotate(180)" : "" }) 
         .text(function(d) { return d.children ? null : d.name + ' ('+d.length+')'; });
-
+   
 
 }
 
@@ -314,7 +316,7 @@ function formatRuler(id, yscale, xscale, height, options) {
 
         if (options.treeType == 'rectangular') {
 
-            var rulerG = d3.select(id).selectAll("g")
+            rulerG = d3.select(id).selectAll("g")
                     .data(yscale.ticks(10))
                   .enter().append("g")
                     .attr("class", "ruleGroup")
@@ -336,8 +338,8 @@ function formatRuler(id, yscale, xscale, height, options) {
                     .text(function(d) { return Math.round(d*100) / 100; });
             */
         } else if (options.treeType == 'radial') {  
-            console.log('here')
-            var rulerG = d3.select(id).selectAll("g")
+
+            rulerG = d3.select(id).selectAll("g")
                     .data(yscale.ticks(10))
                   .enter().append("g")
                     .attr("class", "ruleGroup")

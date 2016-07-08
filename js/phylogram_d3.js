@@ -16,7 +16,7 @@ var startW = 800, startH = 600;
 var nodes, links, node, link;
 var width = startW - margin.left - margin.right;
 var height = startH - margin.top - margin.bottom;
-var treeType = 'rectangular'; // rectangular or circular [currently rendered treeType]
+var treeType = 'radial'; // rectangular or circular [currently rendered treeType]
 var scale = false;
 var newick;
 // tooltip 
@@ -283,7 +283,9 @@ function updateTree(options={}) {
         options['backgroundColor'] = e.options[e.selectedIndex].value;
     }
 
-    if (options.treeType != treeType || options.skipBranchLengthScaling != scale) { // if tree type changes
+    // adjust physical positioning
+    if (options.treeType != treeType || options.skipBranchLengthScaling != scale) {
+
 
         if (options.treeType == 'rectangular') {
 
@@ -312,10 +314,12 @@ function updateTree(options={}) {
                 .duration(duration)
                 .attr("d", elbow)
 
-            ruler.data(function(d) { return [lineData(yscale(d))] })
+            // not working TODO
+            rulerG.data(function(d) { return [lineData(yscale(d))] })
                     .transition()
                     .duration(duration)
                     .attr("d",lineFunction)
+
 
         } else if (options.treeType == 'radial') {
 
@@ -326,7 +330,7 @@ function updateTree(options={}) {
             }
 
             nodes = radialTree.nodes(newick);
-            if (!options.skipBranchLengthScaling) { scaleBranchLengths(nodes); }
+            if (!options.skipBranchLengthScaling) { var yscale = scaleBranchLengths(nodes); }
             links = radialTree.links(nodes)
 
             node.data(nodes)
@@ -337,13 +341,23 @@ function updateTree(options={}) {
                 });
 
             link.data(links)
-                //.transition()
-                //.duration(duration)
+                .transition()
+                .duration(duration)
                 .attr("d", function(d) { return step(d.source.x, d.source.y, d.target.x, d.target.y); })
+
+            rulerG.data(function(d) { return [circleData(yscale(d))] })
+                    .transition()
+                    .duration(duration)
+                    .attr("d",lineFunction)
         }
 
         treeType = options.treeType; // update current tree type
         scale = options.skipBranchLengthScaling;
+
+        d3.selectAll("g.leaf text")
+            .attr("text-anchor", function(d) { return options.treeType == 'radial' && d.x > 180 ? "end" : "start" })
+            .attr("transform", function(d) { return options.treeType == 'radial' && d.x > 180 ? "rotate(180)" : "" })
+            .attr("dx", function(d) { return options.treeType == 'radial' && d.x > 180 ? "-8" : "8" }) // XXX not working
     }
 
     if (options.treeType == 'rectangular') {
