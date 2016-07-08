@@ -695,32 +695,29 @@ function buildGUI(selector, mapParse=null) {
 
     //$('#collapseGUI').collapse('toggle'); // strange drag and slide behavior
 
-    var guiRow0 = gui.append("div")
-        .attr("class","row form-group")
-        .style("margin-bottom","0px")
-
-    var col1 = guiRow0.append("div")
-        .attr("class","col-sm-4 btn-toolbar")
-
-    var tmp = col1.append("button")
-        .attr("class","btn btn-info")
-        .attr("id","rectangular")
-        .attr("title","Generate a rectangular layout")
-        .attr("onclick","updateTree({'treeType':this.id})")
-        .html('<i class="fa fa-square-o fa-lg" aria-hidden="true"></i>')
-    col1.append("button")
-        .attr("class","btn btn-info")
-        .attr("id","radial")
-        .attr("title","Generate a radial layout")
-        .attr("onclick","updateTree({'treeType':this.id})")
-        .html('<i class="fa fa-circle-thin fa-lg" aria-hidden="true"></i>')
-
 
     var guiRow1 = gui.append("div")
         .attr("class","row")
 
     var col1 = guiRow1.append("div")
         .attr("class","col-sm-2")
+
+    var tmp = col1.append("div")
+        .attr("class","btn-toolbar")
+    
+    tmp.append("button")
+        .attr("class","btn btn-info")
+        .attr("id","rectangular")
+        .attr("title","Generate a rectangular layout")
+        .attr("onclick","updateTree({'treeType':this.id})")
+        .html('<i class="fa fa-square-o fa-lg" aria-hidden="true"></i>')
+
+    tmp.append("button")
+        .attr("class","btn btn-info")
+        .attr("id","radial")
+        .attr("title","Generate a radial layout")
+        .attr("onclick","updateTree({'treeType':this.id})")
+        .html('<i class="fa fa-circle-thin fa-lg" aria-hidden="true"></i>')
 
     var check1 = col1.append("div")
         .attr("class","checkbox")
@@ -810,29 +807,22 @@ function buildGUI(selector, mapParse=null) {
             .text('None');
         // select for background color
     }
-
-    var guiRow2 = gui.append("div")
-        .attr("class","row")
-
-    var col1 = guiRow2.append("div")
+    var col3 = guiRow1.append("div")
         .attr("class","col-sm-2")
 
-    col1.append("label")
+    col3.append("label")
         .text("Vertical scale")
 
-    col1.append("div")
+    col3.append("div")
         .attr("id","scaleH")
 
     scaleHSlider = d3.slider().min(22).max(100).step(1).on("slide", function(evt, value) { updateTree(); });
     d3.select('#scaleH').call(scaleHSlider);
 
-    var col2 = guiRow2.append("div")
-        .attr("class","col-sm-2")
-
-    col2.append("label")
+    col3.append("label")
         .text("Leaf radius")
 
-    col2.append("div")
+    col3.append("div")
         .attr("id","leafR")
 
     leafRSlider = d3.slider().min(5).max(20).on("slide", function(evt, value) { updateTree(); });
