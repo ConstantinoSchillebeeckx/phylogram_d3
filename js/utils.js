@@ -299,8 +299,8 @@ function formatTree(nodes, links, yscale=null, xscale=null, height, options) {
 
 Parameters:
 ===========
-- svg : svg selctor
-        svg HTML element into which to render
+- id : id selector
+       id (with #) into which to render ruler
 - yscale : quantitative scale
            horizontal scaling factor for distance
 - xscale : quantitative scale
@@ -311,9 +311,7 @@ Parameters:
             tree options, expects a key hideRuler;
             if true, rules won't be drawn. also
             expects a key treeType (rectangular/radial)
-- callback : callback function
-             ruler should be formatted first so that
-             all other SVG elements lay on top of it
+
 Returns:
 ========
 - nothing
@@ -323,7 +321,9 @@ function formatRuler(id, yscale, xscale, height, options) {
 
     if (!options.hideRuler && yscale != null) {
 
+
         if (options.treeType == 'rectangular') {
+
 
             rulerG = d3.select(id).selectAll("g")
                     .data(yscale.ticks(10))
@@ -336,7 +336,7 @@ function formatRuler(id, yscale, xscale, height, options) {
                     .attr("class","rule" )
                     .attr("d",lineFunction)
 
-         /*   ruler.selectAll("text.rule")
+            ruler.selectAll("text.rule")
                     .data(yscale.ticks(10))
                 .enter().append("svg:text")
                     .attr("class", "rule")
@@ -345,9 +345,19 @@ function formatRuler(id, yscale, xscale, height, options) {
                     .attr("dy", -3)
                     .attr("text-anchor", "middle")
                     .text(function(d) { return Math.round(d*100) / 100; });
-            */
         } else if (options.treeType == 'radial') {  
 
+            rulerG = d3.select(id).selectAll("g")
+                    .data(yscale.ticks(10))
+                  .enter().append("g")
+                    .attr("class", "ruleGroup")
+                  .append('circle')
+                    .attr("class","rule")
+                    .attr('r', yscale)
+                    .attr("fill","none")
+                    .attr("stroke","#ddd")
+
+/* temporarily disabled
             rulerG = d3.select(id).selectAll("g")
                     .data(yscale.ticks(10))
                   .enter().append("g")
@@ -359,6 +369,7 @@ function formatRuler(id, yscale, xscale, height, options) {
                   .enter().append('path')
                     .attr("class","rule" )
                     .attr("d",lineFunction)
+*/
         }
     }
 }

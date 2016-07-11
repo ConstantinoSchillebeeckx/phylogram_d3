@@ -301,32 +301,34 @@ function updateTree(options={}) {
     // adjust physical positioning
     if (options.treeType != treeType || options.skipBranchLengthScaling != scale) {
 
-
         if (options.treeType == 'rectangular') {
 
             if (options.treeType != treeType) {
-                d3.select("#canvasSVG").transition()
-                    .duration(duration)
+                d3.select("#canvasSVG")
+                    //.transition()
+                    //.duration(duration)
                     .attr("transform","translate(" + margin.left + "," + margin.top + ")")
             }
 
             nodes = rectTree.nodes(newick);
-            scaleLeafSeparation(tree, nodes, options.sliderScaleH);
+            var xscale = scaleLeafSeparation(tree, nodes, options.sliderScaleH);
             if (!options.skipBranchLengthScaling) { 
-                scaleBranchLengths(nodes); 
+                var yscale = scaleBranchLengths(nodes); 
+                d3.selectAll("g.ruleGroup").remove()
+                formatRuler('#rulerSVG', yscale, xscale, height, options);
             }
             links = rectTree.links(nodes)
 
             node.data(nodes)
-                .transition()
-                .duration(duration)
+                //.transition()
+                //.duration(duration)
                 .attr("transform", function(d) {
                     return "translate(" + d.y + "," + d.x + ")";
                 });
 
             link.data(links)
-                .transition()
-                .duration(duration)
+                //.transition()
+                //.duration(duration)
                 .attr("d", elbow)
 
             /*
@@ -340,25 +342,30 @@ function updateTree(options={}) {
         } else if (options.treeType == 'radial') {
 
             if (options.treeType != treeType) {
-                d3.select("#canvasSVG").transition()
-                    .duration(duration)
+                d3.select("#canvasSVG")
+                    //.transition()
+                    //.duration(duration)
                     .attr("transform","translate(" + (outerRadius + margin.left) + "," + (outerRadius + margin.top) + ")")
             }
 
             nodes = radialTree.nodes(newick);
-            if (!options.skipBranchLengthScaling) { var yscale = scaleBranchLengths(nodes); }
+            if (!options.skipBranchLengthScaling) { 
+                var yscale = scaleBranchLengths(nodes); 
+                d3.selectAll("g.ruleGroup").remove()
+                formatRuler('#rulerSVG', yscale, null, height, options);
+            }
             links = radialTree.links(nodes)
 
             node.data(nodes)
-                .transition()
-                .duration(duration)
+                //.transition()
+                //.duration(duration)
                 .attr("transform", function(d) {
                     return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")";
                 });
 
             link.data(links)
-                .transition()
-                .duration(duration)
+                //.transition()
+                //duration.duration(duration)
                 .attr("d", function(d) { return step(d.source.x, d.source.y, d.target.x, d.target.y); })
 
             /*
