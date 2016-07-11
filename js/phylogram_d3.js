@@ -162,10 +162,10 @@ function init(dat, div, options={}) {
             options['mapping'] = mapParse;
             options['colorScale'] = colorScales;
 
-            buildTree(renderDiv, newick, options);
+            buildTree(renderDiv, newick, options, function() { resizeSVG(); });
         });
     } else {
-        buildTree(renderDiv, newick, options);
+        buildTree(renderDiv, newick, options, function() { resizeSVG(); });
     }
 }
 
@@ -195,7 +195,7 @@ Retrurns:
 
 */
 
-function buildTree(div, newick, options) {
+function buildTree(div, newick, options, callback) {
 
     // check options, if not set, set to default
     if (!('treeType' in options)) { 
@@ -245,7 +245,7 @@ function buildTree(div, newick, options) {
         d3.select("#canvasSVG").attr("transform","translate(" + margin.left + "," + margin.top + ")")
         tree = rectTree;
     } else if (options.treeType == 'radial') {
-        d3.select("#canvasSVG").attr("transform","translate(" + (innerRadius + margin.left) + "," + (innerRadius + margin.top) + ")")
+        d3.select("#canvasSVG").attr("transform","translate(" + (outerRadius + margin.left) + "," + (outerRadius + margin.top) + ")")
         tree = radialTree;
     }
 
@@ -257,10 +257,9 @@ function buildTree(div, newick, options) {
     formatTree(nodes, links, yscale, xscale, height, options);
 
     svg.call(tip);
-    resizeSVG();
-
     showSpinner(null, false); // hide spinner
 
+    callback();
 }
 
 
