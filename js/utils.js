@@ -246,12 +246,12 @@ function formatNodes(id, nodes, options, leafRadius=5) {
 
     // node label
     node.append("text")
-        .attr("class","leafLabel")
+        .attr("class",function(d) { return d.children ? "distanceLabel" : "leafLabel" })
         .attr("dx", function(d) { 
             if (d.children) {
-                return -35;
+                return -20;
             } else if (treeType == 'radial' && d.x > 180) {
-                return -8;
+                return -10;
             } else {
                 return 8;
             } 
@@ -259,7 +259,17 @@ function formatNodes(id, nodes, options, leafRadius=5) {
         .attr("dy", function(d) { return d.children ? -6 : 3 })
         .attr("text-anchor", function(d) { return treeType == 'radial' && d.x > 180 ? "end" : "start" })
         .attr("transform", function(d) { return treeType == 'radial' && d.x > 180 ? "rotate(180)" : "" }) 
-        .text(function(d) { return d.children ? d.length : d.name + ' ('+d.length+')'; })
+        .text(function(d) { 
+            if (d.children) {
+                if (d.length && d.length.toFixed(2) > 0.01) {
+                    return d.length.toFixed(2);
+                } else {
+                    return '';
+                }
+            } else {
+                return d.name + ' ('+d.length+')';
+            }
+        })
         .attr("opacity", function(d) { return options.skipLabels ? 1e-6 : 1; });
    
 

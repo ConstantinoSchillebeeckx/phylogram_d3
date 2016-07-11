@@ -363,6 +363,7 @@ function updateTree(options={}) {
                     return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")";
                 });
 
+
             link.data(links)
                 //.transition()
                 //duration.duration(duration)
@@ -376,13 +377,21 @@ function updateTree(options={}) {
             */
         }
 
+        // if tree type changes
+        // adjust some label positioning
+        if (options.treeType != treeType) {
+            d3.selectAll("g.node text")
+                .attr("text-anchor", function(d) { return options.treeType == 'radial' && d.x > 180 ? "end" : "start" })
+                .attr("transform", function(d) { return options.treeType == 'radial' && d.x > 180 ? "rotate(180)" : "" })
+
+            d3.selectAll("g.inner text")
+                .attr("dx", function(d) { return options.treeType == 'radial' && d.x > 180 ? 20 : -20 })
+        }
+
         treeType = options.treeType; // update current tree type
         scale = options.skipBranchLengthScaling;
 
-        d3.selectAll("g.leaf text")
-            .attr("text-anchor", function(d) { return options.treeType == 'radial' && d.x > 180 ? "end" : "start" })
-            .attr("transform", function(d) { return options.treeType == 'radial' && d.x > 180 ? "rotate(180)" : "" })
-            .attr("dx", function(d) { return options.treeType == 'radial' && d.x > 180 ? "-8" : "8" }) // XXX not working
+
     }
 
     if (options.treeType == 'rectangular') {
@@ -401,7 +410,7 @@ function updateTree(options={}) {
     svg.selectAll("g.leaf circle")
         .attr("r", options.sliderLeafR);
     svg.selectAll("g.leaf text")
-        .attr("dx", options.sliderLeafR+3);
+        .attr("dx", function(d) { return options.treeType == 'radial' && d.x > 180 ? -8 - options.sliderLeafR : options.sliderLeafR + 8 });
 
 
     // toggle leaf labels
