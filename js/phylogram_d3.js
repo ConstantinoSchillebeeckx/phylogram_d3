@@ -425,7 +425,7 @@ function updateTree(options={}) {
         .text(function(d) { return options.skipDistanceLabel ? d.name : d.name + ' ('+d.length+')'; });
 
     // remove legend if one exists so we can update
-    d3.select("#legendID g").remove()
+    d3.selectAll("#legendID g").remove()
 
 
     // update leaf node
