@@ -1037,9 +1037,10 @@ function generateLegend(title, mapVals, colorScale, type) {
     // generate containing group if necessarry
     var container = d3.select("#legendID")
     if (container.empty()) { // if legend doesn't already exist
+        var box = d3.select("svg").node().getBBox()
         container = d3.select('svg g').append("g")
             .attr("id", "legendID")
-            .attr("transform","translate(" + (d3.select("svg").node().getBBox().width + 10) + ",0)");
+            .attr("transform","translate(" + (box.width + 10) + ",0)");
     }
 
 
