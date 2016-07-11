@@ -1095,7 +1095,7 @@ function generateLegend(title, mapVals, colorScale, type) {
         .data(sorted).enter()
         .append('g')
             .attr('class', 'legend')
-            .attr('transform', function(d,i) { return 'translate(5,' + (25 + i * 20) + ')'; } )
+            .attr('transform', function(d,i) { return 'translate(11,' + (25 + i * 20) + ')'; } )
         
     if (type == 'circle' && bar === false) {
         legendRow.append(type)
@@ -1107,16 +1107,25 @@ function generateLegend(title, mapVals, colorScale, type) {
         legendRow.append('rect')
             .attr('width', bar ? 30 : 9)
             .attr('height', bar ? 20 : 9)
-            .attr('x', bar ? 4 : -4.5)
+            .attr('x', bar ? -4.5 : -4.5)
             .attr('y', bar ? -11 : -4.5)
             .attr('fill', function(d) { return colorScale(d) } ) 
     }
         
     legendRow.append('text')
-            .attr('dx', 8)
+            .attr('dx', bar ? 0 : 8)
             .attr('dy', 3)
             .attr('text-anchor', 'start')
-            .attr("fill", bar ? "white" : "black")
+            .attr("fill", function(d) {
+                if (bar) {
+                    var L = d3.hsl(colorScale(d)).l;
+                    var rgb = legendColorScale(L);
+                    console.log(L, rgb);
+                    return d3.rgb(rgb,rgb,rgb);
+                } else {
+                    return 'black';
+                }
+            })
             .text(function(d) { 
                 if (bar) {
                     return scale(d).toFixed(2);

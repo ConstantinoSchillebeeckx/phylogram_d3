@@ -22,6 +22,13 @@ var newick;
 var treeType = 'rectangular'; // rectangular or circular [currently rendered treeType]
 var scale = true; // if true, tree will be scaled by distance metric
 
+// scale for adjusting legend
+// text color based on background
+// [background HSL -> L value]
+// domain is L (0,1)
+// range is RBG
+var legendColorScale = d3.scale.linear().domain([0.5,1]).range([255,0])
+
 // tooltip 
 var tip = d3.tip()
     .attr('class', 'd3-tip')
@@ -410,7 +417,17 @@ function updateTree(options={}) {
     svg.selectAll("g.leaf circle")
         .attr("r", options.sliderLeafR);
     svg.selectAll("g.leaf text")
-        .attr("dx", function(d) { return options.treeType == 'radial' && d.x > 180 ? -8 - options.sliderLeafR : options.sliderLeafR + 8 });
+        .attr("dx", function(d) { 
+            if (options.treeType == 'radial') {
+                if (d.x > 180) {
+                    return -8 - options.sliderLeafR;
+                } else {
+                    return options.sliderLeafR + 8;
+                }
+            } else {
+                return options.sliderLeafR + 3;
+            }
+        });
 
 
     // toggle leaf labels
