@@ -427,7 +427,6 @@ function updateTree(options={}) {
     // remove legend if one exists so we can update
     d3.selectAll("#legendID g").remove()
 
-
     // update leaf node
     if (options.leafColor != '') {
         var colorScale = colorScales.get(options.leafColor); // color scale
