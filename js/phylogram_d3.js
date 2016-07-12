@@ -476,7 +476,7 @@ function updateTree(options={}) {
         svg.selectAll('g.leaf.node rect')
             .transition()
             .attr("width", function(d) {
-                var name = d.name.replace('.','_');
+                var name = d.name.replace(new RegExp('\\.', 'g'), '_');
                 var textWidth = d3.select('#leaf_' + name + ' text').node().getComputedTextLength();
                 var radius = d3.select('#leaf_' + name + ' circle').node().getBBox().height / 2.0;
                 return textWidth + radius + 10; // add extra so background is wider than label

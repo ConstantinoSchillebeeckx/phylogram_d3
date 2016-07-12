@@ -207,29 +207,34 @@ function formatNodes(id, nodes, options) {
     }
 
     node = d3.select(id).selectAll("g.node")
-        .data(nodes, function(d, i) { return d.name != '' ? d.name : 'root'; })
-      .enter().append("g")
-        .attr("class", function(n) {
-            if (n.children) {
-                if (n.depth == 0) {
-                    return "root node"
+            .data(nodes)
+          .enter().append("g")
+            .attr("class", function(n) {
+                if (n.children) {
+                    if (n.depth == 0) {
+                        return "root node"
+                    } else {
+                        return "inner node"
+                    }
                 } else {
-                    return "inner node"
+                    return "leaf node"
                 }
-            } else {
-                return "leaf node"
-            }
-        })
-        .attr("id", function(d) { return d.children ? null : 'leaf_' + d.name.replace('.','_'); })
-        .attr("transform", function(d) {
-            if (options.treeType == 'rectangular') {
-                return "translate(" + d.y + "," + d.x + ")";
-            } else if (options.treeType == 'radial') {
-                return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")";
-            }
-        })
-        .on('mouseover', tip.show) 
-        .on('mouseout', tip.hide)
+            })
+            .attr("id", function(d) {
+                if (!d.children) {
+                    var name = d.name.replace(new RegExp('\\.', 'g'), '_');
+                    return 'leaf_' + name;
+                }
+            })
+            .attr("transform", function(d) {
+                if (options.treeType == 'rectangular') {
+                    return "translate(" + d.y + "," + d.x + ")";
+                } else if (options.treeType == 'radial') {
+                    return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")";
+                }
+            })
+            .on('mouseover', tip.show) 
+            .on('mouseout', tip.hide)
 
     // node backgrounds
     node.append("rect")
@@ -242,7 +247,7 @@ function formatNodes(id, nodes, options) {
     node.append("circle")
         .attr("r", options.sliderLeafR)
         .attr("opacity", function(d) { 
-            if (!d.children || d.name == '') {
+            if (!d.children || d.depth == 0) {
                 return 1;
             } else {
                 return 1e-6;
@@ -370,7 +375,9 @@ function formatRuler(id, yscale, xscale, height, options) {
 
             rulerG = d3.select(id).selectAll("g")
                     .data(yscale.ticks(10))
-                  .enter().append('circle')
+                  .enter().append("g")
+                    .attr("class", "ruleGroup")
+                  .append('circle')
                     .attr("class","rule")
                     .attr('r', yscale);
 /*
