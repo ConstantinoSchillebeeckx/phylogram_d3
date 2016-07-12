@@ -199,7 +199,12 @@ Returns:
 - nothing
 
 */
-function formatNodes(id, nodes, options, leafRadius=5) {
+function formatNodes(id, nodes, options) {
+
+    // set default leaf radius if not present
+    if (!('sliderLeafR' in options)) {
+        options['sliderLeafR'] = 5;
+    }
 
     node = d3.select(id).selectAll("g.node")
         .data(nodes, function(d, i) { return d.name != '' ? d.name : 'root'; })
@@ -229,13 +234,13 @@ function formatNodes(id, nodes, options, leafRadius=5) {
     // node backgrounds
     node.append("rect")
       .attr('width', 0 ) // width is set when choosing background color
-      .attr('height', 10 + leafRadius * 2) 
-      .attr('y', -leafRadius - 5)
+      .attr('height', 10 + options.sliderLeafR * 2) 
+      .attr('y', -options.sliderLeafR - 5)
       .attr("opacity", function(d) { return d.children ? 1e-6 : 1 });
 
     // node circles
     node.append("circle")
-        .attr("r", leafRadius)
+        .attr("r", options.sliderLeafR)
         .attr("opacity", function(d) { 
             if (!d.children || d.name == '') {
                 return 1;
@@ -248,13 +253,12 @@ function formatNodes(id, nodes, options, leafRadius=5) {
     node.append("text")
         .attr("class",function(d) { return d.children ? "distanceLabel" : "leafLabel" })
         .attr("dx", function(d) { 
-            if (d.children) {
-                return -20;
-            } else if (treeType == 'radial' && d.x > 180) {
-                return -10;
-            } else {
-                return 8;
-            } 
+            if (d.children) { // if inner node
+                return treeType == 'radial' && d.x > 180 ? 20 : -20;
+            } else { // if leaf node
+                return treeType == 'radial' && d.x > 180 ? (-5 - options.sliderLeafR) : (5 + options.sliderLeafR);
+            }
+
         }) 
         .attr("dy", function(d) { return d.children ? -6 : 3 })
         .attr("text-anchor", function(d) { return treeType == 'radial' && d.x > 180 ? "end" : "start" })

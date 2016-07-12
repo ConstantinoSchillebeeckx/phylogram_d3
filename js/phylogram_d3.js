@@ -389,17 +389,13 @@ function updateTree(options={}) {
             d3.selectAll("g.node text")
                 .attr("text-anchor", function(d) { return options.treeType == 'radial' && d.x > 180 ? "end" : "start" })
                 .attr("transform", function(d) { return options.treeType == 'radial' && d.x > 180 ? "rotate(180)" : "" })
-
-            d3.selectAll("g.inner text")
-                .attr("dx", function(d) { return options.treeType == 'radial' && d.x > 180 ? 20 : -20 })
         }
 
         treeType = options.treeType; // update current tree type
         scale = options.skipBranchLengthScaling;
-
-
     }
 
+    // adjust vertical scale
     if (options.treeType == 'rectangular') {
         scaleLeafSeparation(tree, nodes, options.sliderScaleH); // this will update x-pos
 
@@ -415,16 +411,12 @@ function updateTree(options={}) {
     // scale leaf radius
     svg.selectAll("g.leaf circle")
         .attr("r", options.sliderLeafR);
-    svg.selectAll("g.leaf text")
+    svg.selectAll("g.node text")
         .attr("dx", function(d) { 
-            if (options.treeType == 'radial') {
-                if (d.x > 180) {
-                    return -8 - options.sliderLeafR;
-                } else {
-                    return options.sliderLeafR + 8;
-                }
-            } else {
-                return options.sliderLeafR + 3;
+            if (d.children) { // if inner node
+                return treeType == 'radial' && d.x > 180 ? 20 : -20;
+            } else { // if leaf node
+                return treeType == 'radial' && d.x > 180 ? (-5 - options.sliderLeafR) : (5 + options.sliderLeafR);
             }
         });
 
