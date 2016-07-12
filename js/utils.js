@@ -340,9 +340,7 @@ function formatRuler(id, yscale, xscale, height, options) {
 
     if (!options.hideRuler && yscale != null) {
 
-
         if (options.treeType == 'rectangular') {
-
 
             rulerG = d3.select(id).selectAll("g")
                     .data(yscale.ticks(10))

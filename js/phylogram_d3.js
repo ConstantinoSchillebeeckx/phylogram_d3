@@ -298,7 +298,7 @@ function updateTree(options={}) {
     options['skipBranchLengthScaling'] = !$('#scale_distance').is(':checked');
 
     // get slider vals
-    options['sliderScaleH'] = scaleHSlider.value(); 
+    options['sliderScaleV'] = scaleHSlider.value(); 
     options['sliderLeafR'] = leafRSlider.value();
 
     // get dropdown values
@@ -324,7 +324,7 @@ function updateTree(options={}) {
             }
 
             nodes = rectTree.nodes(newick);
-            var xscale = scaleLeafSeparation(tree, nodes, options.sliderScaleH);
+            var xscale = scaleLeafSeparation(tree, nodes, options.sliderScaleV);
             if (!options.skipBranchLengthScaling) { 
                 var yscale = scaleBranchLengths(nodes); 
                 d3.selectAll("g.ruleGroup").remove()
@@ -403,11 +403,17 @@ function updateTree(options={}) {
     }
 
     // if leaf radius becomes too large, adjust vertical scale
-    if (options.sliderLeafR * 2 > options.sliderScaleH) { scaleHSlider.value( 2 * options.sliderLeafR ); }
+    if (options.sliderLeafR * 2 > options.sliderScaleV) { scaleHSlider.value( 2 * options.sliderLeafR ); }
 
     // adjust vertical scale
     if (options.treeType == 'rectangular') {
-        scaleLeafSeparation(tree, nodes, options.sliderScaleH); // this will update x-pos
+        var xscale = scaleLeafSeparation(tree, nodes, options.sliderScaleV); // this will update x-pos
+
+        // update ruler length
+        var treeH = d3.select("#treeSVG").node().getBBox().height
+        d3.selectAll(".ruleGroup line")
+            .attr("y2",xscale(treeH + margin.top + margin.bottom)) // TODO doesn't work quite right with large scale
+
 
         // scale vertical pos
         svg.selectAll("g.node")
