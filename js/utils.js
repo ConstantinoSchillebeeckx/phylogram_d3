@@ -628,6 +628,11 @@ by removing the class prefix and returning the
 original taxa string as an object split into taxonomic
 levels e.g. {"Kingdom":"bacteria", ... }
 
+NOTE: any taxa level with an assignment "unassigned" 
+will be thrown out - this way the tree will not
+color by this level (tree can only be colored by
+defined taxa)
+
 Parameters:
 ===========
 - taxa : string
@@ -657,7 +662,9 @@ function cleanTaxa(taxa) {
         // construct object
         var taxaLevels = ['Taxa [Kingdom]','Taxa [Phylum]','Taxa [Class]','Taxa [Order]','Taxa [Family]','Taxa [Genus]','Taxa [Species]'];
         clean.forEach(function(taxa, i) {
-            ret[taxaLevels[i]] = taxa;
+            if (taxa != 'unassigned') {
+                ret[taxaLevels[i]] = taxa;
+            }
         })
 
         return ret;
