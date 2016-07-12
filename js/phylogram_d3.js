@@ -241,11 +241,11 @@ function buildTree(div, newick, options, callback) {
 
 
     // generate intial layout and all tree elements
+    d3.select("#canvasSVG").attr("transform","translate(" + margin.left + "," + margin.top + ")")
     if (options.treeType == 'rectangular') {
-        d3.select("#canvasSVG").attr("transform","translate(" + margin.left + "," + margin.top + ")")
         tree = rectTree;
     } else if (options.treeType == 'radial') {
-        d3.select("#canvasSVG").attr("transform","translate(" + (outerRadius + margin.left) + "," + (outerRadius + margin.top) + ")")
+        d3.selectAll("#canvasSVG g").attr("transform","translate(" + outerRadius + "," + outerRadius + ")")
         tree = radialTree;
     }
 
