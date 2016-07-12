@@ -1040,12 +1040,12 @@ function generateLegend(title, mapVals, colorScale, type) {
 
     // generate containing group if necessarry
     var container = d3.select("#legendID")
+    var box = d3.select("#treeSVG").node().getBBox()
     if (container.empty()) { // if legend doesn't already exist
-        var box = d3.select("svg").node().getBBox()
         container = d3.select('svg g').append("g")
             .attr("id", "legendID")
-            .attr("transform","translate(" + (box.width + 10) + ",0)");
     }
+    container.attr("transform","translate(" + (box.width + 10) + ",0)");
 
 
 
@@ -1070,6 +1070,7 @@ function generateLegend(title, mapVals, colorScale, type) {
     }
     var legend = container.append("g")
             .attr("transform",transform)
+            .attr("id", type == "circle" ? "node_legend" : "background_legend")
 
     // if legend is to show an ordinal range, we represent it as a colorbar
     // this way we don't have a potentially gigantic legend
@@ -1124,7 +1125,6 @@ function generateLegend(title, mapVals, colorScale, type) {
                 if (bar) {
                     var L = d3.hsl(colorScale(d)).l;
                     var rgb = legendColorScale(L);
-                    console.log(L, rgb);
                     return d3.rgb(rgb,rgb,rgb);
                 } else {
                     return 'black';

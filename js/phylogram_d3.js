@@ -310,10 +310,10 @@ function updateTree(options={}) {
         if (options.treeType == 'rectangular') {
 
             if (options.treeType != treeType) {
-                d3.select("#canvasSVG")
+                d3.selectAll("#canvasSVG g")
                     //.transition()
                     //.duration(duration)
-                    .attr("transform","translate(" + margin.left + "," + margin.top + ")")
+                    .attr("transform","translate(0,0)")
             }
 
             nodes = rectTree.nodes(newick);
@@ -348,7 +348,7 @@ function updateTree(options={}) {
         } else if (options.treeType == 'radial') {
 
             if (options.treeType != treeType) {
-                d3.select("#canvasSVG")
+                d3.selectAll("#canvasSVG g")
                     //.transition()
                     //.duration(duration)
                     .attr("transform","translate(" + (outerRadius + margin.left) + "," + (outerRadius + margin.top) + ")")
