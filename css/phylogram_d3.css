@@ -29,12 +29,7 @@ text.rule {
     text-decoration: underline;
 }
 
-line.rule {
-    stroke: #ddd;
-    fill: none;
-}
-
-path.rule {
+.ruleGroup {
     stroke: #ddd;
     fill: none;
     stroke-width: 1px;
