@@ -1045,7 +1045,7 @@ function generateLegend(title, mapVals, colorScale, type) {
         container = d3.select('svg g').append("g")
             .attr("id", "legendID")
     }
-    container.attr("transform","translate(" + (box.width + 10) + ",0)");
+    container.attr("transform","translate(" + (box.width + margin.right + margin.left) + ",0)");
 
 
 
