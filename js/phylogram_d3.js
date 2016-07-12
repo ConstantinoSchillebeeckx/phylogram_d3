@@ -122,6 +122,13 @@ TODO
 */
 function init(dat, div, options={}) {
 
+    // ensure a file was passed
+    if (!dat) {
+        var msg = 'Please ensure that, at a minimum, a Newick file is passed to the <code>init()</code> call!';
+        displayErrMsg(msg, div);
+        return false;
+    }
+
     renderDiv = div;
 
     // show loading spinner
