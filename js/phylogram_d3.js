@@ -395,6 +395,9 @@ function updateTree(options={}) {
         scale = options.skipBranchLengthScaling;
     }
 
+    // if leaf radius becomes too large, adjust vertical scale
+    if (options.sliderLeafR * 2 > options.sliderScaleH) { scaleHSlider.value( 2 * options.sliderLeafR ); }
+
     // adjust vertical scale
     if (options.treeType == 'rectangular') {
         scaleLeafSeparation(tree, nodes, options.sliderScaleH); // this will update x-pos
