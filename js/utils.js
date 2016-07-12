@@ -343,13 +343,19 @@ function formatRuler(id, yscale, xscale, height, options) {
                     .data(yscale.ticks(10))
                   .enter().append("g")
                     .attr("class", "ruleGroup")
-                    
+                  .append('svg:line')
+                    .attr("class", "rule")
+                    .attr('y1', 0)
+                    .attr('y2', xscale(height))
+                    .attr('x1', yscale)
+                    .attr('x2', yscale)
+/*
             ruler = rulerG.selectAll('circle.rule')
-                    .data(function(d) { return [lineData(yscale(d))] })
+                    .data(function(d) { console.log(yscale(d)); return [lineData(yscale(d))] })
                   .enter().append('path')
                     .attr("class","rule" )
                     .attr("d",lineFunction)
-
+/*
             ruler.selectAll("text.rule")
                     .data(yscale.ticks(10))
                 .enter().append("svg:text")
@@ -359,10 +365,15 @@ function formatRuler(id, yscale, xscale, height, options) {
                     .attr("dy", -3)
                     .attr("text-anchor", "middle")
                     .text(function(d) { return Math.round(d*100) / 100; });
+*/
         } else if (options.treeType == 'radial') {  
 
             rulerG = d3.select(id).selectAll("g")
                     .data(yscale.ticks(10))
+                  .enter().append('circle')
+                    .attr("class","rule")
+                    .attr('r', yscale);
+/*
                   .enter().append("g")
                     .attr("class", "ruleGroup")
                   .append('circle')
@@ -370,7 +381,7 @@ function formatRuler(id, yscale, xscale, height, options) {
                     .attr('r', yscale)
                     .attr("fill","none")
                     .attr("stroke","#ddd")
-
+*/
 /* temporarily disabled
             rulerG = d3.select(id).selectAll("g")
                     .data(yscale.ticks(10))
