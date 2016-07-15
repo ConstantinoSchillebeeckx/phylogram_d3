@@ -129,6 +129,11 @@ function init(dat, div, options={}) {
         return false;
     }
 
+    // ensure options is obj if not passed as such
+    if (!(options !== null && typeof options === 'object')){
+        options = {};
+    }
+
     renderDiv = div;
 
     // show loading spinner
