@@ -6,7 +6,7 @@
 
 // GLOBALS
 // --------------
-var mapParse, colorScales, mappingFile;
+var options;
 // use margin convention
 // https://bl.ocks.org/mbostock/3019563
 // width and height are initially set and then
@@ -34,7 +34,7 @@ var tip = d3.tip()
     .attr('class', 'd3-tip')
     .offset([-10, 0])
     .html(function(d) {
-        return formatTooltip(d, mapParse);
+        return formatTooltip(d, options);
     })
 var outerRadius = startW / 2,
     innerRadius = outerRadius - 170;
@@ -168,11 +168,8 @@ function init(dat, div, options={}) {
             if (error) throw error;
 
             var parsed = parseMapping(data);
-            mapParse = parsed[0];
-            colorScales = parsed[1];
-
-            options['mapping'] = mapParse;
-            options['colorScale'] = colorScales;
+            options['mapping'] = parsed[0];
+            options['colorScale'] = parsed[1];
 
             buildTree(renderDiv, newick, options, function() { resizeSVG(); });
         });
@@ -226,9 +223,7 @@ function buildTree(div, newick, options, callback) {
         .attr("class","container-fluid render")
 
     // build GUI
-    if ('mapping' in options) {
-        var gui = buildGUI(div, options.mapping);
-    }
+    var gui = buildGUI(div, options);
 
     var tmp = d3.select(renderDiv).append("div")
             .attr("class","row")
@@ -308,7 +303,7 @@ function updateTree(options={}) {
 
     // get dropdown values
     var leafColor, backgroundColor;
-    if (!mapParse.empty()) {
+    if ('mapping' in options && !options.mapping.empty()) {
         var e = document.getElementById("leafColor");
         options['leafColor'] = e.options[e.selectedIndex].value;
         var e = document.getElementById("backgroundColor");
@@ -456,60 +451,61 @@ function updateTree(options={}) {
     // remove legend if one exists so we can update
     d3.selectAll("#legendID g").remove()
 
-    // update leaf node
-    if (options.leafColor != '') {
-        var colorScale = colorScales.get(options.leafColor); // color scale
-        var mapVals = mapParse.get(options.leafColor); // d3.map() obj with leaf name as key
+    if ('mapping' in options) {
+        // update leaf node
+        if (options.leafColor != '') {
+            var colorScale = options.colorScale.get(options.leafColor); // color scale
+            var mapVals = options.mapping.get(options.leafColor); // d3.map() obj with leaf name as key
 
-        // fill out legend
-        generateLegend(options.leafColor, mapVals, colorScale, 'circle');
+            // fill out legend
+            generateLegend(options.leafColor, mapVals, colorScale, 'circle');
 
-        // update node styling
-        svg.selectAll('g.leaf.node circle')
-            .transition()
-            .style('fill', function(d) {
-                return mapVals.get(d.name) ? dimColor(colorScale(mapVals.get(d.name))) : 'white'
-            })
-            .style('stroke', function(d) {
-                return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'gray'
-            })
-    } else if (options.leafColor == '') {
-        svg.selectAll('g.leaf.node circle')
-            .transition()
-            .attr("style","");
+            // update node styling
+            svg.selectAll('g.leaf.node circle')
+                .transition()
+                .style('fill', function(d) {
+                    return mapVals.get(d.name) ? dimColor(colorScale(mapVals.get(d.name))) : 'white'
+                })
+                .style('stroke', function(d) {
+                    return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'gray'
+                })
+        } else if (options.leafColor == '') {
+            svg.selectAll('g.leaf.node circle')
+                .transition()
+                .attr("style","");
+        }
+
+
+        // update leaf background
+        if (options.backgroundColor != '') {
+            var colorScale = colorScales.get(options.backgroundColor) // color scale
+            var mapVals = mapParse.get(options.backgroundColor) // d3.map() obj with leaf name as key
+
+
+            // fill out legend
+            var offset = 25;
+            generateLegend(options.backgroundColor, mapVals, colorScale, 'rect');
+
+            // update node background style
+            svg.selectAll('g.leaf.node rect')
+                .transition()
+                .attr("width", function(d) {
+                    var name = d.name.replace(new RegExp('\\.', 'g'), '_');
+                    var textWidth = d3.select('#leaf_' + name + ' text').node().getComputedTextLength();
+                    var radius = d3.select('#leaf_' + name + ' circle').node().getBBox().height / 2.0;
+                    return textWidth + radius + 10; // add extra so background is wider than label
+                })
+                .style('fill', function(d) {
+                    return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'none'
+                })
+                .style('opacity',1)
+        } else if (options.leafColor == '') {
+            svg.selectAll('g.leaf.node rect')
+                .transition(2000)
+                .style('opacity','1e-6')
+                .attr('width','0')
+        }
     }
-
-
-    // update leaf background
-    if (options.backgroundColor != '') {
-        var colorScale = colorScales.get(options.backgroundColor) // color scale
-        var mapVals = mapParse.get(options.backgroundColor) // d3.map() obj with leaf name as key
-
-
-        // fill out legend
-        var offset = 25;
-        generateLegend(options.backgroundColor, mapVals, colorScale, 'rect');
-
-        // update node background style
-        svg.selectAll('g.leaf.node rect')
-            .transition()
-            .attr("width", function(d) {
-                var name = d.name.replace(new RegExp('\\.', 'g'), '_');
-                var textWidth = d3.select('#leaf_' + name + ' text').node().getComputedTextLength();
-                var radius = d3.select('#leaf_' + name + ' circle').node().getBBox().height / 2.0;
-                return textWidth + radius + 10; // add extra so background is wider than label
-            })
-            .style('fill', function(d) {
-                return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'none'
-            })
-            .style('opacity',1)
-    } else if (options.leafColor == '') {
-        svg.selectAll('g.leaf.node rect')
-            .transition(2000)
-            .style('opacity','1e-6')
-            .attr('width','0')
-    }
-
 
     resizeSVG();
 }

@@ -714,8 +714,9 @@ Parameters:
 ==========
 - selector : string
     div ID (with '#') into which to place GUI controls
-- mapParse : d3 map obj (optioal)
-    optional parsed mapping file; if present, two
+- options : obj
+    options obj, same as passed to init()
+    if present mapping file key present, two
     select dropdowns are generated with the columns
     of the file.  one dropdown is for coloring the
     leaf nodes, the other for the leaf backgrounds.
@@ -723,7 +724,7 @@ Parameters:
     should be used here.
 */
 
-function buildGUI(selector, mapParse=null) {
+function buildGUI(selector, options) {
 
     var collapse = d3.select(selector).append('div')
         .attr("class","panel panel-default")
@@ -825,7 +826,9 @@ function buildGUI(selector, mapParse=null) {
     check3.append('text')
         .text("Scale by distance")
 
+    var mapParse = options.mapping;
 
+    
     // if mapping file was passed
     if (mapParse && !mapParse.empty()) {
 
@@ -964,7 +967,8 @@ Parameters:
 ==========
 - d : node attributes
 
-- mapParse : d3 map obj (optional)
+- options : obj (optional)
+    same options obj as passed to init
     optional parsed mapping file; keys are mapping file
     column headers, values are d3 map obj with key as
     node name and value as file value
@@ -974,11 +978,12 @@ Returns:
 - formatted HTML with all node data
 
 */
-function formatTooltip(d, mapParse=null) {
-    var html = "<div class='tip-title'>Leaf <span class='tip-name'>" + d.name + "</span></div><hr>";
+function formatTooltip(d, options=null) {
+    var html = "<div class='tip-title'>Leaf <span class='tip-name'>" + d.name + "</span></div>";
 
-    if (mapParse) {
-        mapParse.keys().forEach(function(col) {
+    if (options && 'mapping' in options) {
+        html += '<br>';
+        options.mapping.keys().forEach(function(col) {
             html += '<p class="tip-row"><span class="tip-meta-title">- ' + col + '</span>: <span class="tip-meta-name">' + mapParse.get(col).get(d.name) + '</span><p>';
         })
     }
