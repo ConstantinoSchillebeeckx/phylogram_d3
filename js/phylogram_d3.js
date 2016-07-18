@@ -7,7 +7,7 @@
 // GLOBALS
 // --------------
 var options = {};
-var mapParse, colorScales;
+var mapParse, colorScales, mappingFile;
 // use margin convention
 // https://bl.ocks.org/mbostock/3019563
 // width and height are initially set and then
@@ -35,7 +35,7 @@ var tip = d3.tip()
     .attr('class', 'd3-tip')
     .offset([-10, 0])
     .html(function(d) {
-        return formatTooltip(d, options);
+        return formatTooltip(d, options.mapping);
     })
 var outerRadius = startW / 2,
     innerRadius = outerRadius - 170;
@@ -99,7 +99,7 @@ var lineFunction = d3.svg.line()
 /* initialize tree
 
 Function called from front-end with all user-defined
-options to format the tree.  Will validate input
+opts to format the tree.  Will validate input
 Newick tree, show a loading spinner, and then
 render the tree
 
@@ -112,7 +112,7 @@ Parameters:
 - options: obj
            options object with potential keys and values
 
-Options obj:
+options obj:
 - mapping_file: path to OTU mapping file (if there is one)
 - hideRuler: (bool) if true, background distance ruler is not rendered TODO
 - skipBranchLengthScaling: (bool) if true, tree will not be scaled by distance TODO
@@ -164,14 +164,15 @@ function init(dat, div, options) {
 
     // render tree
     if ('mapping_file' in options) {
+        mappingFile = options.mapping_file;
         d3.tsv(options.mapping_file, function(error, data) {
             if (error) throw error;
 
             var parsed = parseMapping(data);
             mapParse = parsed[0];
             colorScales = parsed[1];
-            options['mapping'] = mapParse;
-            options['colorScale'] = colorScales;
+            options.mapping = mapParse;
+            options.colorScale = colorScales;
 
             buildTree(renderDiv, newick, options, function() { resizeSVG(); });
         });
@@ -196,8 +197,8 @@ Parameters:
         div id (with included #) in which to generated tree
 - newick : Newick obj
            return of function processNewick()
-- options: obj
-           options object with potential keys and values
+- opts: obj
+           opts object with potential keys and values
 
 
 Retrurns:
@@ -206,18 +207,18 @@ Retrurns:
 
 */
 
-function buildTree(div, newick, options, callback) {
+function buildTree(div, newick, opts, callback) {
 
-    // check options, if not set, set to default
-    if (!('treeType' in options)) { 
-        options['treeType'] = treeType;
+    // check opts, if not set, set to default
+    if (!('treeType' in opts)) { 
+        opts['treeType'] = treeType;
     } else {
-        treeType = options.treeType;
+        treeType = opts.treeType;
     }
-    if (!('skipBranchLengthScaling' in options)) { 
-        options['skipBranchLengthScaling'] = !scale;
+    if (!('skipBranchLengthScaling' in opts)) { 
+        opts['skipBranchLengthScaling'] = !scale;
     } else {
-        scale = options.skipBranchLengthScaling;
+        scale = opts.skipBranchLengthScaling;
     }
 
     // add bootstrap container class
@@ -225,7 +226,7 @@ function buildTree(div, newick, options, callback) {
         .attr("class","container-fluid render")
 
     // build GUI
-    var gui = buildGUI(div, options);
+    var gui = buildGUI(div, opts);
 
     var tmp = d3.select(renderDiv).append("div")
             .attr("class","row")
@@ -236,11 +237,7 @@ function buildTree(div, newick, options, callback) {
             .attr("class", "col-sm-12")
             .attr("id","tree")
         .append("svg:svg")
-            //.attr("preserveAspectRatio","xMinYMin meet")
             .attr("xmlns","http://www.w3.org/2000/svg")
-            //.attr("width",startW)
-            //.attr("height",startH)
-            //.attr("viewBox","0 0 " + width + " " + height)
         .append("g") // svg g group is translated in updateTree()
             .attr("id",'canvasSVG')
 
@@ -252,19 +249,19 @@ function buildTree(div, newick, options, callback) {
 
     // generate intial layout and all tree elements
     d3.select("#canvasSVG").attr("transform","translate(" + margin.left + "," + margin.top + ")")
-    if (options.treeType == 'rectangular') {
+    if (opts.treeType == 'rectangular') {
         tree = rectTree;
-    } else if (options.treeType == 'radial') {
+    } else if (opts.treeType == 'radial') {
         d3.selectAll("#canvasSVG g").attr("transform","translate(" + outerRadius + "," + outerRadius + ")")
         tree = radialTree;
     }
 
     // initial format of tree (nodes, links, labels, ruler)
     nodes = tree.nodes(newick);
-    if (!options.skipBranchLengthScaling) { var yscale = scaleBranchLengths(nodes); }
-    if (options.treeType == 'rectangular') { var xscale = scaleLeafSeparation(tree, nodes); }
+    if (!opts.skipBranchLengthScaling) { var yscale = scaleBranchLengths(nodes); }
+    if (opts.treeType == 'rectangular') { var xscale = scaleLeafSeparation(tree, nodes); }
     links = tree.links(nodes);
-    formatTree(nodes, links, yscale, xscale, height, options);
+    formatTree(nodes, links, yscale, xscale, height, opts);
 
     svg.call(tip);
     showSpinner(null, false); // hide spinner
@@ -286,29 +283,33 @@ on GUI settings.
 Assumes globals (nodes, links) exist
 
 */
-function updateTree(options={}) {
+function updateTree() {
+
 
     // set tree type if GUI was updated
     // by anything other than tree type
     // buttons
     if (!('treeType' in options)) {
-        options['treeType'] = treeType;
+        options.treeType = treeType;
     }
-    if (!('mapping' in options)) { 
-        options['mapping'] = mapParse;
+
+    // someone in the code, global var 'options' is
+    // being emptied ({}) so we are resetting the 
+    // mapping info here
+    if (typeof mappingFile != 'undefined') {
+        options.mapping = mapParse;
+        options.colorScale = colorScales;
     }
-    if (!('colorScale' in options)) { 
-        options['colorScale'] = colorScales;
-    }
+
 
     // get checkbox state
-    options['skipDistanceLabel'] = !$('#toggle_distance').is(':checked');
-    options['skipLeafLabel'] = !$('#toggle_leaf').is(':checked');
-    options['skipBranchLengthScaling'] = !$('#scale_distance').is(':checked');
+    options.skipDistanceLabel = !$('#toggle_distance').is(':checked');
+    options.skipLeafLabel = !$('#toggle_leaf').is(':checked');
+    options.skipBranchLengthScaling = !$('#scale_distance').is(':checked');
 
     // get slider vals
-    options['sliderScaleV'] = scaleHSlider.value(); 
-    options['sliderLeafR'] = leafRSlider.value();
+    options.sliderScaleV = scaleHSlider.value(); 
+    options.sliderLeafR = leafRSlider.value();
 
     // get dropdown values
     var leafColor, backgroundColor;

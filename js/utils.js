@@ -129,15 +129,15 @@ Parameters:
 - svg : svg selctor
         svg HTML element into which to render
 - links : d3.tree.links
-- options : obj
-            tree options, see documentation for keys
+- opts : obj
+            tree opts, see documentation for keys
 
 Returns:
 ========
 - nothing
 
 */
-function formatLinks(id, links, options) {
+function formatLinks(id, links, opts) {
 
     // set to global!
     link = d3.select(id).selectAll("path.link")
@@ -145,9 +145,9 @@ function formatLinks(id, links, options) {
         .enter().append("path")
         .attr("class","link")
         .attr("d", function(d) {
-            if (options.treeType == 'rectangular') {
+            if (opts.treeType == 'rectangular') {
                 return elbow(d);
-            } else if (options.treeType == 'radial') {
+            } else if (opts.treeType == 'radial') {
                 return step(d.source.x, d.source.y, d.target.x, d.target.y);
             }
         })
@@ -191,19 +191,19 @@ Parameters:
 - svg : svg selctor
         svg HTML element into which to render
 - nodes : d3.tree.nodes
-- options : obj
-            tree options, see documentation for keys
+- opts : obj
+            tree opts, see documentation for keys
 
 Returns:
 ========
 - nothing
 
 */
-function formatNodes(id, nodes, options) {
+function formatNodes(id, nodes, opts) {
 
     // set default leaf radius if not present
-    if (!('sliderLeafR' in options)) {
-        options['sliderLeafR'] = 5;
+    if (!('sliderLeafR' in opts)) {
+        opts['sliderLeafR'] = 5;
     }
 
     node = d3.select(id).selectAll("g.node")
@@ -227,9 +227,9 @@ function formatNodes(id, nodes, options) {
                 }
             })
             .attr("transform", function(d) {
-                if (options.treeType == 'rectangular') {
+                if (opts.treeType == 'rectangular') {
                     return "translate(" + d.y + "," + d.x + ")";
-                } else if (options.treeType == 'radial') {
+                } else if (opts.treeType == 'radial') {
                     return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")";
                 }
             })
@@ -239,13 +239,13 @@ function formatNodes(id, nodes, options) {
     // node backgrounds
     node.append("rect")
       .attr('width', 0 ) // width is set when choosing background color
-      .attr('height', 10 + options.sliderLeafR * 2) 
-      .attr('y', -options.sliderLeafR - 5)
+      .attr('height', 10 + opts.sliderLeafR * 2) 
+      .attr('y', -opts.sliderLeafR - 5)
       .attr("opacity", function(d) { return d.children ? 1e-6 : 1 });
 
     // node circles
     node.append("circle")
-        .attr("r", options.sliderLeafR)
+        .attr("r", opts.sliderLeafR)
         .attr("opacity", function(d) { 
             if (!d.children || d.depth == 0) {
                 return 1;
@@ -261,7 +261,7 @@ function formatNodes(id, nodes, options) {
             if (d.children) { // if inner node
                 return treeType == 'radial' && d.x > 180 ? 20 : -20;
             } else { // if leaf node
-                return treeType == 'radial' && d.x > 180 ? (-5 - options.sliderLeafR) : (5 + options.sliderLeafR);
+                return treeType == 'radial' && d.x > 180 ? (-5 - opts.sliderLeafR) : (5 + opts.sliderLeafR);
             }
 
         }) 
@@ -279,7 +279,7 @@ function formatNodes(id, nodes, options) {
                 return d.name + ' ('+d.length+')';
             }
         })
-        .attr("opacity", function(d) { return options.skipLabels ? 1e-6 : 1; });
+        .attr("opacity", function(d) { return opts.skipLabels ? 1e-6 : 1; });
    
 
 }
@@ -301,14 +301,14 @@ Parameters:
            if null, ruler is not drawn
 - height : int
            height of svg
-- options : obj
-            tree options, see documentation for keys
+- opts : obj
+            tree opts, see documentation for keys
 
 */
-function formatTree(nodes, links, yscale=null, xscale=null, height, options) {
-    formatRuler('#rulerSVG', yscale, xscale, height, options);
-    formatLinks('#treeSVG', links, options);
-    formatNodes('#treeSVG', nodes, options);
+function formatTree(nodes, links, yscale=null, xscale=null, height, opts) {
+    formatRuler('#rulerSVG', yscale, xscale, height, opts);
+    formatLinks('#treeSVG', links, opts);
+    formatNodes('#treeSVG', nodes, opts);
 }
 
 
@@ -326,8 +326,8 @@ Parameters:
            vertical scale
 - height : int
            height of svg
-- options : obj
-            tree options, expects a key hideRuler;
+- opts : obj
+            tree opts, expects a key hideRuler;
             if true, rules won't be drawn. also
             expects a key treeType (rectangular/radial)
 
@@ -336,11 +336,11 @@ Returns:
 - nothing
 
 */
-function formatRuler(id, yscale, xscale, height, options) {
+function formatRuler(id, yscale, xscale, height, opts) {
 
-    if (!options.hideRuler && yscale != null) {
+    if (!opts.hideRuler && yscale != null) {
 
-        if (options.treeType == 'rectangular') {
+        if (opts.treeType == 'rectangular') {
 
             rulerG = d3.select(id).selectAll("g")
                     .data(yscale.ticks(10))
@@ -369,7 +369,7 @@ function formatRuler(id, yscale, xscale, height, options) {
                     .attr("text-anchor", "middle")
                     .text(function(d) { return Math.round(d*100) / 100; });
 */
-        } else if (options.treeType == 'radial') {  
+        } else if (opts.treeType == 'radial') {  
 
             rulerG = d3.select(id).selectAll("g")
                     .data(yscale.ticks(10))
@@ -716,8 +716,8 @@ Parameters:
 ==========
 - selector : string
     div ID (with '#') into which to place GUI controls
-- options : obj
-    options obj, same as passed to init()
+- opts : obj
+    opts obj, same as passed to init()
     if present mapping file key present, two
     select dropdowns are generated with the columns
     of the file.  one dropdown is for coloring the
@@ -726,7 +726,7 @@ Parameters:
     should be used here.
 */
 
-function buildGUI(selector, options) {
+function buildGUI(selector, opts) {
 
     var collapse = d3.select(selector).append('div')
         .attr("class","panel panel-default")
@@ -779,14 +779,14 @@ function buildGUI(selector, options) {
         .attr("class","btn btn-info")
         .attr("id","rectangular")
         .attr("title","Generate a rectangular layout")
-        .attr("onclick","updateTree({'treeType':this.id})")
+        .attr("onclick","options.treeType = this.id; updateTree();")
         .html('<i class="fa fa-square-o fa-lg" aria-hidden="true"></i>')
 
     tmp.append("button")
         .attr("class","btn btn-info")
         .attr("id","radial")
         .attr("title","Generate a radial layout")
-        .attr("onclick","updateTree({'treeType':this.id})")
+        .attr("onclick","options.treeType = this.id; updateTree();")
         .html('<i class="fa fa-circle-thin fa-lg" aria-hidden="true"></i>')
 
     var check1 = col1.append("div")
@@ -828,7 +828,7 @@ function buildGUI(selector, options) {
     check3.append('text')
         .text("Scale by distance")
 
-    var mapParse = options.mapping;
+    //var mapParse = opts.mapping;
 
     
     // if mapping file was passed
@@ -842,7 +842,7 @@ function buildGUI(selector, options) {
             .text("Leaf node")
             
         var select1 = col2.append("select")
-            .attr('onchange','updateTree()')
+            .attr('onchange','updateTree();')
             .attr('id','leafColor')
             .attr("class","form-control")
 
@@ -969,8 +969,7 @@ Parameters:
 ==========
 - d : node attributes
 
-- options : obj (optional)
-    same options obj as passed to init
+- mapParse : obj (optional)
     optional parsed mapping file; keys are mapping file
     column headers, values are d3 map obj with key as
     node name and value as file value
@@ -980,12 +979,12 @@ Returns:
 - formatted HTML with all node data
 
 */
-function formatTooltip(d, options=null) {
+function formatTooltip(d, mapParse) {
     var html = "<div class='tip-title'>Leaf <span class='tip-name'>" + d.name + "</span></div>";
-
-    if (options && 'mapping' in options) {
-        html += '<br>';
-        options.mapping.keys().forEach(function(col) {
+    
+    if (mapParse) {
+        html += '<hr>';
+        mapParse.keys().forEach(function(col) {
             html += '<p class="tip-row"><span class="tip-meta-title">- ' + col + '</span>: <span class="tip-meta-name">' + mapParse.get(col).get(d.name) + '</span><p>';
         })
     }
