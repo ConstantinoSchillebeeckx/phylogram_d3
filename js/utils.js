@@ -684,14 +684,16 @@ inner g group.
 */
 function resizeSVG() {
 
-    //findTreeCenter()
+    var g = d3.select('#canvasSVG').node().getBBox();
+    var x0 = g.x;
+    var y0 = g.y + margin.top;
+    var x1 = g.width + margin.right + margin.left;
+    var y1 = g.height + margin.left + margin.bottom;
 
-    var g = d3.select('svg g').node().getBBox();
 
     // scale SVG
     d3.select('svg')
-        .attr("width", g.width + margin.left + margin.right)
-        .attr("height", g.height + margin.top + margin.bottom)
+        .attr("viewBox", x0 + " " + y0 + " " + x1 + " " + y1);
     
 }
 

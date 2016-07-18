@@ -12,7 +12,7 @@ var mapParse, colorScales;
 // https://bl.ocks.org/mbostock/3019563
 // width and height are initially set and then
 // automatically scalled to fit tree
-var margin = {top: 30, right: 0, bottom: 20, left: 50};
+var margin = {top: 30, right: 10, bottom: 20, left: 10};
 var startW = 800, startH = 600;
 var width = startW - margin.left - margin.right;
 var height = startH - margin.top - margin.bottom;
@@ -236,10 +236,11 @@ function buildTree(div, newick, options, callback) {
             .attr("class", "col-sm-12")
             .attr("id","tree")
         .append("svg:svg")
-            .attr("preserveAspectRatio","xMinYMin meet")
+            //.attr("preserveAspectRatio","xMinYMin meet")
             .attr("xmlns","http://www.w3.org/2000/svg")
-            .attr("width",startW)
-            .attr("height",startH)
+            //.attr("width",startW)
+            //.attr("height",startH)
+            //.attr("viewBox","0 0 " + width + " " + height)
         .append("g") // svg g group is translated in updateTree()
             .attr("id",'canvasSVG')
 
@@ -285,7 +286,7 @@ on GUI settings.
 Assumes globals (nodes, links) exist
 
 */
-function updateTree() {
+function updateTree(options={}) {
 
     // set tree type if GUI was updated
     // by anything other than tree type
