@@ -6,7 +6,8 @@
 
 // GLOBALS
 // --------------
-var options;
+var options = {};
+var mapParse, colorScales;
 // use margin convention
 // https://bl.ocks.org/mbostock/3019563
 // width and height are initially set and then
@@ -120,7 +121,7 @@ Options obj:
 TODO
 
 */
-function init(dat, div, options={}) {
+function init(dat, div, options) {
 
     // ensure a file was passed
     if (!dat) {
@@ -161,15 +162,16 @@ function init(dat, div, options={}) {
     // process Newick tree
     newick = processNewick(fileStr);
 
-
     // render tree
     if ('mapping_file' in options) {
         d3.tsv(options.mapping_file, function(error, data) {
             if (error) throw error;
 
             var parsed = parseMapping(data);
-            options['mapping'] = parsed[0];
-            options['colorScale'] = parsed[1];
+            mapParse = parsed[0];
+            colorScales = parsed[1];
+            options['mapping'] = mapParse;
+            options['colorScale'] = colorScales;
 
             buildTree(renderDiv, newick, options, function() { resizeSVG(); });
         });
@@ -283,13 +285,19 @@ on GUI settings.
 Assumes globals (nodes, links) exist
 
 */
-function updateTree(options={}) {
+function updateTree() {
 
     // set tree type if GUI was updated
     // by anything other than tree type
     // buttons
     if (!('treeType' in options)) {
         options['treeType'] = treeType;
+    }
+    if (!('mapping' in options)) { 
+        options['mapping'] = mapParse;
+    }
+    if (!('colorScale' in options)) { 
+        options['colorScale'] = colorScales;
     }
 
     // get checkbox state
@@ -452,6 +460,7 @@ function updateTree(options={}) {
     d3.selectAll("#legendID g").remove()
 
     if ('mapping' in options) {
+
         // update leaf node
         if (options.leafColor != '') {
             var colorScale = options.colorScale.get(options.leafColor); // color scale
