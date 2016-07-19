@@ -140,45 +140,33 @@ function init(dat, div, options) {
     // show loading spinner
     showSpinner(renderDiv, true)
 
-    // ensure file exists and can be read
-    var fileStr = false;
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState == 4) {
-            if (xhr.status != 404) {
-                fileStr = xhr.responseText.split("'").join(''); // remove the extra ' surrounding strings
-            } else {
-                var msg = 'Input file <code>' + dat + '</code> could not be parsed, ensure it is a proper Newick tree file!';
-                displayErrMsg(msg, renderDiv);
-                return false;
-            }
+    d3.text(dat, function(error, fileStr) {
+        if (error) {
+            var msg = 'Input file <code><a href="' + dat + '">' + dat + '</a></code> could not be parsed, ensure it is a proper Newick tree file!';
+            displayErrMsg(msg, renderDiv);
         }
-    }
 
-    xhr.open("GET", dat, false);
-    xhr.send();
+        // process Newick tree
+        newick = processNewick(fileStr);
 
+        // render tree
+        if ('mapping_file' in options) {
+            mappingFile = options.mapping_file;
+            d3.tsv(options.mapping_file, function(error, data) {
+                if (error) throw error;
 
-    // process Newick tree
-    newick = processNewick(fileStr);
+                var parsed = parseMapping(data);
+                mapParse = parsed[0];
+                colorScales = parsed[1];
+                options.mapping = mapParse;
+                options.colorScale = colorScales;
 
-    // render tree
-    if ('mapping_file' in options) {
-        mappingFile = options.mapping_file;
-        d3.tsv(options.mapping_file, function(error, data) {
-            if (error) throw error;
-
-            var parsed = parseMapping(data);
-            mapParse = parsed[0];
-            colorScales = parsed[1];
-            options.mapping = mapParse;
-            options.colorScale = colorScales;
-
+                buildTree(renderDiv, newick, options, function() { resizeSVG(); });
+            });
+        } else {
             buildTree(renderDiv, newick, options, function() { resizeSVG(); });
-        });
-    } else {
-        buildTree(renderDiv, newick, options, function() { resizeSVG(); });
-    }
+        }
+    });
 }
 
 

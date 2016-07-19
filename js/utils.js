@@ -427,7 +427,7 @@ function displayErrMsg(msg, div) {
     showSpinner(null, false);
 
     d3.select(div).append('div')
-        .attr('class','alert alert-danger lead col-sm-4 col-sm-offset-4')
+        .attr('class','alert alert-danger lead col-sm-8 col-sm-offset-2')
         .style('margin-top','20px')
         .attr('role','alert')
         .html(msg);
@@ -685,11 +685,12 @@ inner g group.
 function resizeSVG() {
 
     var g = d3.select('#canvasSVG').node().getBBox();
+    var inner = d3.select("#treeSVG").node().getBoundingClientRect();
+
     var x0 = g.x;
     var y0 = g.y + margin.top;
     var x1 = g.width + margin.right + margin.left;
     var y1 = g.height + margin.left + margin.bottom;
-
 
     // scale SVG
     d3.select('svg')
@@ -1222,24 +1223,6 @@ function dimColor(colorName) {
     c.l += 0.20;
     c + "";
     return c;
-
-}
-
-
-
-function findTreeCenter() {
-
-    var tree = d3.select("#treeSVG").node().getBoundingClientRect();
-    var root = d3.select("g.root.node").node().getBoundingClientRect();
-
-    console.log(tree)
-    console.log(root)
-
-    var dX = (root.top - tree.top)
-    var dY = (root.left - tree.left)
-
-    console.log(dX,dY)
-    return [dX, dY];
 
 }
 
