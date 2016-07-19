@@ -121,6 +121,8 @@ options obj:
 TODO
 
 */
+
+
 function init(dat, div, options) {
 
     // ensure a file was passed
@@ -140,10 +142,15 @@ function init(dat, div, options) {
     // show loading spinner
     showSpinner(renderDiv, true)
 
+
     d3.text(dat, function(error, fileStr) {
-        if (error) {
-            var msg = 'Input file <code><a href="' + dat + '">' + dat + '</a></code> could not be parsed, ensure it is a proper Newick tree file!';
-            displayErrMsg(msg, renderDiv);
+        if (dat.substring(0, 4) == '((((') {
+            fileStr = dat;
+        } else {
+            if (error || fileStr == '' || fileStr == null) {
+                var msg = 'Input file <code><a href="' + dat + '">' + dat + '</a></code> could not be parsed, ensure it is a proper Newick tree file!';
+                displayErrMsg(msg, renderDiv);
+            }
         }
 
         // process Newick tree
