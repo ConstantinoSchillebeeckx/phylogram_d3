@@ -195,7 +195,8 @@ Retrurns:
 
 function buildTree(div, newick, opts, callback) {
 
-    if 'mapping_dat' in opts {
+    console.log(opts.mapping_dat);
+    if ('mapping_dat' in opts) {
         var parsed = parseMapping(opts.mapping_dat);
         mapParse = parsed[0];
         colorScales = parsed[1];
