@@ -142,9 +142,13 @@ function init(dat, div, options) {
     // show loading spinner
     showSpinner(renderDiv, true)
 
-    // 
+    // dat can either be a string to the Newick tree or the actual Newick string
+    // this is done to alleviate cross-origin issues, see https://github.com/ConstantinoSchillebeeckx/q2-phylogram/pull/2#issuecomment-233702888
+    // therefore, in the case where it is a string, the function will error
+    // but we assume if the first character seen in the string is a ( that
+    // it is a valid newick tree
     d3.text(dat, function(error, fileStr) {
-        if (dat.substring(0, 4) == '((((') {
+        if (dat.substring(0, 1) == '(') {
             fileStr = dat;
         } else {
             if (error || fileStr == '' || fileStr == null) {
