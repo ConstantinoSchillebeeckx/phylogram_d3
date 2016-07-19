@@ -142,7 +142,7 @@ function init(dat, div, options) {
     // show loading spinner
     showSpinner(renderDiv, true)
 
-
+    // 
     d3.text(dat, function(error, fileStr) {
         if (dat.substring(0, 4) == '((((') {
             fileStr = dat;
