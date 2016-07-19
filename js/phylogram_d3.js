@@ -157,15 +157,8 @@ function init(dat, div, options) {
         // render tree
         if ('mapping_file' in options) {
             mappingFile = options.mapping_file;
-            d3.tsv(options.mapping_file, function(error, data) {
-                console.log(data);
-    
-                var parsed = parseMapping(data);
-                mapParse = parsed[0];
-                colorScales = parsed[1];
-                options.mapping = mapParse;
-                options.colorScale = colorScales;
-
+            d3.tsv(mappingFile, function(error, data) {
+                options.mapping_dat = data;
                 buildTree(renderDiv, newick, options, function() { resizeSVG(); });
             });
         } else {
@@ -201,6 +194,14 @@ Retrurns:
 */
 
 function buildTree(div, newick, opts, callback) {
+
+    if 'mapping_dat' in opts {
+        var parsed = parseMapping(opts.mapping_dat);
+        mapParse = parsed[0];
+        colorScales = parsed[1];
+        options.mapping = mapParse;
+        options.colorScale = colorScales;
+    }
 
     // check opts, if not set, set to default
     if (!('treeType' in opts)) { 
