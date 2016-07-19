@@ -142,30 +142,24 @@ function init(dat, div, options) {
     // show loading spinner
     showSpinner(renderDiv, true)
 
-    // dat can either be a string to the Newick tree or the actual Newick string
-    // this is done to alleviate cross-origin issues, see https://github.com/ConstantinoSchillebeeckx/q2-phylogram/pull/2#issuecomment-233702888
-    // therefore, in the case where it is a string, the function will error
-    // but we assume if the first character seen in the string is a ( that
-    // it is a valid newick tree
-    d3.text(dat, function(error, fileStr) {
-        if (dat.substring(0, 1) == '(') {
-            fileStr = dat;
-        } else {
-            if (error || fileStr == '' || fileStr == null) {
-                var msg = 'Input file <code><a href="' + dat + '">' + dat + '</a></code> could not be parsed, ensure it is a proper Newick tree file!';
-                displayErrMsg(msg, renderDiv);
-            }
+    //d3.text(dat, function(error, fileStr) {
+    d3.jsonp(dat + '?callback=d3.jsonp.readNewick', function(fileStr) {
+
+        if (fileStr == '' || fileStr == null) {
+            var msg = 'Input file <code><a href="' + dat + '">' + dat + '</a></code> could not be parsed, ensure it is a proper Newick tree file!';
+            displayErrMsg(msg, renderDiv);
         }
 
         // process Newick tree
         newick = processNewick(fileStr);
 
+
         // render tree
         if ('mapping_file' in options) {
             mappingFile = options.mapping_file;
             d3.tsv(options.mapping_file, function(error, data) {
-                if (error) throw error;
-
+                console.log(data);
+    
                 var parsed = parseMapping(data);
                 mapParse = parsed[0];
                 colorScales = parsed[1];
