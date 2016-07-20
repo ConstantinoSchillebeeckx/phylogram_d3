@@ -43,9 +43,6 @@ Rendering the phylogram begins with the function `init()` which you can simply c
   * skipLabels : `(bool)` if True, all node labels will be hidden [default: show labels]
 
 
-TODO
-string indicating the location of the metadata mapping file for the tree.  This must be a TSV formatted file with the first column containing the same identifiers as those found in the Newick tree.  If using taxaonomy data, format it in the QIIME default manner (e.g. *k__bacteria_2;p__firmicutes;c__negativicutes;o__selenomonadales;f__veillonellaceae;g__megasphaera;s__elsdenii*).  This file is used to generate the GUI which is used to change the styling of the tree.
-
 ##### Notes on the OTU mapping file
 The OTU mapping file is similar to a standard QIIME mapping file in that it associates additionaly metadata to the objects of interest; however in this case the objects of interest are OTUs instead of samples.  This file has the following caveats:
 
