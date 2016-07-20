@@ -28,7 +28,7 @@ A working demo can be found [here](http://www.matatu.com/phylogram/demo.php) whi
 * [d3-slider](https://github.com/MasterMaps/d3-slider)
 
 ## Usage
-Rendering the phylogram begins with the function [init()][1] which you can simply call in the `body` tag of your HTML page using the [onload](https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onload) event handle: `<body onload="init(parameters);">`.  Currently, the function takes three parameters:
+Rendering the phylogram begins with the function [`init()`][1] which you can simply call in the `body` tag of your HTML page using the [onload](https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onload) event handle: `<body onload="init(parameters);">`.  Currently, the function takes three parameters:
 
 1. String indicating the location of the Newick tree used to build the phylogram.
 
