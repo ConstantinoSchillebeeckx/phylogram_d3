@@ -142,13 +142,12 @@ function init(dat, div, options) {
     // show loading spinner
     showSpinner(renderDiv, true)
 
-    //d3.text(dat, function(error, fileStr) {
-    d3.jsonp(dat + '?callback=d3.jsonp.readNewick', function(fileStr) {
-
-        if (fileStr == '' || fileStr == null) {
+    d3.text(dat, function(error, fileStr) {
+        if (error) {
             var msg = 'Input file <code><a href="' + dat + '">' + dat + '</a></code> could not be parsed, ensure it is a proper Newick tree file!';
             displayErrMsg(msg, renderDiv);
-        }
+            return;
+          }
 
         // process Newick tree
         newick = processNewick(fileStr);
@@ -195,7 +194,6 @@ Retrurns:
 
 function buildTree(div, newick, opts, callback) {
 
-    console.log(opts.mapping_dat);
     if ('mapping_dat' in opts) {
         var parsed = parseMapping(opts.mapping_dat);
         mapParse = parsed[0];
