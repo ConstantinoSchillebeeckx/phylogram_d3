@@ -28,7 +28,7 @@ A working demo can be found [here](http://www.matatu.com/phylogram/demo.php) whi
 * [d3-slider](https://github.com/MasterMaps/d3-slider)
 
 ## Usage
-Rendering the phylogram begins with the function (init())[https://github.com/ConstantinoSchillebeeckx/phylogram_d3/blob/master/js/phylogram_d3.js#L126] which you can simply call in the `body` tag of your HTML page using the [onload](https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onload) event handle: `<body onload="init(parameters);">`.  Currently, the function takes three parameters:
+Rendering the phylogram begins with the function [init()][1] which you can simply call in the `body` tag of your HTML page using the [onload](https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onload) event handle: `<body onload="init(parameters);">`.  Currently, the function takes three parameters:
 
 1. String indicating the location of the Newick tree used to build the phylogram.
 
@@ -56,3 +56,4 @@ The OTU mapping file is similar to a standard QIIME mapping file in that it asso
 
 * if passing ordinal data (e.g. 0.4, 1.90) the legend will render a color bar with min/max values.  Therefore, if you have categorical data labeled with numbers (e.g. Site 1, 2, 3), ensure that you format the values with alphanumeric characters (e.g. Site1, Site2, Site3)
 
+[1]: https://github.com/ConstantinoSchillebeeckx/phylogram_d3/blob/master/js/phylogram_d3.js#L126
