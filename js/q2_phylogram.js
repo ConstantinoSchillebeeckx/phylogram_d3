@@ -7,10 +7,16 @@
 
 /* initialize tree
 
-This functino is meant to be used with q2_phylogram
+This function is meant to be used with q2_phylogram
 since QIIME2 does not allow cross-origin loading of
 data.  This function must be loaded after the initial
-init() defined in js/phylogram.js
+init() defined in js/phylogram.js and will thus replace
+it.
+
+It is expected then, that the Newick file contents are
+wrapped in the d3.jsonp.readNewick() callback.  Furthemore,
+the contents of the mapping file will be stored in the var
+options.mapping_dat.
 
 Function called from front-end with all user-defined
 opts to format the tree.  Will validate input
@@ -69,15 +75,7 @@ function init(dat, div, options) {
 
 
         // render tree
-        if ('mapping_file' in options) {
-            mappingFile = options.mapping_file;
-            d3.tsv(mappingFile, function(error, data) {
-                options.mapping_dat = data;
-                buildTree(renderDiv, newick, options, function() { resizeSVG(); });
-            });
-        } else {
-            buildTree(renderDiv, newick, options, function() { resizeSVG(); });
-        }
+        buildTree(renderDiv, newick, options, function() { resizeSVG(); });
     });
 }
 
