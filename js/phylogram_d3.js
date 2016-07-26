@@ -39,7 +39,6 @@ var tip = d3.tip()
     })
 var outerRadius = startW / 2,
     innerRadius = outerRadius - 170;
-var renderDiv; // svg is rendered here
 
 var tree; // will be set to one of the following tree types
 // TODO can consolidate tree types into a single one
@@ -125,27 +124,18 @@ TODO
 
 function init(dat, div, options) {
 
-    // ensure a file was passed
-    if (!dat) {
-        var msg = 'Please ensure that, at a minimum, a Newick file is passed to the <code>init()</code> call!';
-        displayErrMsg(msg, div);
-        return false;
-    }
 
-    // ensure options is obj if not passed as such
-    if (!(options !== null && typeof options === 'object')){
-        options = {};
-    }
-
-    renderDiv = div;
 
     // show loading spinner
-    showSpinner(renderDiv, true)
+    showSpinner(div, true)
+
+
+    validateInputs(dat, options);
 
     d3.text(dat, function(error, fileStr) {
         if (error) {
             var msg = 'Input file <code><a href="' + dat + '">' + dat + '</a></code> could not be parsed, ensure it is a proper Newick tree file!';
-            displayErrMsg(msg, renderDiv);
+            displayErrMsg(msg, div);
             return;
           }
 
@@ -158,10 +148,10 @@ function init(dat, div, options) {
             mappingFile = options.mapping_file;
             d3.tsv(mappingFile, function(error, data) {
                 options.mapping_dat = data;
-                buildTree(renderDiv, newick, options, function() { fitViewBox(); });
+                buildTree(div, newick, options, function() { fitViewBox(); });
             });
         } else {
-            buildTree(renderDiv, newick, options, function() { fitViewBox(); });
+            buildTree(div, newick, options, function() { fitViewBox(); });
         }
     });
 }
@@ -221,7 +211,7 @@ function buildTree(div, newick, opts, callback) {
     // build GUI
     var gui = buildGUI(div, opts);
 
-    var tmp = d3.select(renderDiv).append("div")
+    var tmp = d3.select(div).append("div")
             .attr("class","row")
             .attr("id","canvas")
 

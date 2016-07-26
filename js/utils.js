@@ -694,7 +694,6 @@ function fitViewBox() {
     // if rectangular, get dimensions of entire canvas
     if (treeType == 'rectangular') {
         var g = d3.select('#canvasSVG').node().getBBox();
-        console.log(g);
 
         x1 = g.width + margin.right + margin.left;
         y1 = g.height + margin.top + margin.bottom;
@@ -1270,6 +1269,43 @@ function dimColor(colorName) {
 
 }
 
+
+
+/* Validat input data and options
+
+Does numerous validation checks on input data; if
+things don't check out, show an error message.
+
+Parameters:
+-----------
+- dat : string
+		filepath for input Newick tre
+- options: obj
+           options object with potential keys and values
+
+*/
+function validateInputs(dat, options) {
+    // ensure a file was passed
+    if (!dat) {
+        var msg = 'Please ensure that, at a minimum, a Newick file is passed to the <code>init()</code> call!';
+        displayErrMsg(msg, div);
+        return false;
+    }
+
+    // ensure options is obj if not passed as such
+    if (!(options !== null && typeof options === 'object')){
+        options = {};
+    }
+
+    // ensure proper tree type was passed
+    if ('treeType' in options) {
+        if (options.treeType != 'radial' && options.treeType != 'rectangular') {
+            var msg = 'Please ensure that the tree type declared in the options object is either "radial" of "rectangular"!';
+            displayErrMsg(msg, div);
+            return false;
+        } 
+    }
+}
 
 
 
