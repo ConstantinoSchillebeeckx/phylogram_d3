@@ -233,6 +233,8 @@ function formatNodes(id, nodes, opts) {
                     return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")";
                 }
             })
+        
+    d3.selectAll('.leaf')
             .on('mouseover', tip.show) 
             .on('mouseout', tip.hide)
 
@@ -676,28 +678,70 @@ function cleanTaxa(taxa) {
 }
 
 
-/*
 
-When called, will resize the SVG to fit the
-inner g group.
+/* Fit the SVG viewBox
+
+SVG does not have a set width or height since we want it to
+respond to the size of the window its in.  Therefore, after
+the contents of the SVG are rendered, we set the viewBox to
+that content size.
 
 */
-function resizeSVG() {
+function fitViewBox() {
 
-    var g = d3.select('#canvasSVG').node().getBBox();
-    var inner = d3.select("#treeSVG").node().getBoundingClientRect();
+    var x0 = 0, y0 = 0, x1, y1, shiftX = 0, shiftY=0;
 
-    var x0 = g.x;
-    var y0 = g.y + margin.top;
-    var x1 = g.width + margin.right + margin.left;
-    var y1 = g.height + margin.left + margin.bottom;
+    // if rectangular, get dimensions of entire canvas
+    if (treeType == 'rectangular') {
+        var g = d3.select('#canvasSVG').node().getBBox();
+        console.log(g);
 
-    // scale SVG
-    d3.select('svg')
-        .attr("viewBox", x0 + " " + y0 + " " + x1 + " " + y1);
+        x1 = g.width + margin.right + margin.left;
+        y1 = g.height + margin.top + margin.bottom;
+    } else { // if radial, get dimensions of tree and legend if it exists
+        var g1 = d3.select('#treeSVG').node().getBBox();
+        if (d3.select('#legendID').node()) { // if legend present
+            var g2 = d3.select('#legendID').node().getBBox();
+            x1 = g1.width + g2.width + 2 * (margin.right + margin.left); // 2 * because legend has an extra left + right spacing between tree and itself
+            y1 = g1.height + g2.height + margin.top + margin.bottom;
+
+            // circle may not be symmetric around center, so shift it
+            // so top/left edge even with SVG
+            var tmp1 = d3.select('#treeSVG').node().getBoundingClientRect();
+            var tmp2 = d3.select('svg').node().getBoundingClientRect();
+            var tmp3 = d3.select('#legendID').node().getBoundingClientRect();
     
-}
+            if (tmp1.top < tmp3.top) { tmp1.top = tmp3.top; }
 
+            //shiftX = tmp1.left - tmp2.left;
+            //shiftY = tmp1.top - tmp2.top - margin.top;
+        } else { // if no legend present
+            x1 = g1.width + margin.right + margin.left;
+            y1 = g1.height + margin.top + margin.bottom;
+
+            // circle may not be symmetric around center, so shift it
+            // so top/left edge even with SVG
+            var tmp1 = d3.select('#treeSVG').node().getBoundingClientRect();
+            var tmp2 = d3.select('svg').node().getBoundingClientRect()
+            shiftX = tmp1.left - tmp2.left;
+            shiftY = tmp1.top - tmp2.top - margin.top;
+        }
+
+
+        // circle may not be symmetric around center, so shift it
+        // so top/left edge even with SVG
+        var tmp1 = d3.select('#treeSVG').node().getBoundingClientRect();
+        var tmp2 = d3.select('svg').node().getBoundingClientRect()
+        shiftX = tmp1.left - tmp2.left;
+        shiftY = tmp1.top - tmp2.top - margin.top;
+        console.log(tmp1, tmp2)
+        console.log(shiftX, shiftY)
+
+    }
+
+    d3.select('svg').attr("viewBox", (x0 + shiftX) + " " + (y0 + shiftY) + " " + (x1 + shiftX) + " " + (y1 + shiftY));
+
+}
 
 
 
@@ -1070,7 +1114,7 @@ function generateLegend(title, mapVals, colorScale, type) {
 
     // generate containing group if necessarry
     var container = d3.select("#legendID")
-    var box = d3.select("#treeSVG").node().getBBox()
+    var box = d3.select("#treeSVG").node().getBoundingClientRect()
     if (container.empty()) { // if legend doesn't already exist
         container = d3.select('svg g').append("g")
             .attr("id", "legendID")

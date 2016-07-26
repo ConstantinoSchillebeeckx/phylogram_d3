@@ -158,10 +158,10 @@ function init(dat, div, options) {
             mappingFile = options.mapping_file;
             d3.tsv(mappingFile, function(error, data) {
                 options.mapping_dat = data;
-                buildTree(renderDiv, newick, options, function() { resizeSVG(); });
+                buildTree(renderDiv, newick, options, function() { fitViewBox(); });
             });
         } else {
-            buildTree(renderDiv, newick, options, function() { resizeSVG(); });
+            buildTree(renderDiv, newick, options, function() { fitViewBox(); });
         }
     });
 }
@@ -225,7 +225,7 @@ function buildTree(div, newick, opts, callback) {
             .attr("class","row")
             .attr("id","canvas")
 
-    // NOTE: size of SVG and SVG g are updated in resizeSVG()
+    // NOTE: size of SVG and SVG g are updated in fitViewBox()
     svg = tmp.append("div")
             .attr("class", "col-sm-12")
             .attr("id","tree")
@@ -511,7 +511,7 @@ function updateTree() {
         }
     }
 
-    resizeSVG();
+    fitViewBox();
 }
 
 
