@@ -235,7 +235,9 @@ function formatNodes(id, nodes, opts) {
             })
         
     d3.selectAll('.leaf')
-            .on('mouseover', tip.show) 
+            .on('mouseover', function(d,i) {
+                tip.show(d, i, [d3.event.pageY, d3.event.pageX]);
+            }) 
             .on('mouseout', tip.hide)
 
     // node backgrounds
@@ -713,42 +715,32 @@ function fitViewBox() {
 
     } else { // if radial, get dimensions of tree and legend if it exists
         var g1 = d3.select('#treeSVG').node().getBBox();
-        if (d3.select('#legendID').node()) { // if legend present
-            var g2 = d3.select('#legendID').node().getBBox();
-            x1 = g1.width + g2.width + 2 * (margin.right + margin.left); // 2 * because legend has an extra left + right spacing between tree and itself
-            y1 = g1.height + g2.height + margin.top + margin.bottom;
-
-            // circle may not be symmetric around center, so shift it
-            // so top/left edge even with SVG
-            var tmp1 = d3.select('#treeSVG').node().getBoundingClientRect();
-            var tmp2 = d3.select('svg').node().getBoundingClientRect();
-            var tmp3 = d3.select('#legendID').node().getBoundingClientRect();
-    
-            if (tmp1.top < tmp3.top) { tmp1.top = tmp3.top; }
-
-            //shiftX = tmp1.left - tmp2.left;
-            //shiftY = tmp1.top - tmp2.top - margin.top;
-        } else { // if no legend present
-            x1 = g1.width + margin.right + margin.left;
-            y1 = g1.height + margin.top + margin.bottom;
-
-            // circle may not be symmetric around center, so shift it
-            // so top/left edge even with SVG
-            var tmp1 = d3.select('#treeSVG').node().getBoundingClientRect();
-            var tmp2 = d3.select('svg').node().getBoundingClientRect()
-            shiftX = tmp1.left - tmp2.left;
-            shiftY = tmp1.top - tmp2.top - margin.top;
-        }
-
 
         // circle may not be symmetric around center, so shift it
         // so top/left edge even with SVG
         var tmp1 = d3.select('#treeSVG').node().getBoundingClientRect();
-        var tmp2 = d3.select('svg').node().getBoundingClientRect()
-        shiftX = tmp1.left - tmp2.left;
-        shiftY = tmp1.top - tmp2.top - margin.top;
-        console.log(tmp1, tmp2)
-        console.log(shiftX, shiftY)
+        var tmp2 = d3.select('svg').node().getBoundingClientRect();
+
+        if (d3.selectAll('#legendID g').node()) { // if legend present
+            // XXX this part still not working quite right
+            var g2 = d3.select('#legendID').node().getBBox();
+            x1 = g1.width + g2.width + (2 * margin.right + margin.left); // 2 * because legend has an extra right margin
+            y1 = g1.height + g2.height + margin.top + margin.bottom;
+
+            var tmp3 = d3.select('#legendID').node().getBoundingClientRect();
+    
+            if (tmp1.top < tmp3.top) { tmp1.top = tmp3.top; }
+
+            shiftX = tmp1.left - tmp2.left;
+        } else { // if no legend present
+            x1 = g1.width + margin.right + margin.left;
+            y1 = g1.height + margin.top + margin.bottom;
+
+            shiftX = tmp1.left - tmp2.left;
+            shiftY = tmp1.top - tmp2.top;
+        }
+
+
 
     }
 

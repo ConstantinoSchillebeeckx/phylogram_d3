@@ -23,7 +23,7 @@ A working demo can be found [here](http://www.matatu.com/phylogram/demo.php) whi
 
 * [d3.js](https://d3js.org/)
 
-* [D3-tip](http://labratrevenge.com/d3-tip/)
+* [D3-tip](https://github.com/emiguevara/d3-tip)
 
 * [d3-slider](https://github.com/MasterMaps/d3-slider)
 
