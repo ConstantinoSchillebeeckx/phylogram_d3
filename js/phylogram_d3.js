@@ -34,7 +34,6 @@ var legendColorScale = d3.scale.linear().domain([0.5,1]).range([255,0])
 var tip = d3.tip()
     .attr('class', 'd3-tip')
     .offset(function() {
-        console.log(this.getBoundingClientRect());
         return [this.getBBox().height / 2, 0]
     })
     .html(function(d) {
@@ -496,7 +495,7 @@ function updateTree() {
                     return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'none'
                 })
                 .style('opacity',1)
-        } else if (options.leafColor == '') {
+        } else if (options.backgroundColor == '') {
             svg.selectAll('g.leaf.node rect')
                 .transition(2000)
                 .style('opacity','1e-6')
