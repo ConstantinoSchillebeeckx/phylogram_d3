@@ -1,5 +1,9 @@
 .render { 
-    font-family: -apple-system, BlinkMacSystemFont, "Montserrat", "Open Sans", Helvetica, sans-serif; 
+    font-family: -apple-system, BlinkMacSystemFont, "Open Sans", Helvetica, sans-serif; 
+    font-size: 11px;
+}
+
+.legend {
     font-size: 11px;
 }
 
@@ -52,7 +56,7 @@ text.rule {
 
 
 /* branches of tree */
-.link {
+path.link {
     fill: none;
     stroke: #aaa;
     stroke-width: 2px;
@@ -108,6 +112,20 @@ text {
 }
 
 
+/* manually added because external CSS
+doesn't seem to be loading well when
+saving SVG
+*/
+.lead {
+    margin-bottom: 20px;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.4
+}
 
-
+@media (min-width:768px) {
+    .lead {
+        font-size: 21px
+    }
+}
 
