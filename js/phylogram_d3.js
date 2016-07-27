@@ -33,7 +33,10 @@ var legendColorScale = d3.scale.linear().domain([0.5,1]).range([255,0])
 // tooltip 
 var tip = d3.tip()
     .attr('class', 'd3-tip')
-    .offset([-10, 0])
+    .offset(function() {
+        console.log(this.getBoundingClientRect());
+        return [this.getBBox().height / 2, 0]
+    })
     .html(function(d) {
         return formatTooltip(d, options.mapping);
     })

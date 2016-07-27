@@ -678,6 +678,17 @@ function cleanTaxa(taxa) {
 }
 
 
+function getViewBox() {
+    var vb = jQuery('svg')[0].getAttribute('viewBox');
+
+    if (vb) {
+        var arr = vb.split(' ').map(function(d) { return parseInt(d); })
+        return {'x0':arr[0], 'y0':arr[1], 'x1':arr[2], 'y1':arr[3]};
+    } else {
+        return false;
+    }
+}
+
 
 /* Fit the SVG viewBox
 
@@ -693,10 +704,13 @@ function fitViewBox() {
 
     // if rectangular, get dimensions of entire canvas
     if (treeType == 'rectangular') {
-        var g = d3.select('#canvasSVG').node().getBBox();
 
+        var g = d3.select('#canvasSVG').node().getBBox();
         x1 = g.width + margin.right + margin.left;
         y1 = g.height + margin.top + margin.bottom;
+        //console.log(g)
+        //console.log(x1, y1)
+
     } else { // if radial, get dimensions of tree and legend if it exists
         var g1 = d3.select('#treeSVG').node().getBBox();
         if (d3.select('#legendID').node()) { // if legend present
@@ -1048,6 +1062,7 @@ function saveSVG(){
         var sheet = document.styleSheets[i];
         if (sheet.href) {
             var sheetName = sheet.href.split('/').pop();
+            console.log(sheetName);
             var rules = sheet.rules;
             if (rules) {
                 for (var j=0; j<rules.length; j++) {
@@ -1113,12 +1128,13 @@ function generateLegend(title, mapVals, colorScale, type) {
 
     // generate containing group if necessarry
     var container = d3.select("#legendID")
-    var box = d3.select("#treeSVG").node().getBoundingClientRect()
+    var box = d3.select("#treeSVG").node().getBBox()  
+
     if (container.empty()) { // if legend doesn't already exist
         container = d3.select('svg g').append("g")
             .attr("id", "legendID")
     }
-    container.attr("transform","translate(" + (box.width + margin.right + margin.left) + ",0)");
+    container.attr("transform","translate(" + (box.width + margin.right) + ",0)");
 
 
 
@@ -1306,8 +1322,6 @@ function validateInputs(dat, options) {
         } 
     }
 }
-
-
 
 
 

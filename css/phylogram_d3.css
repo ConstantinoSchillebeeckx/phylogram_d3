@@ -97,3 +97,17 @@ text.rule {
 text {
     font-family: "Open Sans";
 }
+
+@media print {
+    #gui { display:none; }
+    svg { 
+        width: 9in;
+        height: 6.5in;
+        margin: 0 0 0 0;
+    }
+}
+
+
+
+
+
