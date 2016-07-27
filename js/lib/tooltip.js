@@ -57,6 +57,26 @@
       nodel.html(content)
         .style({ opacity: 1, 'pointer-events': 'all' })
 
+      // set direction based on where mouse is w.r.t entire screen
+      // NOTE: this will not work if absolute is being used
+      var x = d3.event.pageX;
+      var y = d3.event.pageY;
+
+      if ( x <= window.innerWidth / 2.0) { // left side of screen
+        if (y <= window.innerHeight / 2.0) {  // top of screen
+          dir = 'se';
+        } else { // bottom of screen
+          dir = 'ne';
+        }
+      } else { // right side of screen
+        if (y <= window.innerHeight / 2.0) {  // top of screen
+          dir = 'sw';
+        } else { // bottom of screen
+          dir = 'nw';
+        }
+      }
+      direction(dir);
+
       while(i--) nodel.classed(directions[i], false)
       if (!absolute || absolute === false) {
         coords = direction_callbacks.get(dir).apply(this);

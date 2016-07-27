@@ -235,9 +235,7 @@ function formatNodes(id, nodes, opts) {
             })
         
     d3.selectAll('.leaf')
-            .on('mouseover', function(d,i) {
-                tip.show(d, i, [d3.event.pageY, d3.event.pageX]);
-            }) 
+            .on('mouseover', tip.show)
             .on('mouseout', tip.hide)
 
     // node backgrounds
