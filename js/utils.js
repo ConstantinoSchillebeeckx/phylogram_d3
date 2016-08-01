@@ -256,6 +256,7 @@ function formatNodes(id, nodes, opts) {
             }
         });
 
+
     // node label
     node.append("text")
         .attr("class",function(d) { return d.children ? "distanceLabel" : "leafLabel" })
@@ -936,8 +937,20 @@ function buildGUI(selector, opts) {
     col3.append("div")
         .attr("id","scaleH")
 
-    scaleHSlider = d3.slider().min(22).max(100).step(1).on("slide", function(evt, value) { updateTree(); });
-    d3.select('#scaleH').call(scaleHSlider);
+    scaleHSlider = document.getElementById('scaleH')
+
+    noUiSlider.create(scaleHSlider, {
+        start: 22,
+        connect: "lower",
+        range: {
+            'min': 22,
+            'max': 100
+        }
+    });
+
+    scaleHSlider.noUiSlider.on('slide', function(){
+        updateTree();
+    });
 
     col3.append("label")
         .text("Leaf radius")
@@ -945,8 +958,42 @@ function buildGUI(selector, opts) {
     col3.append("div")
         .attr("id","leafR")
 
-    leafRSlider = d3.slider().min(5).max(20).on("slide", function(evt, value) { updateTree(); });
-    d3.select("#leafR").call(leafRSlider);
+    leafRSlider = document.getElementById('leafR')
+
+    noUiSlider.create(leafRSlider, {
+        start: 5,
+        step: 0.1,
+        connect: "lower",
+        range: {
+            'min': 5,
+            'max': 20
+        }
+    });
+
+    leafRSlider.noUiSlider.on('slide', function(){
+        updateTree();
+    });
+
+    col3.append("label")
+        .text("Rotation")
+
+    col3.append("div")
+        .attr("id","rotation")
+
+    rotationSlider = document.getElementById('rotation')
+
+    noUiSlider.create(rotationSlider, {
+        start: 0,
+        connect: "lower",
+        range: {
+            'min': -180,
+            'max': 180
+        }
+    });
+
+    rotationSlider.noUiSlider.on('slide', function(){
+        updateTree();
+    });
 }
 
 

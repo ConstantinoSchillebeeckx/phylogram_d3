@@ -148,10 +148,10 @@ function init(dat, div, options) {
             mappingFile = options.mapping_file;
             d3.tsv(mappingFile, function(error, data) {
                 options.mapping_dat = data;
-                buildTree(div, newick, options, function() { fitViewBox(); });
+                buildTree(div, newick, options, function() { updateTree(); });
             });
         } else {
-            buildTree(div, newick, options, function() { fitViewBox(); });
+            buildTree(div, newick, options, function() { updateTree(); });
         }
     });
 }
@@ -276,7 +276,7 @@ function updateTree() {
         options.treeType = treeType;
     }
 
-    // someone in the code, global var 'options' is
+    // somewhere in the code, global var 'options' is
     // being emptied ({}) so we are resetting the 
     // mapping info here
     if (typeof mappingFile != 'undefined') {
@@ -291,8 +291,8 @@ function updateTree() {
     options.skipBranchLengthScaling = !$('#scale_distance').is(':checked');
 
     // get slider vals
-    options.sliderScaleV = scaleHSlider.value(); 
-    options.sliderLeafR = leafRSlider.value();
+    options.sliderScaleV = parseInt(scaleHSlider.noUiSlider.get()); 
+    options.sliderLeafR = parseInt(leafRSlider.noUiSlider.get());
 
     // get dropdown values
     var leafColor, backgroundColor;
@@ -395,8 +395,18 @@ function updateTree() {
         scale = options.skipBranchLengthScaling;
     }
 
+    // enable/disable sliders
+    if (treeType == 'radial') {
+        rotationSlider.removeAttribute('disabled');
+        scaleHSlider.setAttribute('disabled',true);
+    } else {
+        rotationSlider.setAttribute('disabled', true);
+        scaleHSlider.removeAttribute('disabled');
+    }
+
+
     // if leaf radius becomes too large, adjust vertical scale
-    if (options.sliderLeafR * 2 > options.sliderScaleV) { scaleHSlider.value( 2 * options.sliderLeafR ); }
+    if (options.sliderLeafR * 2 > options.sliderScaleV && treeType == 'rectangular') { scaleHSlider.noUiSlider.set( 2 * options.sliderLeafR ); }
 
     // adjust vertical scale
     if (options.treeType == 'rectangular') {

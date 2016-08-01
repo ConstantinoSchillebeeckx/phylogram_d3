@@ -129,3 +129,14 @@ saving SVG
     }
 }
 
+
+/* slider */
+.noUi-horizontal {
+    height: 10px;
+}
+
+.noUi-horizontal .noUi-handle {
+    width: 18px;
+    height: 15px;
+    top: -4px;
+}

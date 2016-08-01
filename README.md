@@ -25,7 +25,7 @@ A working demo can be found [here](http://www.matatu.com/phylogram/demo.php) whi
 
 * [D3-tip](https://github.com/emiguevara/d3-tip)
 
-* [d3-slider](https://github.com/MasterMaps/d3-slider)
+* [noUiSlider](http://refreshless.com/nouislider/)
 
 ## Usage
 Rendering the phylogram begins with the function [`init()`][1] which you can simply call in the `body` tag of your HTML page using the [onload](https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onload) event handle: `<body onload="init(parameters);">`.  Currently, the function takes three parameters:
