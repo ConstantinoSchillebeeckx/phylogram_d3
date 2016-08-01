@@ -235,7 +235,7 @@ function buildTree(div, newick, opts, callback) {
     if (opts.treeType == 'rectangular') {
         tree = rectTree;
     } else if (opts.treeType == 'radial') {
-        d3.selectAll("#canvasSVG g").attr("transform","translate(" + outerRadius + "," + outerRadius + ")")
+        //d3.selectAll("#canvasSVG g").attr("transform","translate(" + outerRadius + "," + outerRadius + ")")
         tree = radialTree;
     }
 

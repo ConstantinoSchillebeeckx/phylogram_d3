@@ -678,7 +678,8 @@ function cleanTaxa(taxa) {
 
 }
 
-
+// get the viewBox attribute of the outermore svg in
+// format {x0, y0, x1, y1}
 function getViewBox() {
     var vb = jQuery('svg')[0].getAttribute('viewBox');
 
@@ -702,51 +703,66 @@ that content size.
 function fitViewBox() {
 
     var x0 = 0, y0 = 0, x1, y1, shiftX = 0, shiftY=0;
+    var svgBox = d3.select('svg').node().getBoundingClientRect();
+    var guiBox = d3.select('#gui').node().getBoundingClientRect();
+    var treeBox = getTreeBox();
+
+    x1 = Math.round(treeBox.width + margin.left + margin.right);
+    y1 = Math.round(treeBox.height + margin.top + margin.bottom);
 
     // if rectangular, get dimensions of entire canvas
     if (treeType == 'rectangular') {
 
-        var g = d3.select('#canvasSVG').node().getBBox();
-        x1 = g.width + margin.right + margin.left;
-        y1 = g.height + margin.top + margin.bottom;
-        //console.log(g)
-        //console.log(x1, y1)
-
     } else { // if radial, get dimensions of tree and legend if it exists
-        var g1 = d3.select('#treeSVG').node().getBBox();
 
-        // circle may not be symmetric around center, so shift it
-        // so top/left edge even with SVG
-        var tmp1 = d3.select('#treeSVG').node().getBoundingClientRect();
-        var tmp2 = d3.select('svg').node().getBoundingClientRect();
-
-        if (d3.selectAll('#legendID g').node()) { // if legend present
-            // XXX this part still not working quite right
-            var g2 = d3.select('#legendID').node().getBBox();
-            x1 = g1.width + g2.width + (2 * margin.right + margin.left); // 2 * because legend has an extra right margin
-            y1 = g1.height + g2.height + margin.top + margin.bottom;
-
-            var tmp3 = d3.select('#legendID').node().getBoundingClientRect();
-    
-            if (tmp1.top < tmp3.top) { tmp1.top = tmp3.top; }
-
-            shiftX = tmp1.left - tmp2.left;
-        } else { // if no legend present
-            x1 = Math.round(g1.width + margin.right + margin.left);
-            y1 = Math.round(g1.height + margin.top + margin.bottom);
-
-            //shiftX = tmp2.left; //tmp1.left - tmp2.left;
-            //shiftY = tmp2.top; //tmp1.top - tmp2.top;
-        }
-
-        //console.log(shiftX, shiftY, x1, x1+shiftX, y1, y1+shiftY)
-        console.log(tmp2)
+        //console.log(treeBox.height, treeBox.left - svgBox.left)
+        shiftX = Math.round(svgBox.left - treeBox.left + margin.left);
+        shiftY = Math.round(svgBox.top - treeBox.top + margin.top);
+        shiftX = 434;
+        shiftY = 393
+        console.log(shiftX, shiftY)
+        d3.select('#canvasSVG').attr('transform','translate(' + shiftX + ',' + shiftY + ')')
 
     }
 
-    d3.select('svg').attr("viewBox", (x0 + shiftX) + " " + (y0 + shiftY) + " " + (x1 + shiftX) + " " + (y1 + shiftY));
+    // + shiftX = left shift
+    // + shiftY = up shift
+    d3.select('svg').attr("viewBox", x0 + " " + y0 + " " + x1 + " " + y1);
 
 }
+
+
+
+
+function getTreeBox() {
+
+    if (treeType == 'rectangular') {
+        return d3.select('#canvasSVG').node().getBBox();
+    } else {
+
+        var g1 = d3.select('#treeSVG').node().getBoundingClientRect();
+
+        if (d3.selectAll('#legendID g').node()) { // if legend present
+            var tmp = {};
+            var g2 = d3.select('#legendID').node().getBoundingClientRect();
+
+            tmp.left = g1.left;
+            tmp.right = g2.right;
+            tmp.top = d3.min([g1.top, g2.top]);
+            tmp.bottom = d3.max([g1.bottom, g2.bottom]);
+            tmp.width = tmp.right - tmp.left;
+            tmp.height = tmp.bottom - tmp.top;
+
+            return tmp;
+        }
+
+        return g1;
+    }
+
+
+}
+
+
 
 
 

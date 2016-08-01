@@ -28,8 +28,8 @@
     <script> 
         var treeOptions = {
             'mapping_file': 'dat/mapping.txt',
-            'treeType': 'rectangular',
-           // 'treeType': 'radial',
+           // 'treeType': 'rectangular',
+            'treeType': 'radial',
             'hideRuler': false,
             'skipBranchLengthScaling': false,
             'skipLabels': false,
