@@ -732,14 +732,15 @@ function fitViewBox() {
 
             shiftX = tmp1.left - tmp2.left;
         } else { // if no legend present
-            x1 = g1.width + margin.right + margin.left;
-            y1 = g1.height + margin.top + margin.bottom;
+            x1 = Math.round(g1.width + margin.right + margin.left);
+            y1 = Math.round(g1.height + margin.top + margin.bottom);
 
-            shiftX = tmp1.left - tmp2.left;
-            shiftY = tmp1.top - tmp2.top;
+            //shiftX = tmp2.left; //tmp1.left - tmp2.left;
+            //shiftY = tmp2.top; //tmp1.top - tmp2.top;
         }
 
-
+        //console.log(shiftX, shiftY, x1, x1+shiftX, y1, y1+shiftY)
+        console.log(tmp2)
 
     }
 
