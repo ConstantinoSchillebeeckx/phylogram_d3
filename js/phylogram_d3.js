@@ -249,6 +249,8 @@ function buildTree(div, newick, opts, callback) {
     svg.call(tip);
     showSpinner(null, false); // hide spinner
 
+    fitViewBox();
+
     callback();
 }
 
@@ -309,13 +311,6 @@ function updateTree() {
 
         if (options.treeType == 'rectangular') {
 
-            if (options.treeType != treeType) {
-                d3.selectAll("#canvasSVG g")
-                    //.transition()
-                    //.duration(duration)
-                    .attr("transform","translate(0,0)")
-            }
-
             nodes = rectTree.nodes(newick);
             var xscale = scaleLeafSeparation(tree, nodes, options.sliderScaleV);
             if (!options.skipBranchLengthScaling) { 
@@ -346,13 +341,6 @@ function updateTree() {
 
 
         } else if (options.treeType == 'radial') {
-
-            if (options.treeType != treeType) {
-                d3.selectAll("#canvasSVG g")
-                    //.transition()
-                    //.duration(duration)
-                    .attr("transform","translate(" + (outerRadius + margin.left) + "," + (outerRadius + margin.top) + ")")
-            }
 
             nodes = radialTree.nodes(newick);
             if (!options.skipBranchLengthScaling) { 

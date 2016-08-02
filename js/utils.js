@@ -704,36 +704,60 @@ function fitViewBox() {
 
     var x0 = 0, y0 = 0, x1, y1, shiftX = 0, shiftY=0;
     var svgBox = d3.select('svg').node().getBoundingClientRect();
-    var guiBox = d3.select('#gui').node().getBoundingClientRect();
     var treeBox = getTreeBox();
+    var viewBox = getViewBox();
 
     x1 = Math.round(treeBox.width + margin.left + margin.right);
     y1 = Math.round(treeBox.height + margin.top + margin.bottom);
+    console.log(x1, y1)
+
+    // only adjust viewbox if content is larger than current
+    if (x1 > viewBox.x1 || y1 > viewBox.y1 || !viewBox) {
+        console.log('updateviewbox')
+        d3.select('svg').attr("viewBox", x0 + " " + y0 + " " + x1 + " " + y1);
+    }
+
 
     // if rectangular, get dimensions of entire canvas
     if (treeType == 'rectangular') {
-
+        shiftX = margin.left;
+        shiftY = margin.top;
     } else { // if radial, get dimensions of tree and legend if it exists
 
-        //console.log(treeBox.height, treeBox.left - svgBox.left)
-        shiftX = Math.round(svgBox.left - treeBox.left + margin.left);
-        shiftY = Math.round(svgBox.top - treeBox.top + margin.top);
-        shiftX = 434;
-        shiftY = 393
-        console.log(shiftX, shiftY)
-        d3.select('#canvasSVG').attr('transform','translate(' + shiftX + ',' + shiftY + ')')
+        // only shift if content is not inside of containing svg
+        if (treeBox.left < svgBox.left) {
+            shiftX = Math.round(treeBox.width / 2.0 - margin.left);
+        } else {
+            shiftX = Math.round(getTransform('#canvasSVG')[0]);
+        }
+
+        // only shift if content is above the containing svg
+        if (treeBox.top < svgBox.top) {
+            shiftY = Math.round(treeBox.height / 2.0 - svgBox.top + margin.top);
+        } else {
+            shiftY = Math.round(getTransform('#canvasSVG')[1]);
+        }
 
     }
+    d3.select('#canvasSVG').attr('transform','translate(' + shiftX + ',' + shiftY + ')')
 
-    // + shiftX = left shift
-    // + shiftY = up shift
-    d3.select('svg').attr("viewBox", x0 + " " + y0 + " " + x1 + " " + y1);
 
+}
+
+// get the transform values of selection
+// returns array [X,Y]
+function getTransform(sel) {
+
+    var transf = d3.select(sel).attr('transform').replace('translate(','').replace(')','');
+    var tmp = transf.split(',');
+
+    return [parseInt(tmp[0]), parseInt(tmp[1])];
 }
 
 
 
 
+// get BoundingClientRect of tree
 function getTreeBox() {
 
     if (treeType == 'rectangular') {
@@ -750,7 +774,7 @@ function getTreeBox() {
             tmp.right = g2.right;
             tmp.top = d3.min([g1.top, g2.top]);
             tmp.bottom = d3.max([g1.bottom, g2.bottom]);
-            tmp.width = tmp.right - tmp.left;
+            tmp.width = tmp.right - tmp.left + margin.right + margin.left;
             tmp.height = tmp.bottom - tmp.top;
 
             return tmp;
@@ -1182,13 +1206,17 @@ function generateLegend(title, mapVals, colorScale, type) {
 
     // generate containing group if necessarry
     var container = d3.select("#legendID")
-    var box = d3.select("#treeSVG").node().getBBox()  
+    var box = d3.select("#treeSVG").node().getBoundingClientRect()  
 
     if (container.empty()) { // if legend doesn't already exist
         container = d3.select('svg g').append("g")
             .attr("id", "legendID")
+
+        var xPos = Math.round(box.right - getTransform('#canvasSVG')[0] + margin.right);
+        var yPos = Math.round(-getTransform('#canvasSVG')[1] + margin.top);
+        container.attr("transform","translate(" + xPos + "," + yPos + ")");
     }
-    container.attr("transform","translate(" + (box.width + margin.right) + ",0)");
+    //container.attr("transform","translate(" + Math.round(box.right + margin.right) + "," + -Math.round(box.height / 2.0) + ")");
 
 
 
