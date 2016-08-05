@@ -863,7 +863,7 @@ function buildGUI(selector, opts) {
         .attr("class","col-sm-2")
 
     var tmp = col1.append("div")
-        .attr("class","btn-toolbar")
+        .attr("class","btn-toolbar btn-group")
     
     tmp.append("button")
         .attr("class","btn btn-info")
@@ -873,7 +873,7 @@ function buildGUI(selector, opts) {
         .html('<i class="fa fa-square-o fa-lg" aria-hidden="true"></i>')
 
     tmp.append("button")
-        .attr("class","btn btn-info")
+        .attr("class","btn btn-warning")
         .attr("id","radial")
         .attr("title","Generate a radial layout")
         .attr("onclick","options.treeType = this.id; updateTree();")
