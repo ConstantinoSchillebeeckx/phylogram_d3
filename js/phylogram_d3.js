@@ -18,7 +18,9 @@ var width = startW - margin.left - margin.right;
 var height = startH - margin.top - margin.bottom;
 var nodes, links, node, link;
 var newick;
-
+var shiftX = 0;
+var shiftY = 0;
+var zoom = d3.behavior.zoom()
 // tree defaults
 var treeType = 'rectangular'; // rectangular or circular [currently rendered treeType]
 var scale = true; // if true, tree will be scaled by distance metric
@@ -222,7 +224,8 @@ function buildTree(div, newick, opts, callback) {
         .append("svg:svg")
             .attr("xmlns","http://www.w3.org/2000/svg")
             .attr("id","SVGtree")
-        .append("g") // svg g group is translated in updateTree()
+            .call(zoom.on("zoom", panZoom))
+        .append("g") // svg g group is translated by fitViewBox()
             .attr("id",'canvasSVG')
 
     svg.append("g")
@@ -287,6 +290,13 @@ function updateTree() {
         options.colorScale = colorScales;
     }
 
+    if (options.treeType != treeType) {
+        var typeChange = true;
+    } else {
+        var typeChange = false;
+    }
+    treeType = options.treeType; // update current tree type
+
 
     // get checkbox state
     options.skipDistanceLabel = !$('#toggle_distance').is(':checked');
@@ -308,7 +318,7 @@ function updateTree() {
 
 
     // adjust physical positioning
-    if (options.treeType != treeType || options.skipBranchLengthScaling != scale) {
+    if (typeChange || options.skipBranchLengthScaling != scale) {
 
         if (options.treeType == 'rectangular') {
 
@@ -374,13 +384,15 @@ function updateTree() {
 
         // if tree type changes
         // adjust some label positioning
-        if (options.treeType != treeType) {
+        if (typeChange) {
             d3.selectAll("g.node text")
                 .attr("text-anchor", function(d) { return options.treeType == 'radial' && d.x > 180 ? "end" : "start" })
                 .attr("transform", function(d) { return options.treeType == 'radial' && d.x > 180 ? "rotate(180)" : "" })
+
+            fitViewBox(); // reset transform of tree to "zero"
+            positionLegend(); // reposition legend in proper position
         }
 
-        treeType = options.treeType; // update current tree type
         scale = options.skipBranchLengthScaling;
     }
 
@@ -500,7 +512,7 @@ function updateTree() {
         }
     }
 
-    fitViewBox();
+    //fitViewBox();
 }
 
 
