@@ -221,6 +221,7 @@ function buildTree(div, newick, opts, callback) {
             .attr("id","tree")
         .append("svg:svg")
             .attr("xmlns","http://www.w3.org/2000/svg")
+            .attr("id","SVGtree")
         .append("g") // svg g group is translated in updateTree()
             .attr("id",'canvasSVG')
 

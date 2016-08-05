@@ -151,6 +151,9 @@ function formatLinks(id, links, opts) {
                 return step(d.source.x, d.source.y, d.target.x, d.target.y);
             }
         })
+        .style("fill","none") // setting style inline otherwise AI doesn't render properly
+        .style("stroke","#aaa")
+        .style("stroke-width","2px")
 }
 
 // https://bl.ocks.org/mbostock/c034d66572fd6bd6815a
@@ -709,11 +712,9 @@ function fitViewBox() {
 
     x1 = Math.round(treeBox.width + margin.left + margin.right);
     y1 = Math.round(treeBox.height + margin.top + margin.bottom);
-    console.log(x1, y1)
 
     // only adjust viewbox if content is larger than current
     if (x1 > viewBox.x1 || y1 > viewBox.y1 || !viewBox) {
-        console.log('updateviewbox')
         d3.select('svg').attr("viewBox", x0 + " " + y0 + " " + x1 + " " + y1);
     }
 
@@ -1033,6 +1034,9 @@ function buildGUI(selector, opts) {
     });
 
     rotationSlider.noUiSlider.on('slide', function(){
+        rotateTree(this.get());
+    });
+    rotationSlider.noUiSlider.on('end', function(){
         updateTree();
     });
 }
@@ -1133,6 +1137,7 @@ function formatTooltip(d, mapParse) {
 // which can then be right-clicked and 'save as...'
 function saveSVG(){
 
+
     // get styles from all stylesheets
     // http://www.coffeegnome.net/converting-svg-to-png-with-canvg/
     var style = "\n";
@@ -1150,11 +1155,10 @@ function saveSVG(){
         }
     }
 
-    var svg = d3.select("svg"),
+    var svg = d3.select('svg'),
         img = new Image(),
-        serializer = new XMLSerializer(),
-        width = svg.node().getBBox().width,
-        height = svg.node().getBBox().height;
+        serializer = new XMLSerializer()
+    
 
     // prepend style to svg
     svg.insert('defs',":first-child")
@@ -1163,12 +1167,10 @@ function saveSVG(){
         .attr('type','text/css')
         .html(style);
 
-
     // generate IMG in new tab
     var svgStr = serializer.serializeToString(svg.node());
-    img.src = 'data:image/svg+xml;base64,'+window.btoa(unescape(encodeURIComponent(svgStr)));
-    var tab = window.open()
-    tab.document.write('<img src="' + img.src + '"/>');
+    img.src = 'data:image/svg+xml;utf8,' +  unescape(encodeURIComponent(svgStr));
+    var tab = window.open(img.src, '_blank')
     tab.document.title = 'phylogram d3';
 };
 
@@ -1410,8 +1412,11 @@ function validateInputs(dat, options) {
 
 
 
-
-
+// callback for rotation slider
+// paratmer: degree of rotation
+function rotateTree(deg) {
+    d3.select('#treeSVG').attr('transform','rotate(' + deg + ')');
+}
 
 
 
