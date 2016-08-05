@@ -391,6 +391,8 @@ function updateTree() {
 
             fitViewBox(); // reset transform of tree to "zero"
             positionLegend(); // reposition legend in proper position
+
+            d3.select('#treeSVG').attr('transform','rotate(0)');
         }
 
         scale = options.skipBranchLengthScaling;

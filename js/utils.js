@@ -705,44 +705,39 @@ that content size.
 */
 function fitViewBox() {
 
-    d3.select('#canvasSVG').attr('transform','translate(' + 0 + ',' + 0 + ')')
+
     var x0 = 0, y0 = 0, x1, y1
+    var scaleFactorX = 1
     var svgBox = d3.select('svg').node().getBoundingClientRect();
     var treeBox = getTreeBox();
     var viewBox = getViewBox();
 
-    x1 = window.innerWidth;
-    y1 = window.innerHeight;
 
-    d3.select('svg').attr("viewBox", x0 + " " + y0 + " " + x1 + " " + y1);
+    x1 = Math.round(treeBox.width + margin.left + margin.right);
+    y1 = Math.round(treeBox.height + margin.top + margin.bottom);
 
+    if (viewBox) {
+        scaleFactorX = x1 / viewBox.x1;
+    }
+
+    // only adjust viewbox if tree is wider than viewbox
+    if (x1 > viewBox.x1 || !viewBox) {
+        d3.select('svg').attr("viewBox", x0 + " " + y0 + " " + x1 + " " + y1);
+    }
 
     // if rectangular, get dimensions of entire canvas
     if (treeType == 'rectangular') {
         shiftX = margin.left;
         shiftY = margin.top;
     } else { // if radial, get dimensions of tree and legend if it exists
-        /*
-        // only shift if content is not inside of containing svg
-        if (treeBox.left < svgBox.left) {
-            //shiftX = Math.round(treeBox.width / 2.0 - margin.left);
-            shiftX = Math.round(-treeBox.left + margin.left + svgBox.left);
-        } else {
-            shiftX = Math.round(getTransform('#canvasSVG')[0]);
+        if (treeBox.top < svgBox.top) { // only shift if tree is above svg top
+            shiftY = Math.round(treeBox.height / 2.0 - svgBox.top + margin.top + 20);
         }
-            shiftX = Math.round(-treeBox.left + margin.left + svgBox.left);
-
-        // only shift if content is above the containing svg
-        if (treeBox.top < svgBox.top) {
-            //shiftY = Math.round(treeBox.height / 2.0 - svgBox.top + margin.top);
-            shiftY = Math.round(-treeBox.top + margin.top + svgBox.top)
-        } else {
-            shiftY = Math.round(getTransform('#canvasSVG')[1]);
+        if (treeBox.left < svgBox.left || treeBox.right > svgBox.right) { // only shift if svg is left/right of svg sides
+            shiftX = Math.round(treeBox.width / (2.0 * scaleFactorX) + margin.left);
         }
-        */
-        shiftY = Math.round(treeBox.height / 2.0 - svgBox.top + margin.top + 20);
-        shiftX = Math.round(treeBox.width / 2.0 + margin.left);
     }
+
     d3.select('#canvasSVG').attr('transform','translate(' + shiftX + ',' + shiftY + ')')
 
 
@@ -767,6 +762,24 @@ function getTreeBox() {
     if (treeType == 'rectangular') {
         return d3.select('#canvasSVG').node().getBoundingClientRect();
     } else {
+
+        var g1 = d3.select('#treeSVG').node().getBoundingClientRect();
+
+        if (d3.selectAll('#legendID g').node()) { // if legend present
+            var tmp = {};
+            var g2 = d3.select('#legendID').node().getBoundingClientRect();
+
+            tmp.left = g1.left;
+            tmp.right = g2.right;
+            tmp.top = d3.min([g1.top, g2.top]);
+            tmp.bottom = d3.max([g1.bottom, g2.bottom]);
+            tmp.width = tmp.right - tmp.left + margin.right + margin.left;
+            tmp.height = tmp.bottom - tmp.top;
+
+            return tmp;
+        }
+
+        return g1;
         return d3.select('#treeSVG').node().getBoundingClientRect();
     }
 
@@ -1031,6 +1044,7 @@ function buildGUI(selector, opts) {
     });
     rotationSlider.noUiSlider.on('end', function(){
         updateTree();
+        orientRadialLabels(this.get());
     });
 }
 
@@ -1130,6 +1144,7 @@ function formatTooltip(d, mapParse) {
 // which can then be right-clicked and 'save as...'
 function saveSVG(){
 
+    centerTree(); 
 
     // get styles from all stylesheets
     // http://www.coffeegnome.net/converting-svg-to-png-with-canvg/
@@ -1138,7 +1153,6 @@ function saveSVG(){
         var sheet = document.styleSheets[i];
         if (sheet.href) {
             var sheetName = sheet.href.split('/').pop();
-            console.log(sheetName);
             var rules = sheet.rules;
             if (rules) {
                 for (var j=0; j<rules.length; j++) {
@@ -1151,7 +1165,6 @@ function saveSVG(){
     var svg = d3.select('svg'),
         img = new Image(),
         serializer = new XMLSerializer()
-    
 
     // prepend style to svg
     svg.insert('defs',":first-child")
@@ -1438,10 +1451,55 @@ function panZoom() {
 }
 
 
-// function called by "center view" button
+// function called by "center view" button in GUI
 function centerTree() {
     zoom.scale(1); // reset zoom
     zoom.translate([0,0]); // reset pan
 
-    d3.select('#canvasSVG').attr('transform','translate(' + shiftX + ',' + shiftY + ')')
+    fitViewBox();
 }
+
+
+
+/* 
+After rotating the tree, some of the radials may be oriented improperly,
+this function will go through all of them and rotate those labels that are
+needed 180
+
+Parameters:
+===========
+- deg : int
+        degree of rotation, between 180 to -180
+
+*/
+function orientRadialLabels(deg) {
+
+    console.log(parseInt(leafRSlider.noUiSlider.get()))
+    d3.selectAll('.node text') 
+        .attr("transform", function(d) { return addAngles(deg, d.x) > 180 ? "rotate(180)" : "" }) 
+        .attr("text-anchor", function(d) { return addAngles(d.x, deg) > 180 ? "end" : "start" })
+        .attr("dx", function(d) { 
+            if (d.children) { // if inner node
+                return treeType == 'radial' && addAngles(deg, d.x) > 180 ? 20 : -20;
+            } else { // if leaf node
+                return treeType == 'radial' && addAngles(deg, d.x) > 180 ? (-5 - parseInt(leafRSlider.noUiSlider.get())) : (5 + parseInt(leafRSlider.noUiSlider.get()));
+            }
+        }) 
+
+
+}
+
+// given two angles, will return the sum clamped to [0, 360]
+function addAngles(a,b) {
+
+    var sum = parseFloat(a) + parseFloat(b);
+
+    if (sum > 360) {
+        return sum - 360;
+    } else if (sum < 0) {
+        return sum + 360;
+    } else {
+        return sum;
+    }
+}
+
