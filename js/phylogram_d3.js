@@ -244,51 +244,10 @@ Assumes globals (nodes, links) exist
 */
 function updateTree() {
 
-
-    // set tree type if GUI was updated
-    // by anything other than tree type
-    // buttons
-    if (!('treeType' in options)) {
-        options.treeType = treeType;
-    }
-
-    // somewhere in the code, global var 'options' is
-    // being emptied ({}) so we are resetting the 
-    // mapping info here
-    if (typeof mappingFile != 'undefined') {
-        options.mapping = mapParse;
-        options.colorScale = colorScales;
-    }
-
-    if (options.treeType != treeType) {
-        var typeChange = true;
-    } else {
-        var typeChange = false;
-    }
-    treeType = options.treeType; // update current tree type
-
-
-    // get checkbox state
-    options.skipDistanceLabel = !$('#toggle_distance').is(':checked');
-    options.skipLeafLabel = !$('#toggle_leaf').is(':checked');
-    options.skipBranchLengthScaling = !$('#scale_distance').is(':checked');
-
-    // get slider vals
-    options.sliderScaleV = parseInt(scaleHSlider.noUiSlider.get()); 
-    options.sliderLeafR = parseInt(leafRSlider.noUiSlider.get());
-
-    // get dropdown values
-    var leafColor, backgroundColor;
-    if ('mapping' in options && !options.mapping.empty()) {
-        var e = document.getElementById("leafColor");
-        options['leafColor'] = e.options[e.selectedIndex].value;
-        var e = document.getElementById("backgroundColor");
-        options['backgroundColor'] = e.options[e.selectedIndex].value;
-    }
-
+    getGUIoptions();
 
     // adjust physical positioning
-    if (typeChange || options.skipBranchLengthScaling != scale) {
+    if (options.typeChange || options.skipBranchLengthScaling != scale) {
 
         if (options.treeType == 'rectangular') {
 
@@ -333,7 +292,7 @@ function updateTree() {
 
         // if tree type changes
         // adjust some label positioning
-        if (typeChange) {
+        if (options.typeChange) {
             d3.selectAll("g.node text")
                 .attr("text-anchor", function(d) { return options.treeType == 'radial' && d.x > 180 ? "end" : "start" })
                 .attr("transform", function(d) { return options.treeType == 'radial' && d.x > 180 ? "rotate(180)" : "" })

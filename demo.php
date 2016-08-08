@@ -9,7 +9,7 @@
         <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,700,800" />
         <link href="https://cdn.rawgit.com/leongersen/noUiSlider/master/distribute/nouislider.min.css" rel="stylesheet">
-        <link href="css/phylogram_d3.css" rel="stylesheet">
+        <link href="css/styles.css" rel="stylesheet">
 
         <!-- JS -->
         <script type="text/javascript" src="https://code.jquery.com/jquery-2.2.4.min.js"></script>

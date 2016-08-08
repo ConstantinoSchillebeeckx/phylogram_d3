@@ -250,14 +250,27 @@ function formatNodes(id, nodes, opts) {
 
     // node circles
     node.append("circle")
-        .attr("r", opts.sliderLeafR)
-        .attr("opacity", function(d) { 
+        .attr("r", function(d) { 
             if (!d.children || d.depth == 0) {
-                return 1;
+                return opts.sliderLeafR;
             } else {
-                return 1e-6;
+                return 3;
             }
         });
+
+    d3.selectAll('.inner.node circle')
+        .on("mouseover", function() { 
+            d3.select(this)
+                .transition()
+                .duration(100)
+                .attr("r",6); 
+        })
+        .on("mouseout", function() { 
+            d3.select(this)
+                .transition()
+                .duration(100)
+                .attr("r",3); 
+        })
 
 
     // node label
@@ -1461,3 +1474,55 @@ function addAngles(a,b) {
     }
 }
 
+
+/* Set options global
+
+Should be called everytime the tree needs to be updated due to
+changes in the GUI
+
+*/
+function getGUIoptions() {
+
+    // set tree type if GUI was updated
+    // by anything other than tree type
+    // buttons
+    if (!('treeType' in options)) {
+        options.treeType = treeType;
+    }
+
+    // somewhere in the code, global var 'options' is
+    // being emptied ({}) so we are resetting the 
+    // mapping info here
+    if (typeof mappingFile != 'undefined') {
+        options.mapping = mapParse;
+        options.colorScale = colorScales;
+    }
+
+    if (options.treeType != treeType) {
+        var typeChange = true;
+    } else {
+        var typeChange = false;
+    }
+    options.typeChange = typeChange;
+    treeType = options.treeType; // update current tree type
+
+
+    // get checkbox state
+    options.skipDistanceLabel = !$('#toggle_distance').is(':checked');
+    options.skipLeafLabel = !$('#toggle_leaf').is(':checked');
+    options.skipBranchLengthScaling = !$('#scale_distance').is(':checked');
+
+    // get slider vals
+    options.sliderScaleV = parseInt(scaleHSlider.noUiSlider.get()); 
+    options.sliderLeafR = parseInt(leafRSlider.noUiSlider.get());
+
+    // get dropdown values
+    var leafColor, backgroundColor;
+    if ('mapping' in options && !options.mapping.empty()) {
+        var e = document.getElementById("leafColor");
+        options['leafColor'] = e.options[e.selectedIndex].value;
+        var e = document.getElementById("backgroundColor");
+        options['backgroundColor'] = e.options[e.selectedIndex].value;
+    }
+
+}

@@ -67,6 +67,11 @@ path.link {
     height: 20px;
 }
 
+.inner.node {
+    fill: #aaa;
+    cursor: pointer;
+}
+
 /* tooltip */
 .d3-tip {
     line-height: 1;
