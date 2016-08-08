@@ -358,23 +358,7 @@ function formatRuler(id, yscale, xscale, height, opts) {
                     .attr('y2', xscale(height))
                     .attr('x1', yscale)
                     .attr('x2', yscale)
-/*
-            ruler = rulerG.selectAll('circle.rule')
-                    .data(function(d) { console.log(yscale(d)); return [lineData(yscale(d))] })
-                  .enter().append('path')
-                    .attr("class","rule" )
-                    .attr("d",lineFunction)
-/*
-            ruler.selectAll("text.rule")
-                    .data(yscale.ticks(10))
-                .enter().append("svg:text")
-                    .attr("class", "rule")
-                    .attr("x", yscale)
-                    .attr("y", 0)
-                    .attr("dy", -3)
-                    .attr("text-anchor", "middle")
-                    .text(function(d) { return Math.round(d*100) / 100; });
-*/
+
         } else if (opts.treeType == 'radial') {  
 
             rulerG = d3.select(id).selectAll("g")
@@ -384,28 +368,7 @@ function formatRuler(id, yscale, xscale, height, opts) {
                   .append('circle')
                     .attr("class","rule")
                     .attr('r', yscale);
-/*
-                  .enter().append("g")
-                    .attr("class", "ruleGroup")
-                  .append('circle')
-                    .attr("class","rule")
-                    .attr('r', yscale)
-                    .attr("fill","none")
-                    .attr("stroke","#ddd")
-*/
-/* temporarily disabled
-            rulerG = d3.select(id).selectAll("g")
-                    .data(yscale.ticks(10))
-                  .enter().append("g")
-                    .attr("class", "ruleGroup")
-                    .attr("transform", function(d) { return "translate(" + -circleData(yscale(d))[0].x + "," + -yscale(d) + ")"; })
-                    
-            ruler = rulerG.selectAll('circle.rule')
-                    .data(function(d) { return [circleData(yscale(d))] })
-                  .enter().append('path')
-                    .attr("class","rule" )
-                    .attr("d",lineFunction)
-*/
+
         }
     }
 }
@@ -853,8 +816,6 @@ function buildGUI(selector, opts) {
       .append("div")
         .attr("class","panel-body")
 
-    //$('#collapseGUI').collapse('toggle'); // strange drag and slide behavior
-
 
     var guiRow1 = gui.append("div")
         .attr("class","row")
@@ -924,8 +885,6 @@ function buildGUI(selector, opts) {
 
     check3.append('text')
         .text("Scale by distance")
-
-    //var mapParse = opts.mapping;
 
     
     // if mapping file was passed
@@ -1474,7 +1433,6 @@ Parameters:
 */
 function orientRadialLabels(deg) {
 
-    console.log(parseInt(leafRSlider.noUiSlider.get()))
     d3.selectAll('.node text') 
         .attr("transform", function(d) { return addAngles(deg, d.x) > 180 ? "rotate(180)" : "" }) 
         .attr("text-anchor", function(d) { return addAngles(d.x, deg) > 180 ? "end" : "start" })

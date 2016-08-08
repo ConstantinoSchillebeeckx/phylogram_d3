@@ -51,42 +51,12 @@ var radialTree = d3.layout.cluster()
 
 // setup rectangular tree
 var rectTree = d3.layout.cluster()
-    //.sort(function(node) { return node.children ? node.children.length : -1; })
     .children(function(node) {
         return node.branchset
     })
     .size([height, width]);
 
 var duration = 1000;
-
-
-// https://jsfiddle.net/chrisJamesC/3MShS/
-var numberOfPoints = 30;
-var lineLength = startH;
-
-function circleData(r) { 
-    var points = [];
-    $.map(Array(numberOfPoints), function (d, i) {
-        var imag = lineLength / 2 + r * Math.sin(2 * i * Math.PI / (numberOfPoints - 1))
-        var real = r - r * Math.cos(2 * i * Math.PI / (numberOfPoints - 1))
-        points.push({x: imag, y: real})
-    }) 
-    return points;
-}
-
-function lineData(y) {
-    var points = [];
-    $.map(Array(numberOfPoints), function (d, i) {
-        var x = i * lineLength / (numberOfPoints - 1)
-        points.push({ x: y, y: x})
-    }).reverse()
-    return points;
-}
-
-var lineFunction = d3.svg.line()
-    .x(function (d) {return d.x;})
-    .y(function (d) {return d.y;})
-    .interpolate("cardinal");
 
 // --------------
 // GLOBALS
@@ -332,23 +302,12 @@ function updateTree() {
             links = rectTree.links(nodes)
 
             node.data(nodes)
-                //.transition()
-                //.duration(duration)
                 .attr("transform", function(d) {
                     return "translate(" + d.y + "," + d.x + ")";
                 });
 
             link.data(links)
-                //.transition()
-                //.duration(duration)
                 .attr("d", elbow)
-
-            /*
-            rulerG.data(function(d) { return [lineData(yscale(d))] })
-                    .transition()
-                    .duration(duration)
-                    .attr("d",lineFunction)
-            */
 
 
         } else if (options.treeType == 'radial') {
@@ -362,24 +321,14 @@ function updateTree() {
             links = radialTree.links(nodes)
 
             node.data(nodes)
-                //.transition()
-                //.duration(duration)
                 .attr("transform", function(d) {
                     return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")";
                 });
 
 
             link.data(links)
-                //.transition()
-                //duration.duration(duration)
                 .attr("d", function(d) { return step(d.source.x, d.source.y, d.target.x, d.target.y); })
 
-            /*
-            rulerG.data(function(d) { return [circleData(yscale(d))] })
-                    .transition()
-                    .duration(duration)
-                    .attr("d",lineFunction)
-            */
         }
 
         // if tree type changes
@@ -514,7 +463,6 @@ function updateTree() {
         }
     }
 
-    //fitViewBox();
 }
 
 
