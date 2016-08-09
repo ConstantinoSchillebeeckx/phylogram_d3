@@ -42,8 +42,6 @@ var tip = d3.tip()
 var outerRadius = startW / 2,
     innerRadius = outerRadius - 170;
 
-var tree; // will be set to one of the following tree types
-// TODO can consolidate tree types into a single one
 // setup radial tree
 var radialTree = d3.layout.cluster()
     .size([360, innerRadius])
@@ -96,11 +94,8 @@ TODO
 
 function init(dat, div, options) {
 
-
-
     // show loading spinner
     showSpinner(div, true)
-
 
     validateInputs(dat, options);
 
@@ -113,7 +108,6 @@ function init(dat, div, options) {
 
         // process Newick tree
         newick = processNewick(fileStr);
-
 
         // render tree
         if ('mapping_file' in options) {
@@ -209,7 +203,6 @@ function buildTree(div, newick, opts, callback) {
     if (opts.treeType == 'rectangular') {
         tree = rectTree;
     } else if (opts.treeType == 'radial') {
-        //d3.selectAll("#canvasSVG g").attr("transform","translate(" + outerRadius + "," + outerRadius + ")")
         tree = radialTree;
     }
 
@@ -362,65 +355,8 @@ function updateTree() {
     svg.selectAll('g.leaf.node text')
         .text(function(d) { return options.skipDistanceLabel ? d.name : d.name + ' ('+d.length+')'; });
 
-    // remove legend if one exists so we can update
-    d3.selectAll("#legendID g").remove()
 
-    if ('mapping' in options) {
-
-        // update leaf node
-        if (options.leafColor != '') {
-            var colorScale = options.colorScale.get(options.leafColor); // color scale
-            var mapVals = options.mapping.get(options.leafColor); // d3.map() obj with leaf name as key
-
-            // fill out legend
-            generateLegend(options.leafColor, mapVals, colorScale, 'circle');
-
-            // update node styling
-            svg.selectAll('g.leaf.node circle')
-                .transition()
-                .style('fill', function(d) {
-                    return mapVals.get(d.name) ? dimColor(colorScale(mapVals.get(d.name))) : 'white'
-                })
-                .style('stroke', function(d) {
-                    return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'gray'
-                })
-        } else if (options.leafColor == '') {
-            svg.selectAll('g.leaf.node circle')
-                .transition()
-                .attr("style","");
-        }
-
-
-        // update leaf background
-        if (options.backgroundColor != '') {
-            var colorScale = colorScales.get(options.backgroundColor) // color scale
-            var mapVals = mapParse.get(options.backgroundColor) // d3.map() obj with leaf name as key
-
-
-            // fill out legend
-            var offset = 25;
-            generateLegend(options.backgroundColor, mapVals, colorScale, 'rect');
-
-            // update node background style
-            svg.selectAll('g.leaf.node rect')
-                .transition()
-                .attr("width", function(d) {
-                    var name = d.name.replace(new RegExp('\\.', 'g'), '_');
-                    var textWidth = d3.select('#leaf_' + name + ' text').node().getComputedTextLength();
-                    var radius = d3.select('#leaf_' + name + ' circle').node().getBBox().height / 2.0;
-                    return textWidth + radius + 10; // add extra so background is wider than label
-                })
-                .style('fill', function(d) {
-                    return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'none'
-                })
-                .style('opacity',1)
-        } else if (options.backgroundColor == '') {
-            svg.selectAll('g.leaf.node rect')
-                .transition(2000)
-                .style('opacity','1e-6')
-                .attr('width','0')
-        }
-    }
+    if ('mapping' in options) { updateLegend(); }
 
 }
 

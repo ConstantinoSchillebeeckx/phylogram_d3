@@ -67,7 +67,7 @@ path.link {
     height: 20px;
 }
 
-.inner.node {
+.node.inner {
     fill: #aaa;
     cursor: pointer;
 }
