@@ -201,17 +201,13 @@ function buildTree(div, newick, opts, callback) {
     // generate intial layout and all tree elements
     d3.select("#canvasSVG").attr("transform","translate(" + margin.left + "," + margin.top + ")")
     if (opts.treeType == 'rectangular') {
-        tree = rectTree;
+        var tree = rectTree;
     } else if (opts.treeType == 'radial') {
-        tree = radialTree;
+        var tree = radialTree;
     }
 
-    // initial format of tree (nodes, links, labels, ruler)
-    nodes = tree.nodes(newick);
-    if (!opts.skipBranchLengthScaling) { var yscale = scaleBranchLengths(nodes); }
-    if (opts.treeType == 'rectangular') { var xscale = scaleLeafSeparation(tree, nodes); }
-    links = tree.links(nodes);
-    formatTree(nodes, links, yscale, xscale, height, opts);
+    layoutTree(tree, newick, opts)
+
 
     svg.call(tip);
     showSpinner(null, false); // hide spinner
@@ -222,7 +218,14 @@ function buildTree(div, newick, opts, callback) {
 }
 
 
-
+function layoutTree(tree, newick, opts) {
+    // initial format of tree (nodes, links, labels, ruler)
+    nodes = tree.nodes(newick);
+    if (!opts.skipBranchLengthScaling) { var yscale = scaleBranchLengths(nodes); }
+    if (opts.treeType == 'rectangular') { var xscale = scaleLeafSeparation(tree, nodes); }
+    links = tree.links(nodes);
+    formatTree(nodes, links, yscale, xscale, height, opts);
+}
 
 
 
@@ -237,12 +240,16 @@ Assumes globals (nodes, links) exist
 */
 function updateTree() {
 
+    console.log('update tree');
+
     getGUIoptions();
 
     // adjust physical positioning
     if (options.typeChange || options.skipBranchLengthScaling != scale) {
 
         if (options.treeType == 'rectangular') {
+
+            tree = rectTree;
 
             nodes = rectTree.nodes(newick);
             var xscale = scaleLeafSeparation(tree, nodes, options.sliderScaleV);
@@ -263,6 +270,8 @@ function updateTree() {
 
 
         } else if (options.treeType == 'radial') {
+
+            tree = radialTree;
 
             nodes = radialTree.nodes(newick);
             if (!options.skipBranchLengthScaling) { 
