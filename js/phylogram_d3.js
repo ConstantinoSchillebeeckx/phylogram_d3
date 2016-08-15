@@ -201,29 +201,38 @@ function buildTree(div, newick, opts, callback) {
     // generate intial layout and all tree elements
     d3.select("#canvasSVG").attr("transform","translate(" + margin.left + "," + margin.top + ")")
     if (opts.treeType == 'rectangular') {
-        var tree = rectTree;
+        layoutTree(rectTree, newick, opts);
     } else if (opts.treeType == 'radial') {
-        var tree = radialTree;
+        layoutTree(radialTree, newick, opts);
     }
-
-    layoutTree(tree, newick, opts)
-
 
     svg.call(tip);
     showSpinner(null, false); // hide spinner
-
     fitViewBox();
-
-    callback();
+    callback(); // calls updateTree
 }
 
+/* will layout tree elements including nodes and links
 
+Assumes globals (nodes, links) exist
+
+Parameters:
+-----------
+- tree : d3.tree layout
+- newick : Newick obj
+           return of function processNewick()
+- opts: obj
+           opts object with potential keys and values
+
+*/
 function layoutTree(tree, newick, opts) {
-    // initial format of tree (nodes, links, labels, ruler)
+    d3.selectAll("g.ruleGroup").remove() // remove ruler
+
     nodes = tree.nodes(newick);
     if (!opts.skipBranchLengthScaling) { var yscale = scaleBranchLengths(nodes); }
     if (opts.treeType == 'rectangular') { var xscale = scaleLeafSeparation(tree, nodes); }
     links = tree.links(nodes);
+
     formatTree(nodes, links, yscale, xscale, height, opts);
 }
 
@@ -235,70 +244,22 @@ Function called from front-end everytime GUI
 is changed; this will redraw the tree based
 on GUI settings.
 
-Assumes globals (nodes, links) exist
-
 */
 function updateTree() {
 
-    console.log('update tree');
 
-    getGUIoptions();
+    getGUIoptions(); // set our globals
+
 
     // adjust physical positioning
     if (options.typeChange || options.skipBranchLengthScaling != scale) {
 
-        if (options.treeType == 'rectangular') {
-
-            tree = rectTree;
-
-            nodes = rectTree.nodes(newick);
-            var xscale = scaleLeafSeparation(tree, nodes, options.sliderScaleV);
-            if (!options.skipBranchLengthScaling) { 
-                var yscale = scaleBranchLengths(nodes); 
-                d3.selectAll("g.ruleGroup").remove()
-                formatRuler('#rulerSVG', yscale, xscale, height, options);
-            }
-            links = rectTree.links(nodes)
-
-            node.data(nodes)
-                .attr("transform", function(d) {
-                    return "translate(" + d.y + "," + d.x + ")";
-                });
-
-            link.data(links)
-                .attr("d", elbow)
-
-
-        } else if (options.treeType == 'radial') {
-
-            tree = radialTree;
-
-            nodes = radialTree.nodes(newick);
-            if (!options.skipBranchLengthScaling) { 
-                var yscale = scaleBranchLengths(nodes); 
-                d3.selectAll("g.ruleGroup").remove()
-                formatRuler('#rulerSVG', yscale, null, height, options);
-            }
-            links = radialTree.links(nodes)
-
-            node.data(nodes)
-                .attr("transform", function(d) {
-                    return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")";
-                });
-
-
-            link.data(links)
-                .attr("d", function(d) { return step(d.source.x, d.source.y, d.target.x, d.target.y); })
-
-        }
+        layoutTree( options.treeType == 'rectangular' ? rectTree : radialTree, newick, options);
 
         // if tree type changes
         // adjust some label positioning
         if (options.typeChange) {
-            d3.selectAll("g.node text")
-                .attr("text-anchor", function(d) { return options.treeType == 'radial' && d.x > 180 ? "end" : "start" })
-                .attr("transform", function(d) { return options.treeType == 'radial' && d.x > 180 ? "rotate(180)" : "" })
-
+            orientTreeLabels(); 
             fitViewBox(); // reset transform of tree to "zero"
             positionLegend(); // reposition legend in proper position
 
@@ -323,7 +284,7 @@ function updateTree() {
 
     // adjust vertical scale
     if (options.treeType == 'rectangular') {
-        var xscale = scaleLeafSeparation(tree, nodes, options.sliderScaleV); // this will update x-pos
+        var xscale = scaleLeafSeparation(rectTree, nodes, options.sliderScaleV); // this will update x-pos
 
         // update ruler length
         var treeH = d3.select("#treeSVG").node().getBBox().height

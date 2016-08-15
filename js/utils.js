@@ -68,6 +68,7 @@ function scaleLeafSeparation(tree, nodes, minSeparation=22) {
     traverseTree(nodes[0], function(node) {
         node.x = xScale(node.x)
     })
+
     links = tree.links(nodes);
 
     return xScale;
@@ -144,16 +145,12 @@ function formatLinks(id, links, opts) {
       .data(links)
         .enter().append("path")
         .attr("class","link")
-        .attr("d", function(d) {
-            if (opts.treeType == 'rectangular') {
-                return elbow(d);
-            } else if (opts.treeType == 'radial') {
-                return step(d.source.x, d.source.y, d.target.x, d.target.y);
-            }
-        })
         .style("fill","none") // setting style inline otherwise AI doesn't render properly
         .style("stroke","#aaa")
         .style("stroke-width","2px")
+
+    d3.selectAll('.link')
+        .attr("d", function(d) { return opts.tree == 'rectangular' ? elbow(d) : step(d.source.x, d.source.y, d.target.x, d.target.y); })
 }
 
 // https://bl.ocks.org/mbostock/c034d66572fd6bd6815a
@@ -229,6 +226,8 @@ function formatNodes(id, nodes, opts) {
                     return 'leaf_' + name;
                 }
             })
+
+    d3.selectAll('.node')
             .attr("transform", function(d) {
                 if (opts.treeType == 'rectangular') {
                     return "translate(" + d.y + "," + d.x + ")";
@@ -276,17 +275,7 @@ function formatNodes(id, nodes, opts) {
     // node label
     node.append("text")
         .attr("class",function(d) { return d.children ? "distanceLabel" : "leafLabel" })
-        .attr("dx", function(d) { 
-            if (d.children) { // if inner node
-                return treeType == 'radial' && d.x > 180 ? 20 : -20;
-            } else { // if leaf node
-                return treeType == 'radial' && d.x > 180 ? (-5 - opts.sliderLeafR) : (5 + opts.sliderLeafR);
-            }
-
-        }) 
         .attr("dy", function(d) { return d.children ? -6 : 3 })
-        .attr("text-anchor", function(d) { return treeType == 'radial' && d.x > 180 ? "end" : "start" })
-        .attr("transform", function(d) { return treeType == 'radial' && d.x > 180 ? "rotate(180)" : "" }) 
         .text(function(d) { 
             if (d.children) {
                 if (d.length && d.length.toFixed(2) > 0.01) {
@@ -299,7 +288,8 @@ function formatNodes(id, nodes, opts) {
             }
         })
         .attr("opacity", function(d) { return opts.skipLabels ? 1e-6 : 1; });
-   
+
+    orientTreeLabels(); 
 
 }
 
@@ -1012,11 +1002,11 @@ function buildGUI(selector, opts) {
     });
 
     rotationSlider.noUiSlider.on('slide', function(){
-        rotateTree(this.get());
+        rotateTree();
     });
     rotationSlider.noUiSlider.on('end', function(){
         updateTree();
-        orientRadialLabels(this.get());
+        orientTreeLabels();
     });
 }
 
@@ -1409,8 +1399,9 @@ function validateInputs(dat, options) {
 
 // callback for rotation slider
 // paratmer: degree of rotation
-function rotateTree(deg) {
-    d3.select('#treeSVG').attr('transform','rotate(' + deg + ')');
+function rotateTree() {
+
+    d3.select('#treeSVG').attr('transform','rotate(' + rotationSlider.noUiSlider.get() + ')');
 }
 
 
@@ -1438,13 +1429,10 @@ After rotating the tree, some of the radials may be oriented improperly,
 this function will go through all of them and rotate those labels that are
 needed 180
 
-Parameters:
-===========
-- deg : int
-        degree of rotation, between 180 to -180
-
 */
-function orientRadialLabels(deg) {
+function orientTreeLabels() {
+
+    var deg = rotationSlider.noUiSlider.get();
 
     d3.selectAll('.node text') 
         .attr("transform", function(d) { return addAngles(deg, d.x) > 180 ? "rotate(180)" : "" }) 
