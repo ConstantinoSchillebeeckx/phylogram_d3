@@ -113,10 +113,10 @@ function init(dat, div, options) {
             mappingFile = options.mapping_file;
             d3.tsv(mappingFile, function(error, data) {
                 options.mapping_dat = data;
-                buildTree(div, newick, options, function() { updateTree(); });
+                buildTree(div, newick, options, function() { updateTree(); fitViewBox(); });
             });
         } else {
-            buildTree(div, newick, options, function() { updateTree(); });
+            buildTree(div, newick, options, function() { updateTree(); fitViewBox(); });
         }
     });
 }
@@ -320,7 +320,9 @@ function updateTree() {
         updateLegend();  // will reposition legend as well
     }
 
-    fitViewBox();
+    if (options.typeChange) {
+        fitViewBox();
+    }
 }
 
 

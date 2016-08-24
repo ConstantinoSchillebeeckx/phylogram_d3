@@ -656,6 +656,8 @@ by default; calling this will center it in the viewbox
 
 */
 function fitTree() {
+
+
     zoom.scale(1); // reset zoom
     zoom.translate([0,0]); // reset pan
 
@@ -669,8 +671,6 @@ function fitTree() {
 
         shiftX = box.x1 / 2.0;
         shiftY = box.y1 / 2.0;
-
-        console.log('fitretree')
 
         if (d3.select('#legendID').node()) { // if legend exists
             shiftX = shiftX - d3.select('#legendID').node().getBoundingClientRect().width - margin.right;
