@@ -120,38 +120,6 @@ function scaleBranchLengths(nodes) {
 
 
 
-/* Format links (branches) of tree
-
-Will render the lines connecting nodes (links)
-with right angle elbows.
-
-Parameters:
-===========
-- svg : svg selctor
-        svg HTML element into which to render
-- links : d3.tree.links
-- opts : obj
-            tree opts, see documentation for keys
-
-Returns:
-========
-- nothing
-
-*/
-function formatLinks(id, links, opts) {
-
-    // set to global!
-    link = d3.select(id).selectAll("path.link")
-      .data(links)
-        .enter().append("path")
-        .attr("class","link")
-        .style("fill","none") // setting style inline otherwise AI doesn't render properly
-        .style("stroke","#aaa")
-        .style("stroke-width","2px")
-
-    d3.selectAll('.link')
-        .attr("d", function(d) { return opts.tree == 'rectangular' ? elbow(d) : step(d.source.x, d.source.y, d.target.x, d.target.y); })
-}
 
 // https://bl.ocks.org/mbostock/c034d66572fd6bd6815a
 // Like d3.svg.diagonal.radial, but with square corners.
@@ -177,36 +145,84 @@ function elbow(d, i) {
 
 
 
-/* Render and format tree nodes
 
-Will render all tree nodes as well as format them
-with color, shape, size; additionally all leaf
-nodes and internal nodes will get labels by default.
-
-A node is a generalized group which can contain shapes
-(circle) as well as labels (text).
+/* Master format tree function
 
 Parameters:
 ===========
-- svg : svg selctor
-        svg HTML element into which to render
-- nodes : d3.tree.nodes
+- nodes : d3 tree nodes
+- links : d3 tree links
+- yscale : quantitative scale
+           horizontal scaling factor for distance
+           if null, ruler is not drawn
+- xscale : quantitative scale
+           vertical scale
+           if null, ruler is not drawn
+- height : int
+           height of svg
 - opts : obj
             tree opts, see documentation for keys
 
-Returns:
-========
-- nothing
-
 */
-function formatNodes(id, nodes, opts) {
+function formatTree(nodes, links, yscale=null, xscale=null, height, opts) {
+
+    /* Format links (branches) of tree
+    formatLinks
+
+    Will render the lines connecting nodes (links)
+    with right angle elbows.
+
+    Parameters:
+    ===========
+    - svg : svg selctor
+            svg HTML element into which to render
+    - links : d3.tree.links
+    - opts : obj
+                tree opts, see documentation for keys
+
+
+    */
+
+    // set to global!
+    link = d3.select('#treeSVG').selectAll("path.link")
+      .data(links)
+        .enter().append("path")
+        .attr("class","link")
+        .style("fill","none") // setting style inline otherwise AI doesn't render properly
+        .style("stroke","#aaa")
+        .style("stroke-width","2px")
+
+    d3.selectAll('.link')
+        .attr("d", function(d) { return opts.tree == 'rectangular' ? elbow(d) : step(d.source.x, d.source.y, d.target.x, d.target.y); })
+
+
+    /* Render and format tree nodes
+    formatNodes
+
+    Will render all tree nodes as well as format them
+    with color, shape, size; additionally all leaf
+    nodes and internal nodes will get labels by default.
+
+    A node is a generalized group which can contain shapes
+    (circle) as well as labels (text).
+
+    Parameters:
+    ===========
+    - svg : svg selctor
+            svg HTML element into which to render
+    - nodes : d3.tree.nodes
+    - opts : obj
+                tree opts, see documentation for keys
+
+
+    */
 
     // set default leaf radius if not present
     if (!('sliderLeafR' in opts)) {
         opts['sliderLeafR'] = 5;
     }
 
-    node = d3.select(id).selectAll("g.node")
+    node = d3.select('#treeSVG').selectAll("g.node")
             .data(nodes)
           .enter().append("g")
             .attr("class", function(n) {
@@ -291,80 +307,48 @@ function formatNodes(id, nodes, opts) {
 
     orientTreeLabels(); 
 
-}
 
 
+    /* Render and format background rules
+    formatRuler
 
+    Parameters:
+    ===========
+    - id : id selector
+           id (with #) into which to render ruler
+    - yscale : quantitative scale
+               horizontal scaling factor for distance
+    - xscale : quantitative scale
+               vertical scale
+    - height : int
+               height of svg
+    - opts : obj
+                tree opts, expects a key hideRuler;
+                if true, rules won't be drawn. also
+                expects a key treeType (rectangular/radial)
 
-/* Master format tree function
+    */
 
-Parameters:
-===========
-- nodes : d3 tree nodes
-- links : d3 tree links
-- yscale : quantitative scale
-           horizontal scaling factor for distance
-           if null, ruler is not drawn
-- xscale : quantitative scale
-           vertical scale
-           if null, ruler is not drawn
-- height : int
-           height of svg
-- opts : obj
-            tree opts, see documentation for keys
-
-*/
-function formatTree(nodes, links, yscale=null, xscale=null, height, opts) {
-    formatRuler('#rulerSVG', yscale, xscale, height, opts);
-    formatLinks('#treeSVG', links, opts);
-    formatNodes('#treeSVG', nodes, opts);
-}
-
-
-
-
-/* Render and format background rules
-
-Parameters:
-===========
-- id : id selector
-       id (with #) into which to render ruler
-- yscale : quantitative scale
-           horizontal scaling factor for distance
-- xscale : quantitative scale
-           vertical scale
-- height : int
-           height of svg
-- opts : obj
-            tree opts, expects a key hideRuler;
-            if true, rules won't be drawn. also
-            expects a key treeType (rectangular/radial)
-
-Returns:
-========
-- nothing
-
-*/
-function formatRuler(id, yscale, xscale, height, opts) {
 
     if (!opts.hideRuler && yscale != null) {
 
         if (opts.treeType == 'rectangular') {
 
-            rulerG = d3.select(id).selectAll("g")
+            rulerG = d3.select('#rulerSVG').selectAll("g")
                     .data(yscale.ticks(10))
                   .enter().append("g")
                     .attr("class", "ruleGroup")
                   .append('svg:line')
                     .attr("class", "rule")
                     .attr('y1', 0)
-                    .attr('y2', xscale(height))
+                    .attr('y2', getTreeBox().height + margin.top + margin.bottom)
                     .attr('x1', yscale)
                     .attr('x2', yscale)
 
+
         } else if (opts.treeType == 'radial') {  
 
-            rulerG = d3.select(id).selectAll("g")
+            rulerG = d3.select('#rulerSVG').selectAll("g")
                     .data(yscale.ticks(10))
                   .enter().append("g")
                     .attr("class", "ruleGroup")
@@ -647,7 +631,7 @@ function cleanTaxa(taxa) {
 
 }
 
-// get the viewBox attribute of the outermore svg in
+// get the viewBox attribute of the outermost svg in
 // format {x0, y0, x1, y1}
 function getViewBox() {
     var vb = jQuery('svg')[0].getAttribute('viewBox');
@@ -661,52 +645,53 @@ function getViewBox() {
 }
 
 
-/* Fit the SVG viewBox
 
-SVG does not have a set width or height since we want it to
-respond to the size of the window its in.  Therefore, after
-the contents of the SVG are rendered, we set the viewBox to
-that content size.
+
+/* function called by "center view" button in GUI
+
+Will position the #canvasSVG in the X-Y direction so
+that the tree fits on the screen.  For example,
+the radial tree is rendered at 0,0 (top/left corner)
+by default; calling this will center it in the viewbox
+
+*/
+function fitTree() {
+    zoom.scale(1); // reset zoom
+    zoom.translate([0,0]); // reset pan
+
+    // set shiftXY to global so that 
+    // zoom function as access for offset
+    if (treeType == 'rectangular') {
+        shiftX = margin.left;
+        shiftY = margin.top;
+    } else {
+        var box = getViewBox();
+
+        shiftX = box.x1 / 2.0;
+        shiftY = box.y1 / 2.0;
+
+        console.log('fitretree')
+
+        if (d3.select('#legendID').node()) { // if legend exists
+            shiftX = shiftX - d3.select('#legendID').node().getBoundingClientRect().width - margin.right;
+        }
+    }
+    d3.select('#canvasSVG').attr('transform','translate(' + shiftX + ',' + shiftY + ')')
+}
+
+
+
+/* Fit the SVG viewBox to browser size
 
 */
 function fitViewBox() {
 
+    var y1 = window.innerHeight - jQuery('#gui').height() - margin.top;
+    var x1 = window.innerWidth;
+     
+    d3.select('svg').attr("viewBox", "0 0 " + x1 + " " + y1);
 
-    var x0 = 0, y0 = 0, x1, y1
-    var scaleFactorX = 1
-    var svgBox = d3.select('svg').node().getBoundingClientRect();
-    var treeBox = getTreeBox();
-    var viewBox = getViewBox();
-
-
-    x1 = Math.round(treeBox.width + margin.left + margin.right);
-    y1 = Math.round(treeBox.height + margin.top + margin.bottom);
-
-    if (viewBox) {
-        scaleFactorX = x1 / viewBox.x1;
-    }
-
-    // only adjust viewbox if tree is wider than viewbox
-    if (x1 > viewBox.x1 || !viewBox) {
-        d3.select('svg').attr("viewBox", x0 + " " + y0 + " " + x1 + " " + y1);
-    }
-
-    // if rectangular, get dimensions of entire canvas
-    if (treeType == 'rectangular') {
-        shiftX = margin.left;
-        shiftY = margin.top;
-    } else { // if radial, get dimensions of tree and legend if it exists
-        if (treeBox.top < svgBox.top) { // only shift if tree is above svg top
-            shiftY = Math.round(treeBox.height / 2.0 - svgBox.top + margin.top + 20);
-        }
-        if (treeBox.left < svgBox.left || treeBox.right > svgBox.right) { // only shift if svg is left/right of svg sides
-            shiftX = Math.round(treeBox.width / (2.0 * scaleFactorX) + margin.left);
-        }
-    }
-
-    d3.select('#canvasSVG').attr('transform','translate(' + shiftX + ',' + shiftY + ')')
-
-
+    fitTree();    
 }
 
 // get the transform values of selection
@@ -726,26 +711,11 @@ function getTransform(sel) {
 function getTreeBox() {
 
     if (treeType == 'rectangular') {
-        return d3.select('#canvasSVG').node().getBoundingClientRect();
+        var tmp_height = d3.extent(nodes.map(function(d) { return d.x }));
+        var tmp_width = d3.extent(nodes.map(function(d) { return d.y })); // note width will be off since it doesn't take into account the label text
+        return {'height':tmp_height[1] - tmp_height[0], 'width':tmp_width[1] - tmp_width[0] };
     } else {
 
-        var g1 = d3.select('#treeSVG').node().getBoundingClientRect();
-
-        if (d3.selectAll('#legendID g').node()) { // if legend present
-            var tmp = {};
-            var g2 = d3.select('#legendID').node().getBoundingClientRect();
-
-            tmp.left = g1.left;
-            tmp.right = g2.right;
-            tmp.top = d3.min([g1.top, g2.top]);
-            tmp.bottom = d3.max([g1.bottom, g2.bottom]);
-            tmp.width = tmp.right - tmp.left + margin.right + margin.left;
-            tmp.height = tmp.bottom - tmp.top;
-
-            return tmp;
-        }
-
-        return g1;
         return d3.select('#treeSVG').node().getBoundingClientRect();
     }
 
@@ -847,7 +817,7 @@ function buildGUI(selector, opts) {
         .attr("class","btn btn-success")
         .attr("id","reset")
         .attr("title","Reset view")
-        .attr("onclick","centerTree();")
+        .attr("onclick","fitTree();")
         .html('<i class="fa fa-arrows-alt" aria-hidden="true"></i>')
 
     var check1 = col1.append("div")
@@ -1008,6 +978,7 @@ function buildGUI(selector, opts) {
         updateTree();
         orientTreeLabels();
     });
+
 }
 
 
@@ -1106,7 +1077,7 @@ function formatTooltip(d, mapParse) {
 // which can then be right-clicked and 'save as...'
 function saveSVG(){
 
-    centerTree(); 
+    fitTree(); 
 
     // get styles from all stylesheets
     // http://www.coffeegnome.net/converting-svg-to-png-with-canvg/
@@ -1181,7 +1152,6 @@ function generateLegend(title, mapVals, colorScale, type) {
         container = d3.select('svg g').append("g")
             .attr("id", "legendID")
 
-        positionLegend();
     }
 
 
@@ -1286,9 +1256,19 @@ to the top/right of the tree element.
 
 */
 function positionLegend() {
-    var box = getTreeBox();
-    var xPos = Math.round(box.right - getTransform('#canvasSVG')[0] + 2 * (margin.right + margin.left));
-    var yPos = Math.round(-getTransform('#canvasSVG')[1] + margin.top);
+
+
+    if (options.treeType == 'rectangular') {
+        var yPos = margin.top;
+        var xPos = jQuery('#treeSVG')[0].getBoundingClientRect().width + margin.right + 10; // +10 from leaf background width
+    } else {
+        var box = getViewBox();
+
+        var xPos = Math.round(box.x1 / 2.0);
+        var yPos = Math.round(-box.y1 / 2.0 + margin.top);
+    }
+
+
     d3.select("#legendID").attr("transform","translate(" + xPos + "," + yPos + ")");
 }
 
@@ -1410,17 +1390,10 @@ function rotateTree() {
 
 // function called when user interacts with plot to pan and zoom with mouse
 function panZoom() {
+
     d3.select('svg g').attr("transform", "translate(" + (d3.event.translate[0] + shiftX) + "," + (d3.event.translate[1] + shiftY) + ")" + " scale(" + d3.event.scale + ")")
 }
 
-
-// function called by "center view" button in GUI
-function centerTree() {
-    zoom.scale(1); // reset zoom
-    zoom.translate([0,0]); // reset pan
-
-    fitViewBox();
-}
 
 
 
@@ -1433,15 +1406,16 @@ needed 180
 function orientTreeLabels() {
 
     var deg = rotationSlider.noUiSlider.get();
+    var rad = parseInt(leafRSlider.noUiSlider.get()); // leaf radius
 
     d3.selectAll('.node text') 
-        .attr("transform", function(d) { return addAngles(deg, d.x) > 180 ? "rotate(180)" : "" }) 
-        .attr("text-anchor", function(d) { return addAngles(d.x, deg) > 180 ? "end" : "start" })
+        .attr("transform", function(d) { return addAngles(deg, d.x) > 180 && treeType == 'radial' ? "rotate(180)" : "" }) 
+        .attr("text-anchor", function(d) { return addAngles(d.x, deg) > 180 && treeType == 'radial' ? "end" : "start" })
         .attr("dx", function(d) { 
             if (d.children) { // if inner node
                 return treeType == 'radial' && addAngles(deg, d.x) > 180 ? 20 : -20;
             } else { // if leaf node
-                return treeType == 'radial' && addAngles(deg, d.x) > 180 ? (-5 - parseInt(leafRSlider.noUiSlider.get())) : (5 + parseInt(leafRSlider.noUiSlider.get()));
+                return treeType == 'radial' && addAngles(deg, d.x) > 180 ? -(5 + rad) : (5 + rad);
             }
         }) 
 
@@ -1540,6 +1514,7 @@ function updateLegend() {
             .style('stroke', function(d) {
                 return mapVals.get(d.name) ? colorScale(mapVals.get(d.name)) : 'gray'
             })
+
     } else if (options.leafColor == '') {
         svg.selectAll('g.leaf.node circle')
             .transition()
@@ -1576,4 +1551,5 @@ function updateLegend() {
             .attr('width','0')
     }
 
+    positionLegend();
 }

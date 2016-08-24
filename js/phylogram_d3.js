@@ -8,10 +8,9 @@
 // --------------
 var options = {};
 var mapParse, colorScales, mappingFile;
+
 // use margin convention
 // https://bl.ocks.org/mbostock/3019563
-// width and height are initially set and then
-// automatically scalled to fit tree
 var margin = {top: 30, right: 10, bottom: 20, left: 10};
 var startW = 800, startH = 600;
 var width = startW - margin.left - margin.right;
@@ -208,7 +207,6 @@ function buildTree(div, newick, opts, callback) {
 
     svg.call(tip);
     showSpinner(null, false); // hide spinner
-    fitViewBox();
     callback(); // calls updateTree
 }
 
@@ -256,15 +254,14 @@ function updateTree() {
 
         layoutTree( options.treeType == 'rectangular' ? rectTree : radialTree, newick, options);
 
-        // if tree type changes
-        // adjust some label positioning
-        if (options.typeChange) {
-            orientTreeLabels(); 
-            fitViewBox(); // reset transform of tree to "zero"
-            positionLegend(); // reposition legend in proper position
-
-            d3.select('#treeSVG').attr('transform','rotate(0)');
-        }
+        // reset rotation to 0 (rect) or to previous pos (radial)
+        d3.select('#treeSVG').attr('transform', function(d) {
+            if (options.treeType == 'rectangular') {
+                return 'rotate(0)';
+            } else {
+                return 'rotate(' + rotationSlider.noUiSlider.get() + ')';
+            }
+        })
 
         scale = options.skipBranchLengthScaling;
     }
@@ -287,9 +284,9 @@ function updateTree() {
         var xscale = scaleLeafSeparation(rectTree, nodes, options.sliderScaleV); // this will update x-pos
 
         // update ruler length
-        var treeH = d3.select("#treeSVG").node().getBBox().height
+        var treeH = getTreeBox().height;
         d3.selectAll(".ruleGroup line")
-            .attr("y2",xscale(treeH + margin.top + margin.bottom)) // TODO doesn't work quite right with large scale
+            .attr("y2", treeH + margin.top + margin.bottom) // TODO doesn't work quite right with large scale
 
 
         // scale vertical pos
@@ -304,14 +301,7 @@ function updateTree() {
     // scale leaf radius
     svg.selectAll("g.leaf circle")
         .attr("r", options.sliderLeafR);
-    svg.selectAll("g.node text")
-        .attr("dx", function(d) { 
-            if (d.children) { // if inner node
-                return treeType == 'radial' && d.x > 180 ? 20 : -20;
-            } else { // if leaf node
-                return treeType == 'radial' && d.x > 180 ? (-5 - options.sliderLeafR) : (5 + options.sliderLeafR);
-            }
-        });
+    orientTreeLabels();
 
 
     // toggle leaf labels
@@ -326,8 +316,11 @@ function updateTree() {
         .text(function(d) { return options.skipDistanceLabel ? d.name : d.name + ' ('+d.length+')'; });
 
 
-    if ('mapping' in options) { updateLegend(); }
+    if ('mapping' in options) { 
+        updateLegend();  // will reposition legend as well
+    }
 
+    fitViewBox();
 }
 
 
