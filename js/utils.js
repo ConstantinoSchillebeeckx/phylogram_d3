@@ -945,7 +945,7 @@ function buildGUI(selector, opts) {
         step: 0.1,
         connect: "lower",
         range: {
-            'min': 5,
+            'min': 1,
             'max': 20
         }
     });
