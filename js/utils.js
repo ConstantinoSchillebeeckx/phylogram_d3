@@ -670,7 +670,7 @@ function fitTree() {
         var box = getViewBox();
 
         shiftX = box.x1 / 2.0;
-        shiftY = box.y1 / 2.0;
+        shiftY = box.y1 / 2.0 + 2 * margin.top;
 
         if (d3.select('#legendID').node()) { // if legend exists
             shiftX = shiftX - d3.select('#legendID').node().getBoundingClientRect().width - margin.right;
@@ -684,10 +684,15 @@ function fitTree() {
 /* Fit the SVG viewBox to browser size
 
 */
-function fitViewBox() {
+function fitViewBox(entireTree = false) {
 
-    var y1 = window.innerHeight - jQuery('#gui').height() - margin.top;
-    var x1 = window.innerWidth;
+    if (!entireTree) {
+        var y1 = window.innerHeight - jQuery('#gui').height() - margin.top;
+        var x1 = window.innerWidth;
+    } else {
+        var x1 = d3.select('#canvasSVG').node().getBoundingClientRect().width;
+        var y1 = d3.select('#canvasSVG').node().getBoundingClientRect().height;
+    }
      
     d3.select('svg').attr("viewBox", "0 0 " + x1 + " " + y1);
 
@@ -1077,7 +1082,11 @@ function formatTooltip(d, mapParse) {
 // which can then be right-clicked and 'save as...'
 function saveSVG(){
 
-    fitTree(); 
+    fitViewBox(true); 
+
+    d3.select('svg')
+        .attr('width', getViewBox().x1)
+        .attr('height', getViewBox().y1); 
 
     // get styles from all stylesheets
     // http://www.coffeegnome.net/converting-svg-to-png-with-canvg/
@@ -1111,6 +1120,12 @@ function saveSVG(){
     img.src = 'data:image/svg+xml;utf8,' +  unescape(encodeURIComponent(svgStr));
     var tab = window.open(img.src, '_blank')
     tab.document.title = 'phylogram d3';
+
+    // reset figure
+    d3.select('svg')
+        .attr('width', null)
+        .attr('height', null); 
+    fitViewBox(false);
 };
 
 
