@@ -1203,8 +1203,8 @@ function generateLegend(title, mapVals, colorScale, type) {
     if (!(typeof sorted[0] === 'string' || sorted[0] instanceof String)) {
         bar = true;
 
-        scale = d3.scale.linear().domain([10,0]).range(d3.extent(sorted)); // map array of values into one of length 11
-        colorScale.domain(range(0,11));
+        scale = d3.scale.linear().domain([10,0]).range(colorScale.domain()); // map array of values into one of length 11
+        //colorScale.domain(range(0,11));
         sorted = range(0,11);
     }
 
@@ -1232,11 +1232,11 @@ function generateLegend(title, mapVals, colorScale, type) {
             .attr("stroke-width",2);
     } else if (type == 'rect' || bar === true) {
         legendRow.append('rect')
-            .attr('width', bar ? 30 : 9)
+            .attr('width', bar ? 45 : 9)
             .attr('height', bar ? 20 : 9)
             .attr('x', bar ? -4.5 : -4.5)
             .attr('y', bar ? -11 : -4.5)
-            .attr('fill', function(d) { return colorScale(d) } ) 
+            .attr('fill', function(d) { return colorScale(scale(d)) } ) 
     }
         
     legendRow.append('text')
@@ -1245,7 +1245,7 @@ function generateLegend(title, mapVals, colorScale, type) {
             .attr('text-anchor', 'start')
             .attr("fill", function(d) {
                 if (bar) {
-                    var L = d3.hsl(colorScale(d)).l;
+                    var L = d3.hsl(colorScale(scale(d))).l;
                     var rgb = legendColorScale(L);
                     return d3.rgb(rgb,rgb,rgb);
                 } else {
@@ -1524,6 +1524,7 @@ function updateLegend() {
         svg.selectAll('g.leaf.node circle')
             .transition()
             .style('fill', function(d) {
+                //console.log(d.name, mapVals.get(d.name), colorScale(mapVals.get(d.name)))
                 return mapVals.get(d.name) ? dimColor(colorScale(mapVals.get(d.name))) : 'white'
             })
             .style('stroke', function(d) {

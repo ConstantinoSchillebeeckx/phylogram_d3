@@ -157,6 +157,7 @@ function buildTree(div, newick, opts, callback) {
         options.colorScale = colorScales;
     }
 
+    console.log(options.mapping)
     // check opts, if not set, set to default
     if (!('treeType' in opts)) { 
         opts['treeType'] = treeType;
@@ -208,6 +209,7 @@ function buildTree(div, newick, opts, callback) {
     svg.call(tip);
     showSpinner(null, false); // hide spinner
     callback(); // calls updateTree
+
 }
 
 /* will layout tree elements including nodes and links
@@ -247,6 +249,7 @@ function updateTree() {
 
 
     getGUIoptions(); // set our globals
+    
 
 
     // adjust physical positioning
