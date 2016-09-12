@@ -316,7 +316,17 @@ function updateTree() {
         .style('fill-opacity', options.skipDistanceLabel? 1e-6 : 1 )
 
     svg.selectAll('g.leaf.node text')
-        .text(function(d) { return options.skipDistanceLabel ? d.name : d.name + ' ('+d.length+')'; });
+        .text(function(d) { 
+            if (options.skipDistanceLabel) {
+                return d.name;
+            } else {
+                if (options.leafText == 'distance') {
+                    return d.name + ' ('+d.length+')'; 
+                } else {
+                    return d.name + ' (' + mapParse.get(options.leafText).get(d.name) + ')';
+                }
+            }
+        });
 
 
     if ('mapping' in options) { 

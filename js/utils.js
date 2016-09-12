@@ -300,7 +300,11 @@ function formatTree(nodes, links, yscale=null, xscale=null, height, opts) {
                     return '';
                 }
             } else {
-                return d.name + ' ('+d.length+')';
+                if (opts['leafText']) {
+                    return d.name + ' (' + mapParse.get(opts['leafText']).get(d.name) + ')';
+                } else {
+                    return d.name + ' (' + d.length + ')';
+                }
             }
         })
         .attr("opacity", function(d) { return opts.skipLabels ? 1e-6 : 1; });
@@ -684,17 +688,12 @@ function fitTree() {
 /* Fit the SVG viewBox to browser size
 
 */
-function fitViewBox(entireTree = false) {
+function fitViewBox() {
 
-    if (!entireTree) {
-        var y1 = window.innerHeight - jQuery('#gui').height() - margin.top;
-        var x1 = window.innerWidth;
-    } else {
-        var x1 = d3.select('#canvasSVG').node().getBoundingClientRect().width;
-        var y1 = d3.select('#canvasSVG').node().getBoundingClientRect().height;
-    }
+    var y1 = window.innerHeight - jQuery('#gui').height() - margin.top;
+    var x1 = window.innerWidth;
      
-    d3.select('svg').attr("viewBox", "0 0 " + x1 + " " + y1);
+    d3.select('svg').attr("viewBox", "0 0 " + parseInt(x1) + " " + parseInt(y1));
 
     fitTree();    
 }
@@ -777,7 +776,8 @@ function buildGUI(selector, opts) {
         .attr("href","#collapseGUI")
         .attr("aria-expanded","true")
         .attr("aria-controls","collapseGUI")
-        .html("<i class='fa fa-chevron-right'></i> Controls")
+        //.html("<i class='fa fa-chevron-right'></i> Controls")
+        .html('Controls')
       .append("button")
         .attr('class', 'btn btn-success pull-right btn')
         .style('padding','1px 7px')
@@ -873,7 +873,7 @@ function buildGUI(selector, opts) {
             .attr("class","col-sm-2 form-group")
 
         col2.append("label")
-            .text("Leaf node")
+            .text("Leaf node color")
             
         var select1 = col2.append("select")
             .attr('onchange','updateTree();')
@@ -895,7 +895,7 @@ function buildGUI(selector, opts) {
 
         // select for background color
         col2.append("label")
-            .text("Leaf background")
+            .text("Leaf background color")
 
         var select2 = col2.append("select")
             .attr('onchange','updateTree()')
@@ -912,14 +912,39 @@ function buildGUI(selector, opts) {
             .attr("value","")
             .text('None');
         // select for background color
+
+
+        // select for leaf text
+        var col3 = guiRow1.append("div")
+            .attr("class","col-sm-2 form-group")
+
+        col3.append("label")
+            .text("Leaf node label")
+            
+        var select3 = col3.append("select")
+            .attr('onchange','updateTree();')
+            .attr('id','leafText')
+            .attr("class","form-control")
+
+        select3.selectAll("option")
+            .data(mapParse.keys()).enter()
+            .append("option")
+            .attr('value',function(d) { return d; })
+            .text(function(d) { return d; })
+
+        select3.append("option")
+            .attr("selected","")
+            .attr("value","distance")
+            .text('Distance');
+        // select for leaf text
     }
-    var col3 = guiRow1.append("div")
+    var col4 = guiRow1.append("div")
         .attr("class","col-sm-2")
 
-    col3.append("label")
+    col4.append("label")
         .text("Vertical scale")
 
-    col3.append("div")
+    col4.append("div")
         .attr("id","scaleH")
 
     scaleHSlider = document.getElementById('scaleH')
@@ -937,10 +962,10 @@ function buildGUI(selector, opts) {
         updateTree();
     });
 
-    col3.append("label")
+    col4.append("label")
         .text("Leaf radius")
 
-    col3.append("div")
+    col4.append("div")
         .attr("id","leafR")
 
     leafRSlider = document.getElementById('leafR')
@@ -959,10 +984,10 @@ function buildGUI(selector, opts) {
         updateTree();
     });
 
-    col3.append("label")
+    col4.append("label")
         .text("Rotation")
 
-    col3.append("div")
+    col4.append("div")
         .attr("id","rotation")
 
     rotationSlider = document.getElementById('rotation')
@@ -1082,11 +1107,16 @@ function formatTooltip(d, mapParse) {
 // which can then be right-clicked and 'save as...'
 function saveSVG(){
 
-    fitViewBox(true); 
+    fitTree();
+
+    var x1 = window.innerWidth;
+    var y1 = d3.select('#canvasSVG').node().getBoundingClientRect().height + 30 + margin.top + margin.bottom;
+
 
     d3.select('svg')
-        .attr('width', getViewBox().x1)
-        .attr('height', getViewBox().y1); 
+        .attr('width', x1)
+        .attr('height', y1)
+        .attr('viewBox',null);
 
     // get styles from all stylesheets
     // http://www.coffeegnome.net/converting-svg-to-png-with-canvg/
@@ -1125,7 +1155,8 @@ function saveSVG(){
     d3.select('svg')
         .attr('width', null)
         .attr('height', null); 
-    fitViewBox(false);
+    fitViewBox();
+    jQuery('.collapse').collapse('show'); // open GUI since clicking the save button closes it
 };
 
 
@@ -1223,7 +1254,8 @@ function generateLegend(title, mapVals, colorScale, type) {
         .append('g')
             .attr('class', 'legend')
             .attr('transform', function(d,i) { return 'translate(11,' + (25 + i * 20) + ')'; } )
-        
+    
+ 
     if (type == 'circle' && bar === false) {
         legendRow.append(type)
             .attr('r', 4.5)
@@ -1236,7 +1268,7 @@ function generateLegend(title, mapVals, colorScale, type) {
             .attr('height', bar ? 20 : 9)
             .attr('x', bar ? -4.5 : -4.5)
             .attr('y', bar ? -11 : -4.5)
-            .attr('fill', function(d) { return colorScale(scale(d)) } ) 
+            .attr('fill', function(d) { return colorScale(d) } ) 
     }
         
     legendRow.append('text')
@@ -1272,7 +1304,7 @@ to the top/right of the tree element.
 */
 function positionLegend() {
 
-
+    console.log(options.treeType)
     if (options.treeType == 'rectangular') {
         var yPos = margin.top;
         var xPos = jQuery('#treeSVG')[0].getBoundingClientRect().width + margin.right + 10; // +10 from leaf background width
@@ -1283,6 +1315,7 @@ function positionLegend() {
         var yPos = Math.round(-box.y1 / 2.0 + margin.top);
     }
 
+    console.log(xPos, yPos)
 
     d3.select("#legendID").attr("transform","translate(" + xPos + "," + yPos + ")");
 }
@@ -1498,6 +1531,8 @@ function getGUIoptions() {
     if ('mapping' in options && !options.mapping.empty()) {
         var e = document.getElementById("leafColor");
         options['leafColor'] = e.options[e.selectedIndex].value;
+        var e = document.getElementById("leafText");
+        options['leafText'] = e.options[e.selectedIndex].value;
         var e = document.getElementById("backgroundColor");
         options['backgroundColor'] = e.options[e.selectedIndex].value;
     }
@@ -1567,5 +1602,7 @@ function updateLegend() {
             .attr('width','0')
     }
 
-    positionLegend();
+    if (options.backgroundColor != '' || options.leafColor != '') {
+        positionLegend();
+    }
 }
