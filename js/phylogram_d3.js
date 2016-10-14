@@ -116,10 +116,10 @@ function init(dat, div, options) {
             mappingFile = options.mapping_file;
             d3.tsv(mappingFile, function(error, data) {
                 options.mapping_dat = data;
-                buildTree(div, newick, options, function() { updateTree(); fitTree(); });
+                buildTree(div, newick, options, function() { updateTree(); });
             });
         } else {
-            buildTree(div, newick, options, function() { updateTree(); fitTree(); });
+            buildTree(div, newick, options, function() { updateTree(); });
         }
     });
 }
@@ -160,7 +160,6 @@ function buildTree(div, newick, opts, callback) {
         options.colorScale = colorScales;
     }
 
-    console.log(options.mapping)
     // check opts, if not set, set to default
     if (!('treeType' in opts)) { 
         opts['treeType'] = treeType;
@@ -290,7 +289,7 @@ function updateTree() {
         var xscale = scaleLeafSeparation(rectTree, nodes, options.sliderScaleV); // this will update x-pos
 
         // update ruler length
-        var treeH = getTreeBox().height;
+        var treeH = getTreeBox().height + 32; // +32 extends rulers outside treeSVG
         d3.selectAll(".ruleGroup line")
             .attr("y2", treeH + margin.top + margin.bottom) // TODO doesn't work quite right with large scale
 
@@ -336,10 +335,6 @@ function updateTree() {
         updateLegend();  // will reposition legend as well
     }
 
-    if (options.typeChange) {
-        fitTree();
-        positionLegend();
-    }
 }
 
 

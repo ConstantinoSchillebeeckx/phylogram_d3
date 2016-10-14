@@ -958,9 +958,10 @@ function buildGUI(selector, opts) {
 
     noUiSlider.create(scaleHSlider, {
         start: 22,
+        step: 0.05,
         connect: [true, false],
         range: {
-            'min': 22,
+            'min': 5,
             'max': 100
         }
     });
@@ -979,7 +980,7 @@ function buildGUI(selector, opts) {
 
     noUiSlider.create(leafRSlider, {
         start: 5,
-        step: 0.1,
+        step: 0.05,
         connect: [true, false],
         range: {
             'min': 1,
