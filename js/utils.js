@@ -651,52 +651,56 @@ function getViewBox() {
 
 
 
-/* function called by "center view" button in GUI
+/*  Fit the SVG viewBox to browser size
 
-Will position the #canvasSVG in the X-Y direction so
-that the tree fits on the screen.  For example,
-the radial tree is rendered at 0,0 (top/left corner)
-by default; calling this will center it in the viewbox
+function called by "center view" button in GUI
+
+Will adjust the X-Y position as well as the zoom
+so that the entire tree (width & height) are fit
+on the screen.  It then aligns the left-most
+and top-most elements with the window.
 
 */
 function fitTree() {
 
-
-    zoom.scale(1); // reset zoom
-    zoom.translate([0,0]); // reset pan
-
-    // set shiftXY to global so that 
-    // zoom function as access for offset
-    if (treeType == 'rectangular') {
-        shiftX = margin.left;
-        shiftY = margin.top;
-    } else {
-        var box = getViewBox();
-
-        shiftX = box.x1 / 2.0;
-        shiftY = box.y1 / 2.0 + 2 * margin.top;
-
-        if (d3.select('#legendID').node()) { // if legend exists
-            shiftX = shiftX - d3.select('#legendID').node().getBoundingClientRect().width - margin.right;
-        }
-    }
-    d3.select('#canvasSVG').attr('transform','translate(' + shiftX + ',' + shiftY + ')')
-}
-
-
-
-/* Fit the SVG viewBox to browser size
-
-*/
-function fitViewBox() {
-
-    var y1 = window.innerHeight - jQuery('#gui').height() - margin.top;
+    var y1 = window.innerHeight;
     var x1 = window.innerWidth;
      
     d3.select('svg').attr("viewBox", "0 0 " + parseInt(x1) + " " + parseInt(y1));
 
-    fitTree();    
+    // reset position
+    d3.select('#canvasSVG')
+        .attr('transform','translate(0,0) scale(1)')
+
+    // get bounding box of content to fit
+    if (treeType == 'rectangular') {
+        var content = d3.select('#canvasSVG').node().getBoundingClientRect();
+    } else {
+        var content = d3.select('#treeSVG').node().getBoundingClientRect();
+        var root = d3.select('.root').node().getBoundingClientRect();
+        console.log(content, d3.select('#treeSVG').node().getBoundingClientRect())
+    }
+
+    var zoomScale = d3.min([
+        (jQuery('#gui').outerWidth() - margin.left - margin.right) / content.width, 
+        (y1 - jQuery('#gui').outerHeight(true) - margin.bottom - margin.top) / content.height
+    ]);
+
+    svg.call(zoom.event);
+
+    zoom.scale(zoomScale);
+    if (treeType == 'rectangular') {
+        zoom.translate([margin.left,margin.top]);
+    } else {
+        zoom.translate([x1 / 2, (root.bottom - content.top) * zoom.scale()]);
+    }
+
+    svg.transition().duration(750).call(zoom.event);
+
 }
+
+
+
 
 // get the transform values of selection
 // returns array [X,Y]
@@ -707,6 +711,9 @@ function getTransform(sel) {
 
     return [parseInt(tmp[0]), parseInt(tmp[1])];
 }
+
+
+
 
 
 
@@ -1107,11 +1114,8 @@ function formatTooltip(d, mapParse) {
 // which can then be right-clicked and 'save as...'
 function saveSVG(){
 
-    fitTree();
-
-    var x1 = window.innerWidth;
-    var y1 = d3.select('#canvasSVG').node().getBoundingClientRect().height + 30 + margin.top + margin.bottom;
-
+    var x1 = getViewBox.width;
+    var y1 = getViewBox.height;
 
     d3.select('svg')
         .attr('width', x1)
@@ -1152,10 +1156,8 @@ function saveSVG(){
     tab.document.title = 'phylogram d3';
 
     // reset figure
-    d3.select('svg')
-        .attr('width', null)
-        .attr('height', null); 
-    fitViewBox();
+    fitTree();
+
     jQuery('.collapse').collapse('show'); // open GUI since clicking the save button closes it
 };
 
@@ -1304,19 +1306,16 @@ to the top/right of the tree element.
 */
 function positionLegend() {
 
-    console.log(options.treeType)
     if (options.treeType == 'rectangular') {
-        var yPos = margin.top;
-        var xPos = jQuery('#treeSVG')[0].getBoundingClientRect().width + margin.right + 10; // +10 from leaf background width
+        var yPos = (margin.top + 30) / zoom.scale(); // 20 to make room for title
+        var xPos = (jQuery('#treeSVG')[0].getBoundingClientRect().width + margin.right + 40) / zoom.scale(); // +40 from leaf background width and extra space
     } else {
-        var box = getViewBox();
+        var box = d3.select('#treeSVG').node().getBoundingClientRect();
 
-        var xPos = Math.round(box.x1 / 2.0);
-        var yPos = Math.round(-box.y1 / 2.0 + margin.top);
+        var xPos = box.right * zoom.scale();
+        var yPos = -box.top / zoom.scale();
+
     }
-
-    console.log(xPos, yPos)
-
     d3.select("#legendID").attr("transform","translate(" + xPos + "," + yPos + ")");
 }
 
@@ -1428,7 +1427,6 @@ function validateInputs(dat, options) {
 // callback for rotation slider
 // paratmer: degree of rotation
 function rotateTree() {
-
     d3.select('#treeSVG').attr('transform','rotate(' + rotationSlider.noUiSlider.get() + ')');
 }
 
@@ -1438,7 +1436,6 @@ function rotateTree() {
 
 // function called when user interacts with plot to pan and zoom with mouse
 function panZoom() {
-
     d3.select('svg g').attr("transform", "translate(" + (d3.event.translate[0] + shiftX) + "," + (d3.event.translate[1] + shiftY) + ")" + " scale(" + d3.event.scale + ")")
 }
 
@@ -1605,4 +1602,6 @@ function updateLegend() {
     if (options.backgroundColor != '' || options.leafColor != '') {
         positionLegend();
     }
+    fitTree();
+
 }

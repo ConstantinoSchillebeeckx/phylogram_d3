@@ -11,7 +11,7 @@ var mapParse, colorScales, mappingFile;
 
 // use margin convention
 // https://bl.ocks.org/mbostock/3019563
-var margin = {top: 30, right: 10, bottom: 20, left: 10};
+var margin = {top: 0, right: 10, bottom: 10, left: 10};
 var startW = 800, startH = 600;
 var width = startW - margin.left - margin.right;
 var height = startH - margin.top - margin.bottom;
@@ -54,6 +54,9 @@ var rectTree = d3.layout.cluster()
     .size([height, width]);
 
 var duration = 1000;
+
+
+
 
 // --------------
 // GLOBALS
@@ -113,10 +116,10 @@ function init(dat, div, options) {
             mappingFile = options.mapping_file;
             d3.tsv(mappingFile, function(error, data) {
                 options.mapping_dat = data;
-                buildTree(div, newick, options, function() { updateTree(); fitViewBox(); });
+                buildTree(div, newick, options, function() { updateTree(); fitTree(); });
             });
         } else {
-            buildTree(div, newick, options, function() { updateTree(); fitViewBox(); });
+            buildTree(div, newick, options, function() { updateTree(); fitTree(); });
         }
     });
 }
@@ -181,7 +184,7 @@ function buildTree(div, newick, opts, callback) {
             .attr("class","row")
             .attr("id","canvas")
 
-    // NOTE: size of SVG and SVG g are updated in fitViewBox()
+    // NOTE: size of SVG and SVG g are updated in fitTree()
     svg = tmp.append("div")
             .attr("class", "col-sm-12")
             .attr("id","tree")
@@ -189,7 +192,7 @@ function buildTree(div, newick, opts, callback) {
             .attr("xmlns","http://www.w3.org/2000/svg")
             .attr("id","SVGtree")
             .call(zoom.on("zoom", panZoom))
-        .append("g") // svg g group is translated by fitViewBox()
+        .append("g") // svg g group is translated by fitTree()
             .attr("id",'canvasSVG')
 
     svg.append("g")
@@ -199,7 +202,7 @@ function buildTree(div, newick, opts, callback) {
 
 
     // generate intial layout and all tree elements
-    d3.select("#canvasSVG").attr("transform","translate(" + margin.left + "," + margin.top + ")")
+    d3.select("#canvasSVG")
     if (opts.treeType == 'rectangular') {
         layoutTree(rectTree, newick, opts);
     } else if (opts.treeType == 'radial') {
@@ -334,7 +337,8 @@ function updateTree() {
     }
 
     if (options.typeChange) {
-        fitViewBox();
+        fitTree();
+        positionLegend();
     }
 }
 
