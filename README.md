@@ -8,7 +8,7 @@ This project is an adaptation of the [GitHubGist](https://gist.github.com/) crea
 ---
 A demo.php file has been provided to render the tree; furthermore, demo data can be found in the directory `/dat`
 
-A working demo can be found [here](http://www.matatu.com/phylogram/demo.php) which was used to generate the following:
+A working demo can be found [here](http://meepmoop.com/phylogram/) which was used to generate the following:
 ![Render](https://rawgit.com/ConstantinoSchillebeeckx/phylogram_d3/master/tree_rect.png "Rectangular tree type")
 ![Render](https://rawgit.com/ConstantinoSchillebeeckx/phylogram_d3/master/tree_radial.png "Radial tree type")
 

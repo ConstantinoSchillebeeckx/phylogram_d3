@@ -320,7 +320,7 @@ function updateTree() {
             if (options.skipDistanceLabel) {
                 return d.name;
             } else {
-                if (options.leafText == 'distance') {
+                if (options.leafText == 'distance' || !mapParse) {
                     return d.name + ' ('+d.length+')'; 
                 } else {
                     return d.name + ' (' + mapParse.get(options.leafText).get(d.name) + ')';

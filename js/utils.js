@@ -866,7 +866,7 @@ function buildGUI(selector, opts) {
 
     
     // if mapping file was passed
-    if (mapParse && !mapParse.empty()) {
+    if (mapParse && !mapParse.empty() && typeof mapParse != 'undefined') {
 
         // select for leaf color
         var col2 = guiRow1.append("div")
@@ -951,7 +951,7 @@ function buildGUI(selector, opts) {
 
     noUiSlider.create(scaleHSlider, {
         start: 22,
-        connect: "lower",
+        connect: [true, false],
         range: {
             'min': 22,
             'max': 100
@@ -973,7 +973,7 @@ function buildGUI(selector, opts) {
     noUiSlider.create(leafRSlider, {
         start: 5,
         step: 0.1,
-        connect: "lower",
+        connect: [true, false],
         range: {
             'min': 1,
             'max': 20
@@ -994,7 +994,7 @@ function buildGUI(selector, opts) {
 
     noUiSlider.create(rotationSlider, {
         start: 0,
-        connect: "lower",
+        connect: [true, false],
         range: {
             'min': -180,
             'max': 180
