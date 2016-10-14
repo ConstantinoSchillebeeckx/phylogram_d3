@@ -1062,9 +1062,9 @@ function autoSort(arr, unique=false) {
 // it as such
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseFloat
 function filterTSVval(value) {
-    if (/^(\-|\+)?([0-9]+(\.[0-9]+))$/.test(value)) { // if string
+    if (/^(\-|\+)?([0-9]+(\.[0-9]+))jQuery/.test(value)) { // if string
         return Number(value);
-    } else if (/^\d+$/.test(value)) { // if int
+    } else if (/^\d+jQuery/.test(value)) { // if int
         return parseInt(value);
     }
     return value;
@@ -1518,9 +1518,9 @@ function getGUIoptions() {
 
 
     // get checkbox state
-    options.skipDistanceLabel = !$('#toggle_distance').is(':checked');
-    options.skipLeafLabel = !$('#toggle_leaf').is(':checked');
-    options.skipBranchLengthScaling = !$('#scale_distance').is(':checked');
+    options.skipDistanceLabel = !jQuery('#toggle_distance').is(':checked');
+    options.skipLeafLabel = !jQuery('#toggle_leaf').is(':checked');
+    options.skipBranchLengthScaling = !jQuery('#scale_distance').is(':checked');
 
     // get slider vals
     options.sliderScaleV = parseInt(scaleHSlider.noUiSlider.get()); 
