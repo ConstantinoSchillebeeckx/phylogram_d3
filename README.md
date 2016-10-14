@@ -36,7 +36,7 @@ Rendering the phylogram begins with the function [`init()`][1] which you can sim
 
 3. an **optional** object with tree parameters, this should be passed as a javascript object with the following optional keys
   * mapping_file : `(str)` location of OTU mapping file to use which associates leaves with metadata
-  * mapping_dat : `(obj)` instead of passing the key *mapping_file* this key can be passed and takes the form as the output of (d3.csv.parse)[https://github.com/d3/d3-3.x-api-reference/blob/master/CSV.md#parse]
+  * mapping_dat : `(obj)` instead of passing the key *mapping_file* this key can be passed and takes the form as the output of [d3.csv.parse](https://github.com/d3/d3-3.x-api-reference/blob/master/CSV.md#parse)
   * treeType : `(str)` either rectangular or radial [default: rectangular]
   * hideRuler : `(bool)` if True, the background ruler will be hidden [default: show ruler]
   * skipBranchLengthScaling : `(bool)` if True, a [cladogram](https://en.wikipedia.org/wiki/Cladogram) will be displayed instead of a [phylogram](https://en.wikipedia.org/wiki/Phylogenetic_tree) [default: phylogram]
