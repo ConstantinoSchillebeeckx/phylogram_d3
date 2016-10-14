@@ -28,6 +28,9 @@ A working demo can be found [here](http://meepmoop.com/phylogram/) which was use
 * [noUiSlider](http://refreshless.com/nouislider/)
 
 ## Usage
+
+**in development**
+
 Rendering the phylogram begins with the function [`init()`][1] which you can simply call in the `body` tag of your HTML page using the [onload](https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onload) event handle: `<body onload="init(parameters);">`.  Currently, the function takes three parameters:
 
 1. String indicating the location of the Newick tree used to build the phylogram.
