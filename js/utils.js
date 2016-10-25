@@ -1176,7 +1176,7 @@ function saveSVG(){
 
 /* Generate legend
 
-Helper function for generating a legend,
+Helper function for generating a legend (floating),
 given various inputs.  Legend consists of an overall
 'g' group which contains a legend title as well as 
 rows of legend elements.  Each row has the class
@@ -1305,11 +1305,11 @@ function generateLegend(title, mapVals, colorScale, type) {
 
 
 
-/* Will position the legend in the proper position
+/* 
 
-Used when first calling the legend creation as well as when
-switching between plot types.  Will reposition the #legendID
-to the top/right of the tree element.
+Will position the legend in the top/right corner
+of window.
+
 
 */
 function positionLegend() {
