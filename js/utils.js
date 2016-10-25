@@ -1075,7 +1075,13 @@ function filterTSVval(value) {
     } else if (parseInt(value)) { // if int
         return parseInt(value);
     }
-    return value;
+
+    // ignore blank values
+    if (value != '') {
+        return value;
+    } else {
+        return null;
+    }
 }
 
 
@@ -1244,10 +1250,12 @@ function generateLegend(title, mapVals, colorScale, type) {
         }
         break;
     }
-
+/*
+            scale = d3.scale.quantize()
+                .domain(d3.extent(vals))
+                .range(colorbrewer.Spectral[11]);*/
     if (bar) {
-        scale = d3.scale.linear().domain([10,0]).range(colorScale.range()); // map array of values into one of length 11
-        console.log(sorted)
+        scale = d3.scale.quantize().domain(range(0,10)).range(colorScale.range()); // map array of values into one of length 11
         labelScale = d3.scale.ordinal().domain(range(0,10)).rangePoints(d3.extent(sorted))
         sorted = range(0,10);
     }
@@ -1280,7 +1288,8 @@ function generateLegend(title, mapVals, colorScale, type) {
             .attr('height', bar ? 20 : 9)
             .attr('x', bar ? -4.5 : -4.5)
             .attr('y', bar ? -11 : -4.5)
-            .attr('fill', function(d) { return colorScale(d) } ) 
+            .attr('fill', function(d) { console.log(d, scale(d)) 
+                return scale(d) } ) 
     }
         
     legendRow.append('text')
