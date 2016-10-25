@@ -1204,11 +1204,9 @@ function generateLegend(title, mapVals, colorScale, type) {
     var container = d3.select("#legendID")
 
     if (container.empty()) { // if legend doesn't already exist
-        container = d3.select('svg g').append("g")
+        container = d3.select('svg').append("g")
             .attr("id", "legendID")
-
     }
-
 
 
     // we need a unique list of values for the legend
@@ -1244,17 +1242,9 @@ function generateLegend(title, mapVals, colorScale, type) {
     var bar = false;
 
     // check if we have all numbers, ignore empty values
-    for (var i = 0; i < sorted.length; i++) {
-        if (parseInt(sorted[i])) {
-            bar = true;
-        }
-        break;
-    }
-/*
-            scale = d3.scale.quantize()
-                .domain(d3.extent(vals))
-                .range(colorbrewer.Spectral[11]);*/
-    if (bar) {
+
+    if (parseInt(sorted[0])) {
+        bar = true;
         scale = d3.scale.quantize().domain(range(0,10)).range(colorScale.range()); // map array of values into one of length 11
         labelScale = d3.scale.ordinal().domain(range(0,10)).rangePoints(d3.extent(sorted))
         sorted = range(0,10);
@@ -1323,18 +1313,10 @@ to the top/right of the tree element.
 
 */
 function positionLegend() {
+    
+    var yPos = (margin.top + 30) / zoom.scale(); // 20 to make room for title
+    d3.select("#legendID").attr("transform","translate(" + (window.innerWidth - 200) + "," + yPos + ")");
 
-    if (options.treeType == 'rectangular') {
-        var yPos = (margin.top + 30) / zoom.scale(); // 20 to make room for title
-        var xPos = (jQuery('#treeSVG')[0].getBoundingClientRect().width + margin.right + 40) / zoom.scale(); // +40 from leaf background width and extra space
-    } else {
-        var box = d3.select('#treeSVG').node().getBoundingClientRect();
-
-        var xPos = box.right * zoom.scale();
-        var yPos = -box.top / zoom.scale();
-
-    }
-    d3.select("#legendID").attr("transform","translate(" + xPos + "," + yPos + ")");
 }
 
 
