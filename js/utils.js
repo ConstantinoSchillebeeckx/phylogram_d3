@@ -1163,7 +1163,7 @@ function saveSVG(){
     tab.document.title = 'phylogram d3';
 
     // reset figure
-    fitTree();
+    d3.select('svg').attr("viewBox", "0 0 " + parseInt(window.innerWidth) + " " + parseInt(window.innerHeight)); // set viewbox
 
     jQuery('.collapse').collapse('show'); // open GUI since clicking the save button closes it
 };
@@ -1288,8 +1288,7 @@ function generateLegend(title, mapVals, colorScale, type) {
             .attr('height', bar ? 20 : 9)
             .attr('x', bar ? -4.5 : -4.5)
             .attr('y', bar ? -11 : -4.5)
-            .attr('fill', function(d) { console.log(d, scale(d)) 
-                return scale(d) } ) 
+            .attr('fill', function(d) {  return scale(d) } ) 
     }
         
     legendRow.append('text')
