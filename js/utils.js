@@ -666,7 +666,7 @@ function fitTree() {
     var y1 = window.innerHeight;
     var x1 = window.innerWidth;
      
-    d3.select('svg').attr("viewBox", "0 0 " + parseInt(x1) + " " + parseInt(y1));
+    d3.select('svg').attr("viewBox", "0 0 " + parseInt(x1) + " " + parseInt(y1)); // fit viewbox
 
     // reset position
     d3.select('#canvasSVG')
@@ -1603,6 +1603,8 @@ function updateLegend() {
     if (options.backgroundColor != '' || options.leafColor != '') {
         positionLegend();
     }
-    fitTree();
+
+     
+    d3.select('svg').attr("viewBox", "0 0 " + parseInt(window.innerWidth) + " " + parseInt(window.innerHeight)); // set viewbox
 
 }

@@ -193,6 +193,7 @@ function buildTree(div, newick, opts, callback) {
             .call(zoom.on("zoom", panZoom))
         .append("g") // svg g group is translated by fitTree()
             .attr("id",'canvasSVG')
+            .attr("transform","translate(" + margin.left + "," + margin.top + ")")
 
     svg.append("g")
             .attr("id","rulerSVG")
