@@ -1070,9 +1070,9 @@ function autoSort(arr, unique=false) {
 // it as such
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseFloat
 function filterTSVval(value) {
-    if (/^(\-|\+)?([0-9]+(\.[0-9]+))jQuery/.test(value)) { // if string
-        return Number(value);
-    } else if (/^\d+jQuery/.test(value)) { // if int
+    if (parseFloat(value)) { // if float
+        return parseFloat(value);
+    } else if (parseInt(value)) { // if int
         return parseInt(value);
     }
     return value;
@@ -1210,12 +1210,15 @@ function generateLegend(title, mapVals, colorScale, type) {
     // they will sort alphabetically or descending if integer
     var counts = d3.map(); // {legend Row: counts}
     mapVals.values().forEach(function(d) {
-        var count = 1
-        if (counts.has(d)) {
-            var count = counts.get(d) + count;
+        if (d != '') { // ignore empty data
+            var count = 1
+            if (counts.has(d)) {
+                var count = counts.get(d) + count;
+            }
+            counts.set(d,count);
         }
-        counts.set(d,count);
     });
+
 
 
     if (container.select("#legendID g").empty()) {
@@ -1231,15 +1234,22 @@ function generateLegend(title, mapVals, colorScale, type) {
     // if legend is to show an ordinal range, we represent it as a colorbar
     // this way we don't have a potentially gigantic legend
     // the length 11 is set by the colorbrewer scale
-    var sorted = autoSort(counts.keys());
+    var sorted = autoSort(counts.keys());   
     var bar = false;
-    var scale;
-    if (!(typeof sorted[0] === 'string' || sorted[0] instanceof String)) {
-        bar = true;
 
-        scale = d3.scale.linear().domain([10,0]).range(colorScale.domain()); // map array of values into one of length 11
-        //colorScale.domain(range(0,11));
-        sorted = range(0,11);
+    // check if we have all numbers, ignore empty values
+    for (var i = 0; i < sorted.length; i++) {
+        if (parseInt(sorted[i])) {
+            bar = true;
+        }
+        break;
+    }
+
+    if (bar) {
+        scale = d3.scale.linear().domain([10,0]).range(colorScale.range()); // map array of values into one of length 11
+        console.log(sorted)
+        labelScale = d3.scale.ordinal().domain(range(0,10)).rangePoints(d3.extent(sorted))
+        sorted = range(0,10);
     }
 
     legend.append("text")
@@ -1258,7 +1268,6 @@ function generateLegend(title, mapVals, colorScale, type) {
             .attr('class', 'legend')
             .attr('transform', function(d,i) { return 'translate(11,' + (25 + i * 20) + ')'; } )
     
- 
     if (type == 'circle' && bar === false) {
         legendRow.append(type)
             .attr('r', 4.5)
@@ -1280,7 +1289,7 @@ function generateLegend(title, mapVals, colorScale, type) {
             .attr('text-anchor', 'start')
             .attr("fill", function(d) {
                 if (bar) {
-                    var L = d3.hsl(colorScale(scale(d))).l;
+                    var L = d3.hsl(scale(d)).l;
                     var rgb = legendColorScale(L);
                     return d3.rgb(rgb,rgb,rgb);
                 } else {
@@ -1289,7 +1298,7 @@ function generateLegend(title, mapVals, colorScale, type) {
             })
             .text(function(d) { 
                 if (bar) {
-                    return scale(d).toFixed(2);
+                    return labelScale(d).toFixed(2);
                 } else {
                     return '(' + counts.get(d) + ') ' + d; 
                 }
