@@ -1242,12 +1242,13 @@ function generateLegend(title, mapVals, colorScale, type) {
     var bar = false;
 
     // check if we have all numbers, ignore empty values
-
     if (parseInt(sorted[0])) {
         bar = true;
-        scale = d3.scale.quantize().domain(range(0,10)).range(colorScale.range()); // map array of values into one of length 11
+        scale = d3.scale.quantize().domain(range(0,10)).range(colorScale.range()); // mapping from metadata value to color
         labelScale = d3.scale.ordinal().domain(range(0,10)).rangePoints(d3.extent(sorted))
         sorted = range(0,10);
+    } else {
+        scale = colorScale;
     }
 
     legend.append("text")
@@ -1310,12 +1311,13 @@ function generateLegend(title, mapVals, colorScale, type) {
 Will position the legend in the top/right corner
 of window.
 
-
 */
 function positionLegend() {
-    
+   
     var yPos = (margin.top + 30) / zoom.scale(); // 20 to make room for title
-    d3.select("#legendID").attr("transform","translate(" + (window.innerWidth - 200) + "," + yPos + ")");
+    var xPos = d3.select("#legendID").node().getBoundingClientRect().width;
+    console.log(xPos);
+    d3.select("#legendID").attr("transform","translate(" + (window.innerWidth - xPos - 15) + "," + yPos + ")");
 
 }
 
