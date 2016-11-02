@@ -334,6 +334,8 @@ function updateTree() {
 
     if ('mapping' in options) { 
         updateLegend();  // will reposition legend as well
+    } else {
+        d3.select('svg').attr("viewBox", "0 0 " + parseInt(window.innerWidth) + " " + parseInt(window.innerHeight)); // set viewbox
     }
 
 }
