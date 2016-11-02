@@ -1121,12 +1121,12 @@ function formatTooltip(d, mapParse) {
 // which can then be right-clicked and 'save as...'
 function saveSVG(){
 
-    var x1 = getViewBox.width;
-    var y1 = getViewBox.height;
+    var viewX = getViewBox().x1;
+    var viewY = d3.select("#canvasSVG").node().getBoundingClientRect().height;
 
     d3.select('svg')
-        .attr('width', x1)
-        .attr('height', y1)
+        .attr('width', viewX)
+        .attr('height', viewY)
         .attr('viewBox',null);
 
     // get styles from all stylesheets
@@ -1163,7 +1163,9 @@ function saveSVG(){
     tab.document.title = 'phylogram d3';
 
     // reset figure
-    d3.select('svg').attr("viewBox", "0 0 " + parseInt(window.innerWidth) + " " + parseInt(window.innerHeight)); // set viewbox
+    d3.select('svg').attr("viewBox", "0 0 " + viewX + " " + viewY); // set viewbox
+    d3.select('svg').attr('width', null);
+    d3.select('svg').attr('height', null);
 
     jQuery('.collapse').collapse('show'); // open GUI since clicking the save button closes it
 };
@@ -1316,7 +1318,6 @@ function positionLegend() {
    
     var yPos = (margin.top + 30) / zoom.scale(); // 20 to make room for title
     var xPos = d3.select("#legendID").node().getBoundingClientRect().width;
-    console.log(xPos);
     d3.select("#legendID").attr("transform","translate(" + (window.innerWidth - xPos - 15) + "," + yPos + ")");
 
 }
