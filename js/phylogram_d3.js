@@ -116,10 +116,10 @@ function init(dat, div, options) {
             mappingFile = options.mapping_file;
             d3.tsv(mappingFile, function(error, data) {
                 options.mapping_dat = data;
-                buildTree(div, newick, options, function() { updateTree(); fitTree(); });
+                buildTree(div, newick, options, function() { updateTree(); });
             });
         } else {
-            buildTree(div, newick, options, function() { updateTree(); fitTree(); });
+            buildTree(div, newick, options, function() { updateTree(); });
         }
     });
 }
@@ -160,7 +160,6 @@ function buildTree(div, newick, opts, callback) {
         options.colorScale = colorScales;
     }
 
-    console.log(options.mapping)
     // check opts, if not set, set to default
     if (!('treeType' in opts)) { 
         opts['treeType'] = treeType;
@@ -194,6 +193,7 @@ function buildTree(div, newick, opts, callback) {
             .call(zoom.on("zoom", panZoom))
         .append("g") // svg g group is translated by fitTree()
             .attr("id",'canvasSVG')
+            .attr("transform","translate(" + margin.left + "," + margin.top + ")")
 
     svg.append("g")
             .attr("id","rulerSVG")
@@ -290,7 +290,7 @@ function updateTree() {
         var xscale = scaleLeafSeparation(rectTree, nodes, options.sliderScaleV); // this will update x-pos
 
         // update ruler length
-        var treeH = getTreeBox().height;
+        var treeH = getTreeBox().height + 32; // +32 extends rulers outside treeSVG
         d3.selectAll(".ruleGroup line")
             .attr("y2", treeH + margin.top + margin.bottom) // TODO doesn't work quite right with large scale
 
@@ -334,12 +334,10 @@ function updateTree() {
 
     if ('mapping' in options) { 
         updateLegend();  // will reposition legend as well
+    } else {
+        d3.select('svg').attr("viewBox", "0 0 " + parseInt(window.innerWidth) + " " + parseInt(window.innerHeight)); // set viewbox
     }
 
-    if (options.typeChange) {
-        fitTree();
-        positionLegend();
-    }
 }
 
 

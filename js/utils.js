@@ -666,7 +666,7 @@ function fitTree() {
     var y1 = window.innerHeight;
     var x1 = window.innerWidth;
      
-    d3.select('svg').attr("viewBox", "0 0 " + parseInt(x1) + " " + parseInt(y1));
+    d3.select('svg').attr("viewBox", "0 0 " + parseInt(x1) + " " + parseInt(y1)); // fit viewbox
 
     // reset position
     d3.select('#canvasSVG')
@@ -958,9 +958,10 @@ function buildGUI(selector, opts) {
 
     noUiSlider.create(scaleHSlider, {
         start: 22,
+        step: 0.05,
         connect: [true, false],
         range: {
-            'min': 22,
+            'min': 5,
             'max': 100
         }
     });
@@ -979,7 +980,7 @@ function buildGUI(selector, opts) {
 
     noUiSlider.create(leafRSlider, {
         start: 5,
-        step: 0.1,
+        step: 0.05,
         connect: [true, false],
         range: {
             'min': 1,
@@ -1069,12 +1070,18 @@ function autoSort(arr, unique=false) {
 // it as such
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseFloat
 function filterTSVval(value) {
-    if (/^(\-|\+)?([0-9]+(\.[0-9]+))jQuery/.test(value)) { // if string
-        return Number(value);
-    } else if (/^\d+jQuery/.test(value)) { // if int
+    if (parseFloat(value)) { // if float
+        return parseFloat(value);
+    } else if (parseInt(value)) { // if int
         return parseInt(value);
     }
-    return value;
+
+    // ignore blank values
+    if (value != '') {
+        return value;
+    } else {
+        return null;
+    }
 }
 
 
@@ -1156,7 +1163,7 @@ function saveSVG(){
     tab.document.title = 'phylogram d3';
 
     // reset figure
-    fitTree();
+    d3.select('svg').attr("viewBox", "0 0 " + parseInt(window.innerWidth) + " " + parseInt(window.innerHeight)); // set viewbox
 
     jQuery('.collapse').collapse('show'); // open GUI since clicking the save button closes it
 };
@@ -1169,7 +1176,7 @@ function saveSVG(){
 
 /* Generate legend
 
-Helper function for generating a legend,
+Helper function for generating a legend (floating),
 given various inputs.  Legend consists of an overall
 'g' group which contains a legend title as well as 
 rows of legend elements.  Each row has the class
@@ -1197,11 +1204,9 @@ function generateLegend(title, mapVals, colorScale, type) {
     var container = d3.select("#legendID")
 
     if (container.empty()) { // if legend doesn't already exist
-        container = d3.select('svg g').append("g")
+        container = d3.select('svg').append("g")
             .attr("id", "legendID")
-
     }
-
 
 
     // we need a unique list of values for the legend
@@ -1209,12 +1214,15 @@ function generateLegend(title, mapVals, colorScale, type) {
     // they will sort alphabetically or descending if integer
     var counts = d3.map(); // {legend Row: counts}
     mapVals.values().forEach(function(d) {
-        var count = 1
-        if (counts.has(d)) {
-            var count = counts.get(d) + count;
+        if (d != '') { // ignore empty data
+            var count = 1
+            if (counts.has(d)) {
+                var count = counts.get(d) + count;
+            }
+            counts.set(d,count);
         }
-        counts.set(d,count);
     });
+
 
 
     if (container.select("#legendID g").empty()) {
@@ -1230,15 +1238,17 @@ function generateLegend(title, mapVals, colorScale, type) {
     // if legend is to show an ordinal range, we represent it as a colorbar
     // this way we don't have a potentially gigantic legend
     // the length 11 is set by the colorbrewer scale
-    var sorted = autoSort(counts.keys());
+    var sorted = autoSort(counts.keys());   
     var bar = false;
-    var scale;
-    if (!(typeof sorted[0] === 'string' || sorted[0] instanceof String)) {
-        bar = true;
 
-        scale = d3.scale.linear().domain([10,0]).range(colorScale.domain()); // map array of values into one of length 11
-        //colorScale.domain(range(0,11));
-        sorted = range(0,11);
+    // check if we have all numbers, ignore empty values
+    if (parseInt(sorted[0])) {
+        bar = true;
+        scale = d3.scale.quantize().domain(range(0,10)).range(colorScale.range()); // mapping from metadata value to color
+        labelScale = d3.scale.ordinal().domain(range(0,10)).rangePoints(d3.extent(sorted))
+        sorted = range(0,10);
+    } else {
+        scale = colorScale;
     }
 
     legend.append("text")
@@ -1257,7 +1267,6 @@ function generateLegend(title, mapVals, colorScale, type) {
             .attr('class', 'legend')
             .attr('transform', function(d,i) { return 'translate(11,' + (25 + i * 20) + ')'; } )
     
- 
     if (type == 'circle' && bar === false) {
         legendRow.append(type)
             .attr('r', 4.5)
@@ -1270,7 +1279,7 @@ function generateLegend(title, mapVals, colorScale, type) {
             .attr('height', bar ? 20 : 9)
             .attr('x', bar ? -4.5 : -4.5)
             .attr('y', bar ? -11 : -4.5)
-            .attr('fill', function(d) { return colorScale(d) } ) 
+            .attr('fill', function(d) {  return scale(d) } ) 
     }
         
     legendRow.append('text')
@@ -1279,7 +1288,7 @@ function generateLegend(title, mapVals, colorScale, type) {
             .attr('text-anchor', 'start')
             .attr("fill", function(d) {
                 if (bar) {
-                    var L = d3.hsl(colorScale(scale(d))).l;
+                    var L = d3.hsl(scale(d)).l;
                     var rgb = legendColorScale(L);
                     return d3.rgb(rgb,rgb,rgb);
                 } else {
@@ -1288,7 +1297,7 @@ function generateLegend(title, mapVals, colorScale, type) {
             })
             .text(function(d) { 
                 if (bar) {
-                    return scale(d).toFixed(2);
+                    return labelScale(d).toFixed(2);
                 } else {
                     return '(' + counts.get(d) + ') ' + d; 
                 }
@@ -1297,26 +1306,19 @@ function generateLegend(title, mapVals, colorScale, type) {
 
 
 
-/* Will position the legend in the proper position
+/* 
 
-Used when first calling the legend creation as well as when
-switching between plot types.  Will reposition the #legendID
-to the top/right of the tree element.
+Will position the legend in the top/right corner
+of window.
 
 */
 function positionLegend() {
+   
+    var yPos = (margin.top + 30) / zoom.scale(); // 20 to make room for title
+    var xPos = d3.select("#legendID").node().getBoundingClientRect().width;
+    console.log(xPos);
+    d3.select("#legendID").attr("transform","translate(" + (window.innerWidth - xPos - 15) + "," + yPos + ")");
 
-    if (options.treeType == 'rectangular') {
-        var yPos = (margin.top + 30) / zoom.scale(); // 20 to make room for title
-        var xPos = (jQuery('#treeSVG')[0].getBoundingClientRect().width + margin.right + 40) / zoom.scale(); // +40 from leaf background width and extra space
-    } else {
-        var box = d3.select('#treeSVG').node().getBoundingClientRect();
-
-        var xPos = box.right * zoom.scale();
-        var yPos = -box.top / zoom.scale();
-
-    }
-    d3.select("#legendID").attr("transform","translate(" + xPos + "," + yPos + ")");
 }
 
 
@@ -1602,6 +1604,8 @@ function updateLegend() {
     if (options.backgroundColor != '' || options.leafColor != '') {
         positionLegend();
     }
-    fitTree();
+
+     
+    d3.select('svg').attr("viewBox", "0 0 " + parseInt(window.innerWidth) + " " + parseInt(window.innerHeight)); // set viewbox
 
 }
