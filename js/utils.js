@@ -1585,6 +1585,7 @@ function updateLegend() {
         // update node background style
         svg.selectAll('g.leaf.node rect')
             .transition()
+            .duration(500)
             .attr("width", function(d) {
                 var name = d.name.replace(new RegExp('\\.', 'g'), '_');
                 var textWidth = d3.select('#leaf_' + name + ' text').node().getComputedTextLength();
@@ -1597,9 +1598,10 @@ function updateLegend() {
             .style('opacity',1)
     } else if (options.backgroundColor == '') {
         svg.selectAll('g.leaf.node rect')
-            .transition(2000)
-            .style('opacity','1e-6')
+            .transition()
+            .duration(500)
             .attr('width','0')
+            .style('opacity','1e-6')
     }
 
     if (options.backgroundColor != '' || options.leafColor != '') {
