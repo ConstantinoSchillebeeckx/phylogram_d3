@@ -33,25 +33,22 @@ A working demo can be found [here](http://meepmoop.com/phylogram/) which was use
 
 Rendering the phylogram begins with the function [`init()`][1] which you can simply call in the `body` tag of your HTML page using the [onload](https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onload) event handle: `<body onload="init(parameters);">`.  Currently, the function takes three parameters:
 
-1. String indicating the location of the Newick tree used to build the phylogram.
+1. String of the Newick tree used to build the phylogram.
 
 2. String identifier for the div id into which to generate the phylogram, note that it must contain the '#' in it.  For example, if you want to render your tree in a div with the id 'phylogram' you'd pass '#phylogram' to the function and you'd need the following in your HTML: `<div id='phylogram'></div>`.
 
 3. an **optional** object with tree parameters, this should be passed as a javascript object with the following optional keys
-  * mapping_file : `(str)` location of OTU mapping file to use which associates leaves with metadata
-  * mapping_dat : `(obj)` instead of passing the key *mapping_file* this key can be passed and takes the form as the output of [d3.csv.parse](https://github.com/d3/d3-3.x-api-reference/blob/master/CSV.md#parse)
+  * mapping_dat : `(obj)` list of objects where the object keys are metadata and the object values are the metadata values. This is used to color the phylogram.
   * treeType : `(str)` either rectangular or radial [default: rectangular]
   * hideRuler : `(bool)` if True, the background ruler will be hidden [default: show ruler]
   * skipBranchLengthScaling : `(bool)` if True, a [cladogram](https://en.wikipedia.org/wiki/Cladogram) will be displayed instead of a [phylogram](https://en.wikipedia.org/wiki/Phylogenetic_tree) [default: phylogram]
   * skipLabels : `(bool)` if True, all node labels will be hidden [default: show labels]
 
 
-##### Notes on the OTU mapping file
-The OTU mapping file is similar to a standard QIIME mapping file in that it associates additionaly metadata to the objects of interest; however in this case the objects of interest are OTUs instead of samples.  This file has the following caveats:
+##### Notes on the `mapping_dat`
+The `mapping_dat` is similar to a standard QIIME mapping file in that it associates additional metadata to the objects of interest; however in this case the objects of interest are OTUs instead of samples.  This file has the following caveats:
 
-* must be a TSV with headers
-
-* first column values must be the same as the leaf nodes in the Newick tree
+* each object must have a key of `OTUID` which must exist as a leaf in the Newick tree
 
 * if providing taxonomy data, format it in the QIIME default manner (e.g. *k__bacteria_2;p__firmicutes;c__negativicutes;o__selenomonadales;f__veillonellaceae;g__megasphaera;s__elsdenii*).  If done correctly, this format will be parsed and cleaned up automatically
 

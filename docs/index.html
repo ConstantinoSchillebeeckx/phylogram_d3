@@ -1,0 +1,167 @@
+<!doctype html>
+
+<html lang="en">
+
+    <head>
+
+        <title>Phylogram d3</title>
+
+        <!-- CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,700,800" />
+        <link href="https://cdn.rawgit.com/leongersen/noUiSlider/master/distribute/nouislider.min.css" rel="stylesheet">
+        <link href="https://cdn.rawgit.com/ConstantinoSchillebeeckx/phylogram_d3/8b79ded5/css/styles.css" rel="stylesheet">
+
+        <!-- JS -->
+        <script type="text/javascript" src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="https://cdn.rawgit.com/mbostock/5577023/raw/5ee09dca6afdbef864de89d4d6caa3296f926f00/colorbrewer.min.js    "></script>
+        <script type="text/javascript" src="https://cdn.rawgit.com/jasondavies/newick.js/master/src/newick.js"></script>
+        <script src="https://d3js.org/d3.v3.min.js"></script>
+        <script type="text/javascript" src="https://cdn.rawgit.com/ConstantinoSchillebeeckx/phylogram_d3/8b79ded5/js/lib/tooltip.js"></script>
+        <script type="text/javascript" src="https://cdn.rawgit.com/leongersen/noUiSlider/master/distribute/nouislider.min.js"></script>
+        <script type="text/javascript" src="https://cdn.rawgit.com/ConstantinoSchillebeeckx/phylogram_d3/8b79ded5/js/phylogram_d3.js"></script>
+        <script type="text/javascript" src="https://cdn.rawgit.com/ConstantinoSchillebeeckx/phylogram_d3/8b79ded5/js/utils.js"></script>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+
+    <script>
+
+        var treeDat = '((((62937:0.03385,New.ReferenceOTU2008:0.22333)0.784:0.00054,(30514:0.32839,6133:0.30268)0.245:0.02773)0.794:0.04966,(((((1297:0.20715,19844:0.03332)0.916:0.16792,(11230:0.09016,17804:0.06286)0.758:0.21143)0.981:0.02059,2806:0.21023)0.408:0.02782,25985:0.76686)0.906:0.01434,(50643:0.36686,((30656:0.18711,6304:0.05099)0.974:0.01475,(7476:0.03728,61094:0.00823)0.465:0.09453)0.704:0.03715)0.790:0.1054)0.893:0.03426)0.877:0.00799,(63148:0.01987,22820:0.14762)0.923:0.03811)'
+
+        var treeOptions = {
+            'mapping_dat': [
+                            {
+                                "OTUID": 11230,
+                                "RDP_taxonomy": "k__bacteria_2;p__firmicutes;c__negativicutes;o__selenomonadales;f__veillonellaceae;g__megasphaera;s__elsdenii",
+                                "RDP_confidence": 1,
+                                "Group": "treatment",
+                                "Location": "Site19"
+                            },
+                            {
+                                "OTUID": 1297,
+                                "RDP_taxonomy": "k__bacteria_2;p__firmicutes;c__clostridia;o__clostridiales;",
+                                "RDP_confidence": 1,
+                                "Group": "control",
+                                "Location": "Site22"
+                            },
+                            {
+                                "OTUID": 17804,
+                                "RDP_taxonomy": "k__bacteria_2;p__firmicutes;c__negativicutes;o__selenomonadales;f__veillonellaceae;g__dialister;",
+                                "RDP_confidence": 1,
+                                "Group": "control",
+                                "Location": "Site15"
+                            },
+                            {
+                                "OTUID": 19844,
+                                "RDP_taxonomy": "k__bacteria_2;p__firmicutes;c__clostridia;o__clostridiales;f__peptostreptococcaceae;g__unclassified_peptostreptococcaceae;s__glycolicum",
+                                "RDP_confidence": 1,
+                                "Group": "treatment",
+                                "Location": "Site1"
+                            },
+                            {
+                                "OTUID": 22820,
+                                "RDP_taxonomy": "k__bacteria_2;p__firmicutes;c__clostridia;o__clostridiales;f__lachnospiraceae;g__blautia;s__torques",
+                                "RDP_confidence": 0.94,
+                                "Group": "treatment",
+                                "Location": "Site4"
+                            },
+                            {
+                                "OTUID": 25985,
+                                "RDP_taxonomy": "k__bacteria_2;p__bacteroidetes;c__bacteroidia;o__bacteroidales;",
+                                "RDP_confidence": 0.94,
+                                "Group": "control",
+                                "Location": "Site21"
+                            },
+                            {
+                                "OTUID": 2806,
+                                "RDP_taxonomy": "k__bacteria_2;p__firmicutes;c__clostridia;o__clostridiales;",
+                                "RDP_confidence": 0.95,
+                                "Group": "control",
+                                "Location": "Site20"
+                            },
+                            {
+                                "OTUID": 30514,
+                                "RDP_taxonomy": "k__bacteria_2;p__firmicutes;c__clostridia;o__clostridiales;f__eubacteriaceae;g__eubacterium;s__desmolans",
+                                "RDP_confidence": 0.91,
+                                "Group": "treatment",
+                                "Location": "Site28"
+                            },
+                            {
+                                "OTUID": 30656,
+                                "RDP_taxonomy": "k__bacteria_2;p__firmicutes;c__bacilli;o__lactobacillales;f__lactobacillaceae;g__lactobacillus;s__amylovorus",
+                                "RDP_confidence": 0.91,
+                                "Group": "treatment",
+                                "Location": "Site7"
+                            },
+                            {
+                                "OTUID": 50643,
+                                "RDP_taxonomy": "k__bacteria_2;p__proteobacteria;c__gammaproteobacteria;o__pseudomonadales;f__pseudomonadaceae;g__pseudomonas;",
+                                "RDP_confidence": 1,
+                                "Group": "control",
+                                "Location": "Site19"
+                            },
+                            {
+                                "OTUID": 61094,
+                                "RDP_taxonomy": "k__bacteria_2;p__firmicutes;c__clostridia;o__clostridiales;f__clostridiaceae;g__clostridium;",
+                                "RDP_confidence": 0.81,
+                                "Group": "control",
+                                "Location": "Site25"
+                            },
+                            {
+                                "OTUID": 6133,
+                                "RDP_taxonomy": "k__bacteria_2;p__firmicutes;c__bacilli;o__lactobacillales;f__streptococcaceae;g__streptococcus;",
+                                "RDP_confidence": 1,
+                                "Group": "treatment",
+                                "Location": "Site11"
+                            },
+                            {
+                                "OTUID": 62937,
+                                "RDP_taxonomy": "k__bacteria_2;p__firmicutes;c__clostridia;o__clostridiales;f__clostridiaceae;g__clostridium;",
+                                "RDP_confidence": 0.9,
+                                "Group": "treatment",
+                                "Location": "Site7"
+                            },
+                            {
+                                "OTUID": 6304,
+                                "RDP_taxonomy": "k__bacteria_2;p__firmicutes;c__clostridia;o__clostridiales;f__clostridiaceae;g__clostridium;",
+                                "RDP_confidence": 1,
+                                "Group": "control",
+                                "Location": "Site26"
+                            },
+                            {
+                                "OTUID": 63148,
+                                "RDP_taxonomy": "k__bacteria_2;p__firmicutes;c__clostridia;o__clostridiales;",
+                                "RDP_confidence": 1,
+                                "Group": "control",
+                                "Location": "Site18"
+                            },
+                            {
+                                "OTUID": 7476,
+                                "RDP_taxonomy": "k__bacteria_2;p__firmicutes;c__clostridia;o__clostridiales;f__clostridiaceae;g__clostridium;s__disporicum",
+                                "RDP_confidence": 0.84,
+                                "Group": "treatment",
+                                "Location": "Site8"
+                            }
+                        ],
+           'treeType': 'rectangular',
+            // 'treeType': 'radial',
+            'hideRuler': false,
+            'skipBranchLengthScaling': false,
+            'skipLabels': false,
+        }
+    </script>
+    <body onload="init(treeDat, '#phylogram', treeOptions);">
+
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-12">
+                    <!-- div for tree -->
+                    <div id='phylogram'></div>
+                </div>
+            </div>
+        </div>
+
+    </body>
