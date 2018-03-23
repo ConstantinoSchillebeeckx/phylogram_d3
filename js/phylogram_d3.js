@@ -1,8 +1,3 @@
-/*
-
-    TODO
-
-*/
 
 // GLOBALS
 // --------------
@@ -31,7 +26,7 @@ var scale = true; // if true, tree will be scaled by distance metric
 // range is RBG
 var legendColorScale = d3.scale.linear().domain([0.5,1]).range([255,0])
 
-// tooltip 
+// tooltip
 var tip = d3.tip()
     .attr('class', 'd3-tip')
     .offset([0,20])
@@ -77,7 +72,7 @@ render the tree
 Parameters:
 ==========
 - dat : string
-		filepath for input Newick tre
+		Newick tree as javascript var
 - div : string
 		div id (with included #) in which to generated tree
 - options: obj
@@ -89,7 +84,6 @@ options obj:
 - skipBranchLengthScaling: (bool) if true, tree will not be scaled by distance TODO
 - skipLabels: (bool) if true, leaves will not be labeled by name or distance
 - treeType: either rectangular or radial
-TODO
 
 */
 
@@ -101,27 +95,13 @@ function init(dat, div, options) {
 
     validateInputs(dat, options);
 
-    d3.text(dat, function(error, fileStr) {
-        if (error) {
-            var msg = 'Input file <code><a href="' + dat + '">' + dat + '</a></code> could not be parsed, ensure it is a proper Newick tree file!';
-            displayErrMsg(msg, div);
-            return;
-          }
+    // process Newick tree
+    newick = processNewick(dat);
 
-        // process Newick tree
-        newick = processNewick(fileStr);
+    // render tree
+    buildTree(div, newick, options, function() { updateTree(); });
 
-        // render tree
-        if ('mapping_file' in options) {
-            mappingFile = options.mapping_file;
-            d3.tsv(mappingFile, function(error, data) {
-                options.mapping_dat = data;
-                buildTree(div, newick, options, function() { updateTree(); });
-            });
-        } else {
-            buildTree(div, newick, options, function() { updateTree(); });
-        }
-    });
+
 }
 
 
@@ -161,12 +141,12 @@ function buildTree(div, newick, opts, callback) {
     }
 
     // check opts, if not set, set to default
-    if (!('treeType' in opts)) { 
+    if (!('treeType' in opts)) {
         opts['treeType'] = treeType;
     } else {
         treeType = opts.treeType;
     }
-    if (!('skipBranchLengthScaling' in opts)) { 
+    if (!('skipBranchLengthScaling' in opts)) {
         opts['skipBranchLengthScaling'] = !scale;
     } else {
         scale = opts.skipBranchLengthScaling;
@@ -252,7 +232,7 @@ function updateTree() {
 
 
     getGUIoptions(); // set our globals
-    
+
 
 
     // adjust physical positioning
@@ -319,12 +299,12 @@ function updateTree() {
         .style('fill-opacity', options.skipDistanceLabel? 1e-6 : 1 )
 
     svg.selectAll('g.leaf.node text')
-        .text(function(d) { 
+        .text(function(d) {
             if (options.skipDistanceLabel) {
                 return d.name;
             } else {
                 if (options.leafText == 'distance' || !mapParse) {
-                    return d.name + ' ('+d.length+')'; 
+                    return d.name + ' ('+d.length+')';
                 } else {
                     return d.name + ' (' + mapParse.get(options.leafText).get(d.name) + ')';
                 }
@@ -332,14 +312,10 @@ function updateTree() {
         });
 
 
-    if ('mapping' in options) { 
+    if ('mapping' in options) {
         updateLegend();  // will reposition legend as well
     } else {
         d3.select('svg').attr("viewBox", "0 0 " + parseInt(window.innerWidth) + " " + parseInt(window.innerHeight)); // set viewbox
     }
 
 }
-
-
-
-
