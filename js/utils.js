@@ -790,7 +790,7 @@ function buildGUI(selector, opts) {
         .style('padding','1px 7px')
         .on("click",saveSVG)
         .append('i')
-        .attr('class','fa fa-floppy-o')
+        .attr('class','far fa-save')
         .attr('title','Save image')
 
     var gui = collapse.append("div")
